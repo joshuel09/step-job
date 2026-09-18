@@ -3,7 +3,9 @@ name = "step-job-api"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.115",
+    # Pinned to the 0.115 line: on 0.141 in this environment include_router
+    # silently registers no routes, even for a single-route router.
+    "fastapi>=0.115,<0.116",
     "uvicorn[standard]>=0.32",
     "pydantic>=2.9",
     "pydantic-settings>=2.5",
@@ -18,6 +20,7 @@ dev = [
     "pytest-asyncio>=0.24",
     "httpx>=0.27",
     "ruff>=0.6",
+    "pyyaml>=6.0",
 ]
 
 [build-system]
