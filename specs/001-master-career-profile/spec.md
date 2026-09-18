@@ -8,6 +8,16 @@
 
 **Input**: User description: "Master Career Profile — the canonical record of a user's career that every generated document derives from."
 
+## Clarifications
+
+### Session 2026-09-18
+
+- Q: What language should the Step Job interface itself be presented in for the first release? → A: Switchable English and Japanese, English as the default, with a Japanese user able to work entirely in Japanese
+- Q: When a user deletes their account, how long is their career data retained before permanent erasure? → A: A 30-day recovery window for general profile data; residence status, nationality and visa fields are purged immediately
+- Q: When a user edits an entry a document was already generated from, does the profile keep the previous version? → A: No general version history; instead the profile provides an immutable snapshot of the entries used at the moment a document is generated
+- Q: What makes two work experiences count as the same entry when checking a proposal against the profile? → A: The same employer with overlapping date ranges, regardless of how the job title is worded
+- Q: In what form should a user be able to export their complete profile? → A: Both together in one export — a complete structured data file plus a readable document
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Describe my career once (Priority: P1)
@@ -132,6 +142,11 @@ fixture.
   as a possible duplicate rather than overwriting existing data.
 - A user enters a very long free-text description. It is stored in full rather
   than silently truncated.
+- A user switches the interface from English to Japanese while part-way through
+  entering an experience. Interface text changes; anything they have typed is
+  preserved exactly as written and is not translated.
+- A user works in the Japanese interface but authors entries in English, or the
+  reverse. Both are valid and neither is corrected.
 
 ## Requirements *(mandatory)*
 
@@ -160,6 +175,17 @@ fixture.
   the action they took, and the result, and MUST be able to link each story to a
   work experience.
 
+**Interface language**
+
+- **FR-021**: The interface MUST be available in English and Japanese, and the
+  user MUST be able to switch between them at any time. English is the default
+  for a new user.
+- **FR-022**: A user who selects Japanese MUST be able to complete every task in
+  this feature entirely in Japanese, with no untranslated interface text.
+- **FR-023**: The interface language MUST be independent of the language a user
+  authors any given entry in. Changing the interface language MUST NOT alter,
+  translate, or re-language stored profile content.
+
 **Canonical source of truth**
 
 - **FR-008**: The profile MUST be the single source of career information. No
@@ -172,6 +198,17 @@ fixture.
   support it.
 - **FR-011**: The system MUST NOT alter the meaning of user-authored content when
   storing it.
+- **FR-028**: The profile MUST be able to produce an immutable snapshot of a
+  given set of entries as they read at that moment, so that a feature generating
+  a document can record exactly what it drew on.
+- **FR-029**: A snapshot MUST remain readable and unchanged after the entries it
+  captured are edited or deleted, so that the claims in an already-generated
+  document stay traceable.
+- **FR-030**: The profile itself MUST remain directly editable. Editing an entry
+  MUST NOT require the user to manage versions, and the system MUST NOT retain a
+  general revision history of entries beyond the snapshots in FR-028.
+- **FR-031**: Snapshots MUST be erased when the profile is deleted, on the same
+  terms as the entries they captured.
 
 **Editing and lifecycle**
 
@@ -183,8 +220,27 @@ fixture.
   an end date earlier than its start date with an explanation.
 - **FR-015**: The system MUST accept a profile that is incomplete, and MUST be
   able to report which sections are empty so the user can see what is missing.
-- **FR-016**: Users MUST be able to export their complete profile in a portable
-  form, and MUST be able to delete it entirely.
+- **FR-016**: Users MUST be able to export their complete profile, and MUST be
+  able to delete it entirely.
+- **FR-035**: A profile export MUST contain both a structured data file holding
+  every entry and the relationships between them, and a readable document
+  presenting the same profile for a person to open.
+- **FR-036**: The structured file MUST be complete: every entry, career story and
+  disclosure setting the user holds, with nothing summarised away.
+- **FR-037**: An export MUST include the Japan-specific fields regardless of
+  their disclosure settings, because those settings govern generated documents
+  rather than the user's own copy of their data.
+- **FR-024**: When a user deletes their profile, residence status, nationality,
+  visa type and visa expiry MUST be erased immediately and MUST NOT be
+  recoverable.
+- **FR-025**: All remaining profile data MUST be retained for a 30-day recovery
+  window after deletion, during which the user MAY restore it, and MUST be
+  permanently erased at the end of that window without further action by the
+  user.
+- **FR-026**: Before deletion proceeds, the user MUST be told which data is
+  erased immediately, which is recoverable, and when the recovery window ends.
+- **FR-027**: Profile data inside the recovery window MUST NOT be readable by any
+  other feature and MUST NOT appear in any generated document.
 
 **Proposed entries**
 
@@ -196,6 +252,15 @@ fixture.
   and MUST be able to reject it outright.
 - **FR-020**: The system MUST identify a proposal that appears to duplicate an
   existing entry and offer to merge it rather than create a duplicate.
+- **FR-032**: A proposed work experience MUST be treated as a possible duplicate
+  when it names the same employer as an existing entry and their date ranges
+  overlap. Differences in how the job title is worded MUST NOT prevent a match.
+- **FR-033**: Two experiences at the same employer whose date ranges do not
+  overlap — a later promotion, or a return after leaving — MUST be treated as
+  distinct entries and MUST NOT be offered as a merge.
+- **FR-034**: A possible duplicate MUST be presented to the user as a suggestion
+  only. The system MUST NOT merge entries without the user choosing to, and the
+  user MUST be able to keep both as separate entries.
 
 ### Key Entities
 
@@ -221,6 +286,9 @@ fixture.
 - **Proposed Entry**: career information suggested by an external source, with
   the source recorded, awaiting the user's review; becomes a profile entry only
   on acceptance.
+- **Entry Snapshot**: an immutable copy of a set of profile entries as they read
+  at one moment, taken when a document is generated so its claims stay traceable
+  after the entries change.
 
 ## Success Criteria *(mandatory)*
 
@@ -243,6 +311,9 @@ fixture.
   when they next sign in, in 100% of cases.
 - **SC-008**: A user can export or delete their entire profile within one minute
   of deciding to.
+- **SC-009**: 100% of deleted profiles have their residence, nationality and visa
+  data erased at the moment of deletion, and all remaining data erased no later
+  than 30 days afterwards.
 
 ## Assumptions
 
