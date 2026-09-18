@@ -1,0 +1,1077 @@
+openapi: 3.1.0
+
+# The source of truth for the Master Career Profile HTTP surface.
+# Per the constitution, the TypeScript client is generated from this document
+# rather than maintained by hand, so this file is a contract, not documentation.
+# Schemas are summarised here; field rules live in ../data-model.md.
+
+info:
+  title: Step Job — Master Career Profile
+  version: 1.0.0
+  description: >
+    The canonical career record. Every route operates on the calling user's own
+    profile; no profile or user identifier appears in any path, because identity
+    is established from the verified session (research.md R-006).
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: profile
+    description: The profile as a whole, plus export and deletion
+  - name: sections
+    description: The typed sections a user maintains directly
+  - name: stories
+    description: Career stories, reusable as STAR examples
+  - name: proposals
+    description: Entries proposed by an outside source, awaiting review
+  - name: snapshots
+    description: Immutable captures supporting generated-document traceability
+
+security:
+  - sessionIdentity: []
+
+paths:
+  /profile:
+    get:
+      tags: [profile]
+      summary: Get the caller's profile with every section
+      responses:
+        "200":
+          description: The profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404":
+          description: No profile exists yet for this user
+    patch:
+      tags: [profile]
+      summary: Update profile-level settings
+      description: >
+        Currently the interface locale only. Changing it never alters stored
+        content (FR-023).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                interface_locale: { $ref: "#/components/schemas/Locale" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+    delete:
+      tags: [profile]
+      summary: Delete the profile
+      description: >
+        Erases residence status, nationality, visa type and visa expiry
+        immediately and unrecoverably. All remaining data is retained for a
+        30-day recovery window, then permanently erased (FR-024, FR-025).
+        The response states what was erased and when the window closes, so the
+        client can satisfy FR-026 before calling.
+      responses:
+        "200":
+          description: Deletion accepted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeletionReceipt" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+
+  /profile/completeness:
+    get:
+      tags: [profile]
+      summary: Report which sections are empty
+      description: Supports FR-015 — an incomplete profile is valid and reportable.
+      responses:
+        "200":
+          description: Section-by-section completeness
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    complete: { type: boolean }
+                    entry_count: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+
+  /profile/restore:
+    post:
+      tags: [profile]
+      summary: Restore a profile inside its recovery window
+      description: >
+        Recovers everything still held. Does not recover the immediately-erased
+        Japan-specific fields, which no longer exist.
+      responses:
+        "200":
+          description: Restored
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "409":
+          description: The recovery window has passed; the profile is gone
+
+  /profile/export:
+    post:
+      tags: [profile]
+      summary: Export the complete profile
+      description: >
+        Returns one archive containing a complete structured data file and a
+        readable document of the same profile (FR-035, FR-036). Japan-specific
+        fields are included regardless of their disclosure settings (FR-037),
+        because those settings govern generated documents rather than the user's
+        own copy. The archive is streamed and not retained server-side (R-005).
+      responses:
+        "200":
+          description: The export archive
+          content:
+            application/zip:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+
+  /profile/identity:
+    put:
+      tags: [sections]
+      summary: Replace the identity section
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Identity" }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Identity" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+
+  /profile/japan:
+    put:
+      tags: [sections]
+      summary: Replace the Japan-specific section
+      description: >
+        Every field is optional. Disclosure flags default to false and govern
+        whether a field may appear in a generated document (FR-006).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JapanProfile" }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JapanProfile" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+
+  /profile/preferences:
+    put:
+      tags: [sections]
+      summary: Replace the career preferences section
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CareerPreference" }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CareerPreference" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+
+  /profile/experiences:
+    get:
+      tags: [sections]
+      summary: List work experiences
+      responses:
+        "200":
+          description: Experiences, most recent first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/WorkExperience" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+    post:
+      tags: [sections]
+      summary: Add a work experience
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WorkExperienceInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkExperience" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+
+  /profile/experiences/{experience_id}:
+    parameters:
+      - $ref: "#/components/parameters/ExperienceId"
+    get:
+      tags: [sections]
+      summary: Get one work experience, with its linked career stories
+      responses:
+        "200":
+          description: The experience
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkExperienceDetail" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [sections]
+      summary: Update a work experience
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WorkExperienceInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkExperience" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+    delete:
+      tags: [sections]
+      summary: Delete a work experience
+      description: >
+        FR-013 requires the user be told what references this entry before it is
+        removed. Call without `confirm` to receive the references; call again
+        with `confirm=true` to proceed.
+      parameters:
+        - name: confirm
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        "204":
+          description: Deleted
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Confirmation required; the body lists what references this entry
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReferenceWarning" }
+
+  /profile/education:
+    get:
+      tags: [sections]
+      summary: List education entries
+      responses:
+        "200":
+          description: Education entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Education" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+    post:
+      tags: [sections]
+      summary: Add an education entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Education" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Education" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+
+  /profile/education/{entry_id}:
+    parameters:
+      - $ref: "#/components/parameters/EntryId"
+    patch:
+      tags: [sections]
+      summary: Update an education entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Education" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Education" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+    delete:
+      tags: [sections]
+      summary: Delete an education entry
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /profile/certifications:
+    get:
+      tags: [sections]
+      summary: List certifications
+      responses:
+        "200":
+          description: Certifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Certification" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+    post:
+      tags: [sections]
+      summary: Add a certification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Certification" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Certification" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+
+  /profile/certifications/{entry_id}:
+    parameters:
+      - $ref: "#/components/parameters/EntryId"
+    patch:
+      tags: [sections]
+      summary: Update a certification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Certification" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Certification" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [sections]
+      summary: Delete a certification
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /profile/skills:
+    get:
+      tags: [sections]
+      summary: List skills
+      responses:
+        "200":
+          description: Skills
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Skill" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+    post:
+      tags: [sections]
+      summary: Add a skill, optionally linked to the experiences where it was used
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Skill" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Skill" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+
+  /profile/skills/{entry_id}:
+    parameters:
+      - $ref: "#/components/parameters/EntryId"
+    patch:
+      tags: [sections]
+      summary: Update a skill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Skill" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Skill" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [sections]
+      summary: Delete a skill
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /profile/languages:
+    get:
+      tags: [sections]
+      summary: List languages
+      responses:
+        "200":
+          description: Languages
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Language" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+    post:
+      tags: [sections]
+      summary: Add a language with its proficiency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Language" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Language" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+
+  /profile/languages/{entry_id}:
+    parameters:
+      - $ref: "#/components/parameters/EntryId"
+    patch:
+      tags: [sections]
+      summary: Update a language
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Language" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Language" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [sections]
+      summary: Delete a language
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /profile/stories:
+    get:
+      tags: [stories]
+      summary: List career stories, optionally filtered by keyword
+      parameters:
+        - name: q
+          in: query
+          description: Keyword search across title, challenge, action and result
+          schema: { type: string }
+      responses:
+        "200":
+          description: Matching stories
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CareerStory" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+    post:
+      tags: [stories]
+      summary: Add a career story
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CareerStoryInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CareerStory" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+
+  /profile/stories/{story_id}:
+    parameters:
+      - name: story_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [stories]
+      summary: Update a career story
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CareerStoryInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CareerStory" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [stories]
+      summary: Delete a career story
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /profile/proposals:
+    get:
+      tags: [proposals]
+      summary: List entries awaiting review
+      description: >
+        Proposals are not part of the profile and appear in no other read
+        (FR-018). Each carries the source it came from and any possible
+        duplicate detected against existing entries.
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, accepted, rejected]
+            default: pending
+      responses:
+        "200":
+          description: Proposals
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ProposedEntry" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+    post:
+      tags: [proposals]
+      summary: Submit proposed entries from a source
+      description: >
+        The contract an import feature delivers into. Accepting proposals here
+        does not add anything to the profile; only review does.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: "#/components/schemas/ProposedEntryInput" }
+      responses:
+        "201":
+          description: Queued for review, with any possible duplicates flagged
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ProposedEntry" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+
+  /profile/proposals/{proposal_id}/accept:
+    parameters:
+      - $ref: "#/components/parameters/ProposalId"
+    post:
+      tags: [proposals]
+      summary: Accept a proposal, optionally with edits
+      description: >
+        When a corrected payload is supplied, the corrected version becomes the
+        profile entry and the original proposal content is not retained as
+        profile data (FR-019).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                  description: The corrected content, replacing what was proposed
+      responses:
+        "201":
+          description: Accepted; the created profile entry is returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcceptedProposal" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Already reviewed; accepted and rejected are terminal
+
+  /profile/proposals/{proposal_id}/reject:
+    parameters:
+      - $ref: "#/components/parameters/ProposalId"
+    post:
+      tags: [proposals]
+      summary: Reject a proposal
+      responses:
+        "204":
+          description: Rejected; nothing enters the profile
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Already reviewed
+
+  /profile/proposals/{proposal_id}/merge:
+    parameters:
+      - $ref: "#/components/parameters/ProposalId"
+    post:
+      tags: [proposals]
+      summary: Merge a proposal into an existing entry
+      description: >
+        Never automatic. The user chooses to merge; keeping both as separate
+        entries is always available by accepting instead (FR-034).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_entry_id]
+              properties:
+                target_entry_id: { type: string, format: uuid }
+                payload:
+                  type: object
+                  description: The merged content to write to the target entry
+      responses:
+        "200":
+          description: Merged; the updated entry is returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkExperience" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Already reviewed
+
+  /profile/snapshots:
+    post:
+      tags: [snapshots]
+      summary: Capture an immutable snapshot of the entries a document drew on
+      description: >
+        Called by a document-generating feature at the moment of generation, so
+        the claims in that document stay traceable after the entries change
+        (FR-028).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [document_ref, entry_ids]
+              properties:
+                document_ref: { type: string }
+                entry_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "201":
+          description: Captured
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EntrySnapshot" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+
+  /profile/snapshots/{snapshot_id}:
+    parameters:
+      - name: snapshot_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [snapshots]
+      summary: Read a snapshot
+      description: >
+        Returns the captured content unchanged, whether or not the entries it
+        captured still exist (FR-029). Snapshots are never updated or deleted
+        individually.
+      responses:
+        "200":
+          description: The snapshot
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EntrySnapshot" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    sessionIdentity:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: >
+        A verified session established at the web layer. The API derives the
+        profile owner from it and never accepts a user identifier from the
+        request (research.md R-006).
+
+  parameters:
+    ExperienceId:
+      name: experience_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    EntryId:
+      name: entry_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ProposalId:
+      name: proposal_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    Unauthorised:
+      description: No verified identity
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: No such entry in the caller's profile
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ValidationFailed:
+      description: >
+        The submitted values were rejected. The response names the offending
+        field and explains why, so the interface can show the reason rather than
+        a generic failure (FR-014).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ValidationError" }
+
+  schemas:
+    Locale:
+      type: string
+      enum: [en, ja]
+      description: Interface language, or the language an entry was authored in
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+
+    ValidationError:
+      type: object
+      required: [code, message, failures]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        failures:
+          type: array
+          items:
+            type: object
+            required: [field, reason]
+            properties:
+              field: { type: string }
+              reason: { type: string }
+
+    ReferenceWarning:
+      type: object
+      description: What references an entry the user is about to delete (FR-013)
+      properties:
+        message: { type: string }
+        references:
+          type: array
+          items:
+            type: object
+            properties:
+              kind: { type: string }
+              count: { type: integer }
+
+    DeletionReceipt:
+      type: object
+      properties:
+        erased_immediately:
+          type: array
+          items: { type: string }
+          description: Fields destroyed on the request path, unrecoverable
+        recoverable_until:
+          type: string
+          format: date-time
+
+    Profile:
+      type: object
+      description: The whole profile. See ../data-model.md for field rules.
+      properties:
+        id: { type: string, format: uuid }
+        interface_locale: { $ref: "#/components/schemas/Locale" }
+        identity: { $ref: "#/components/schemas/Identity" }
+        japan: { $ref: "#/components/schemas/JapanProfile" }
+        preferences: { $ref: "#/components/schemas/CareerPreference" }
+        experiences:
+          type: array
+          items: { $ref: "#/components/schemas/WorkExperience" }
+        education:
+          type: array
+          items: { $ref: "#/components/schemas/Education" }
+        certifications:
+          type: array
+          items: { $ref: "#/components/schemas/Certification" }
+        skills:
+          type: array
+          items: { $ref: "#/components/schemas/Skill" }
+        languages:
+          type: array
+          items: { $ref: "#/components/schemas/Language" }
+
+    Identity:
+      type: object
+      required: [full_name_latin]
+      properties:
+        full_name_latin: { type: string }
+        full_name_japanese: { type: string, nullable: true }
+        furigana: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+
+    JapanProfile:
+      type: object
+      description: >
+        Every field optional. Disclosure flags default false and govern whether a
+        field may appear in a generated document (FR-006); they do not affect
+        export (FR-037).
+      properties:
+        residence_status: { type: string, nullable: true }
+        nationality: { type: string, nullable: true }
+        visa_type: { type: string, nullable: true }
+        visa_expires_on: { type: string, format: date, nullable: true }
+        work_authorisation: { type: boolean, nullable: true }
+        japanese_qualification: { type: string, nullable: true }
+        disclose_residence_status: { type: boolean, default: false }
+        disclose_nationality: { type: boolean, default: false }
+        disclose_visa: { type: boolean, default: false }
+        disclose_work_authorisation: { type: boolean, default: false }
+        disclose_japanese_qualification: { type: boolean, default: false }
+
+    WorkExperienceInput:
+      type: object
+      required: [employer_name, job_title, started_on, source_language]
+      properties:
+        employer_name: { type: string }
+        job_title: { type: string }
+        employment_type:
+          type: string
+          enum: [permanent, contract, part_time, internship, freelance]
+        started_on: { type: string, format: date }
+        ended_on:
+          type: string
+          format: date
+          nullable: true
+          description: Null means ongoing
+        description: { type: string }
+        source_language: { $ref: "#/components/schemas/Locale" }
+
+    WorkExperience:
+      allOf:
+        - $ref: "#/components/schemas/WorkExperienceInput"
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string, format: uuid }
+
+    WorkExperienceDetail:
+      allOf:
+        - $ref: "#/components/schemas/WorkExperience"
+        - type: object
+          properties:
+            stories:
+              type: array
+              items: { $ref: "#/components/schemas/CareerStory" }
+
+    Education:
+      type: object
+      required: [institution]
+      properties:
+        id: { type: string, format: uuid, readOnly: true }
+        institution: { type: string }
+        qualification: { type: string, nullable: true }
+        field_of_study: { type: string, nullable: true }
+        started_on: { type: string, format: date, nullable: true }
+        ended_on: { type: string, format: date, nullable: true }
+        source_language: { $ref: "#/components/schemas/Locale" }
+
+    Certification:
+      type: object
+      required: [name]
+      properties:
+        id: { type: string, format: uuid, readOnly: true }
+        name: { type: string }
+        issuer: { type: string, nullable: true }
+        issued_on: { type: string, format: date, nullable: true }
+        expires_on: { type: string, format: date, nullable: true }
+        source_language: { $ref: "#/components/schemas/Locale" }
+
+    Skill:
+      type: object
+      required: [name]
+      properties:
+        id: { type: string, format: uuid, readOnly: true }
+        name: { type: string }
+        level:
+          type: string
+          nullable: true
+          enum: [beginner, intermediate, advanced, expert]
+        used_in_experience_ids:
+          type: array
+          items: { type: string, format: uuid }
+
+    Language:
+      type: object
+      required: [language, proficiency]
+      properties:
+        id: { type: string, format: uuid, readOnly: true }
+        language: { type: string }
+        proficiency:
+          type: string
+          enum: [native, business, conversational, basic]
+        qualification: { type: string, nullable: true }
+
+    CareerPreference:
+      type: object
+      properties:
+        desired_roles:
+          type: array
+          items: { type: string }
+        desired_locations:
+          type: array
+          items: { type: string }
+        working_arrangement:
+          type: string
+          nullable: true
+          enum: [onsite, hybrid, remote]
+        salary_min: { type: integer, nullable: true }
+        salary_max: { type: integer, nullable: true }
+        currency: { type: string, nullable: true }
+        source_language: { $ref: "#/components/schemas/Locale" }
+
+    CareerStoryInput:
+      type: object
+      required: [title, challenge, action, result, source_language]
+      properties:
+        work_experience_id: { type: string, format: uuid, nullable: true }
+        title: { type: string }
+        challenge: { type: string }
+        action: { type: string }
+        result: { type: string }
+        source_language: { $ref: "#/components/schemas/Locale" }
+
+    CareerStory:
+      allOf:
+        - $ref: "#/components/schemas/CareerStoryInput"
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string, format: uuid }
+
+    ProposedEntryInput:
+      type: object
+      required: [entry_type, source, payload]
+      properties:
+        entry_type:
+          type: string
+          enum: [work_experience, education, certification, skill, language, career_story]
+        source:
+          type: string
+          description: Which source produced this proposal (FR-017)
+        payload:
+          type: object
+          description: The proposed content, shaped by entry_type
+
+    ProposedEntry:
+      allOf:
+        - $ref: "#/components/schemas/ProposedEntryInput"
+        - type: object
+          required: [id, status]
+          properties:
+            id: { type: string, format: uuid }
+            status:
+              type: string
+              enum: [pending, accepted, rejected]
+            possible_duplicate_of:
+              type: string
+              format: uuid
+              nullable: true
+              description: >
+                Set when an existing entry shares the employer and an
+                overlapping date range (FR-032). A suggestion only.
+            reviewed_at: { type: string, format: date-time, nullable: true }
+
+    AcceptedProposal:
+      type: object
+      properties:
+        proposal_id: { type: string, format: uuid }
+        created_entry_id: { type: string, format: uuid }
+        entry_type: { type: string }
+
+    EntrySnapshot:
+      type: object
+      description: Immutable once created (FR-029)
+      properties:
+        id: { type: string, format: uuid }
+        document_ref: { type: string }
+        captured_at: { type: string, format: date-time }
+        captured_entry_ids:
+          type: array
+          items: { type: string, format: uuid }
+        payload:
+          type: object
+          description: The captured entries as they read at capture time
