@@ -36,15 +36,15 @@ business logic, `apps/web/` for the interface, `apps/worker/` for scheduled work
 **Purpose**: Establish the monorepo. This feature is the first in the repository,
 so Phase 1 creates the structure every later feature extends.
 
-- [ ] T001 Create the workspace root with `pnpm-workspace.yaml` and `package.json` declaring `apps/*` and `packages/*`
-- [ ] T002 [P] Add `docker-compose.yml` at the repository root with PostgreSQL and Redis services
-- [ ] T003 [P] Initialise the API project in `apps/api/pyproject.toml` with FastAPI, Pydantic, SQLAlchemy, Alembic and pytest
-- [ ] T004 [P] Initialise the worker project in `apps/worker/pyproject.toml` with Dramatiq, Redis and pytest, depending on the API package for shared models
-- [ ] T005 [P] Initialise the Next.js App Router project in `apps/web/package.json` with TypeScript, Tailwind, shadcn/ui, TanStack Query, React Hook Form, Zod and next-intl
-- [ ] T006 [P] Add shared lint, format and TypeScript configuration in `packages/config/`
-- [ ] T007 Add the client generation script `pnpm gen:api` in `packages/api-client/package.json`, generating from `specs/001-master-career-profile/contracts/openapi.yaml`
-- [ ] T008 Add the continuous integration workflow in `.github/workflows/ci.yml` running the API, worker and web suites plus a check that the generated client is up to date
-- [ ] T009 [P] Add `apps/api/.env.example` and `apps/web/.env.example` documenting required configuration
+- [X] T001 Create the workspace root with `pnpm-workspace.yaml` and `package.json` declaring `apps/*` and `packages/*`
+- [X] T002 [P] Add `docker-compose.yml` at the repository root with PostgreSQL and Redis services
+- [X] T003 [P] Initialise the API project in `apps/api/pyproject.toml` with FastAPI, Pydantic, SQLAlchemy, Alembic and pytest
+- [X] T004 [P] Initialise the worker project in `apps/worker/pyproject.toml` with Dramatiq, Redis and pytest, depending on the API package for shared models
+- [X] T005 [P] Initialise the Next.js App Router project in `apps/web/package.json` with TypeScript, Tailwind, shadcn/ui, TanStack Query, React Hook Form, Zod and next-intl
+- [X] T006 [P] Add shared lint, format and TypeScript configuration in `packages/config/`
+- [X] T007 Add the client generation script `pnpm gen:api` in `packages/api-client/package.json`, generating from `specs/001-master-career-profile/contracts/openapi.yaml`
+- [X] T008 Add the continuous integration workflow in `.github/workflows/ci.yml` running the API, worker and web suites plus a check that the generated client is up to date
+- [X] T009 [P] Add `apps/api/.env.example` and `apps/web/.env.example` documenting required configuration
 
 ---
 
@@ -55,19 +55,19 @@ gates structurally true rather than conventions each endpoint must remember.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T010 Implement settings and environment loading in `apps/api/app/core/settings.py`
-- [ ] T011 Implement the verified-identity dependency in `apps/api/app/core/identity.py`, deriving the profile owner from the session and never from the request path or body, per research.md R-006
-- [ ] T012 [P] Implement the error shape and handlers in `apps/api/app/core/errors.py`, matching the `Error` and `ValidationError` schemas in `contracts/openapi.yaml`
-- [ ] T013 Implement the database session and engine in `apps/api/app/db/session.py`
-- [ ] T014 Implement the declarative base in `apps/api/app/db/base.py` with a UUID primary key mixin and created/updated timestamps, satisfying gate G3
-- [ ] T015 Implement the soft-delete query filter in `apps/api/app/db/soft_delete.py` so soft-deleted profiles are excluded from every read at the data-access layer, satisfying FR-027 and gate G6 structurally
-- [ ] T016 Create the `CareerProfile` model in `apps/api/app/career/models.py` with `interface_locale`, `deleted_at` and `purge_after` per data-model.md
-- [ ] T017 [P] Create the `EntrySnapshot` model in `apps/api/app/career/models.py` as an insert-only entity, per research.md R-001
-- [ ] T018 Initialise Alembic in `apps/api/migrations/` and generate the first migration covering `CareerProfile` and `EntrySnapshot`
-- [ ] T019 Wire the application entrypoint and router registration in `apps/api/app/main.py`
-- [ ] T020 [P] Create the locale-segmented routing skeleton in `apps/web/app/[locale]/layout.tsx` with next-intl, per research.md R-003
-- [ ] T021 [P] Create the message catalogue shells in `apps/web/messages/en.json` and `apps/web/messages/ja.json`
-- [ ] T022 [P] Add test fixtures providing an authenticated identity and a clean database in `apps/api/tests/conftest.py`
+- [X] T010 Implement settings and environment loading in `apps/api/app/core/settings.py`
+- [X] T011 Implement the verified-identity dependency in `apps/api/app/core/identity.py`, deriving the profile owner from the session and never from the request path or body, per research.md R-006
+- [X] T012 [P] Implement the error shape and handlers in `apps/api/app/core/errors.py`, matching the `Error` and `ValidationError` schemas in `contracts/openapi.yaml`
+- [X] T013 Implement the database session and engine in `apps/api/app/db/session.py`
+- [X] T014 Implement the declarative base in `apps/api/app/db/base.py` with a UUID primary key mixin and created/updated timestamps, satisfying gate G3
+- [X] T015 Implement the soft-delete query filter in `apps/api/app/db/soft_delete.py` so soft-deleted profiles are excluded from every read at the data-access layer, satisfying FR-027 and gate G6 structurally
+- [X] T016 Create the `CareerProfile` model in `apps/api/app/career/models.py` with `interface_locale`, `deleted_at` and `purge_after` per data-model.md
+- [X] T017 [P] Create the `EntrySnapshot` model in `apps/api/app/career/models.py` as an insert-only entity, per research.md R-001
+- [X] T018 Initialise Alembic in `apps/api/migrations/` and generate the first migration covering `CareerProfile` and `EntrySnapshot`
+- [X] T019 Wire the application entrypoint and router registration in `apps/api/app/main.py`
+- [X] T020 [P] Create the locale-segmented routing skeleton in `apps/web/app/[locale]/layout.tsx` with next-intl, per research.md R-003
+- [X] T021 [P] Create the message catalogue shells in `apps/web/messages/en.json` and `apps/web/messages/ja.json`
+- [X] T022 [P] Add test fixtures providing an authenticated identity and a clean database in `apps/api/tests/conftest.py`
 
 **Checkpoint**: Foundation ready — user story implementation can now begin
 
