@@ -1,0 +1,14 @@
+{
+  "common": {
+    "appName": "Step Job",
+    "tagline": "Tell Step Job your career once.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "language": "Language"
+  },
+  "profile": {
+    "title": "Career profile"
+  }
+}

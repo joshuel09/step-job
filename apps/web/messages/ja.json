@@ -1,0 +1,14 @@
+{
+  "common": {
+    "appName": "Step Job",
+    "tagline": "経歴を一度だけ登録してください。",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "language": "言語"
+  },
+  "profile": {
+    "title": "職務プロフィール"
+  }
+}

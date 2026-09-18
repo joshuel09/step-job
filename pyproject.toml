@@ -1,0 +1,14 @@
+# uv workspace root. The worker depends on the API package so that models and
+# business rules are shared rather than duplicated, per the constitution.
+[tool.uv.workspace]
+members = ["apps/api", "apps/worker"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

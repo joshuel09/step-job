@@ -146,3 +146,15 @@ vite.config.ts.timestamp-*
 .claude/
 CLAUDE.md
 CLAUDE.local.md
+
+# Build output, caches and virtual environments
+__pycache__/
+*.pyc
+.venv/
+dist/
+build/
+.next/
+*.egg-info/
+.DS_Store
+.ruff_cache/
+.pytest_cache/

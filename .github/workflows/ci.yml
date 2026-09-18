@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: stepjob
+          POSTGRES_PASSWORD: stepjob
+          POSTGRES_DB: stepjob
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U stepjob"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://stepjob:stepjob@localhost:5432/stepjob
+      TEST_DATABASE_URL: postgresql+psycopg://stepjob:stepjob@localhost:5432/stepjob_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --all-extras
+      - name: Lint
+        run: uv run ruff check .
+      - name: Migrations apply cleanly
+        run: uv run alembic upgrade head
+        working-directory: apps/api
+      - name: API tests
+        run: uv run pytest
+        working-directory: apps/api
+
+  worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --all-extras
+      - name: Worker tests
+        run: uv run pytest
+        working-directory: apps/worker
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Version comes from the root package.json "packageManager" field;
+      # passing it here as well makes the action fail on a mismatch.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generated client is current
+        run: |
+          pnpm gen:api
+          git diff --exit-code packages/api-client/src/schema.ts \
+            || { echo "::error::Generated client is stale. Run 'pnpm gen:api' and commit."; exit 1; }
+      - name: Web tests
+        run: pnpm --filter web test
+      - name: Build
+        run: pnpm --filter web build
