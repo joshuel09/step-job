@@ -76,6 +76,11 @@ def auth_headers(user_id: uuid.UUID) -> dict[str, str]:
 
 
 @pytest.fixture
-def client() -> Iterator[TestClient]:
+def client(session) -> Iterator[TestClient]:
+    """A client whose requests run inside the test's rolled-back session."""
+    from app.db.session import get_session
+
+    app.dependency_overrides[get_session] = lambda: session
     with TestClient(app) as c:
         yield c
+    app.dependency_overrides.clear()

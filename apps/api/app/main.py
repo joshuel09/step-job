@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 
+from app.career.router import router as career_router
 from app.core.errors import AppError, app_error_handler
 
 app = FastAPI(
@@ -19,4 +20,4 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-# Career routes are registered with User Story 1.
+app.include_router(career_router)

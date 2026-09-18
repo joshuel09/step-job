@@ -86,35 +86,37 @@ present and unchanged. Covers quickstart.md Scenario 1.
 
 ### Tests for User Story 1
 
-- [ ] T023 [P] [US1] Contract tests for the profile and section routes in `apps/api/tests/contract/test_profile_sections.py`, generated against `contracts/openapi.yaml`
-- [ ] T024 [P] [US1] Integration test for quickstart Scenario 1, recording a career and reading it back, in `apps/api/tests/integration/test_record_career.py`
-- [ ] T025 [P] [US1] Integration test for quickstart Scenario 5, the split deletion and restore behaviour, in `apps/api/tests/integration/test_profile_deletion.py`
-- [ ] T026 [P] [US1] Unit tests for date-range validation in `apps/api/tests/unit/test_validation.py`
+- [X] T023 [P] [US1] Contract tests for the profile and section routes in `apps/api/tests/contract/test_profile_sections.py`, generated against `contracts/openapi.yaml`
+- [X] T024 [P] [US1] Integration test for quickstart Scenario 1, recording a career and reading it back, in `apps/api/tests/integration/test_record_career.py`
+- [X] T025 [P] [US1] Integration test for quickstart Scenario 5, the split deletion and restore behaviour, in `apps/api/tests/integration/test_profile_deletion.py`
+- [X] T026 [P] [US1] Unit tests for date-range validation in `apps/api/tests/unit/test_validation.py`
 
 ### Implementation for User Story 1
 
-- [ ] T027 [P] [US1] Create the `Identity` model in `apps/api/app/career/models.py`, storing one name string so single-part names are valid
-- [ ] T028 [P] [US1] Create the `JapanProfile` model in `apps/api/app/career/models.py` with every disclosure flag defaulting to false in the schema, satisfying gate G5
-- [ ] T029 [P] [US1] Create the `WorkExperience` model in `apps/api/app/career/models.py` including `employer_name_normalised` and a nullable `ended_on` meaning ongoing
-- [ ] T030 [P] [US1] Create the `Education` and `Certification` models in `apps/api/app/career/models.py`
-- [ ] T031 [P] [US1] Create the `Skill` model and its many-to-many link to `WorkExperience` in `apps/api/app/career/models.py`
-- [ ] T032 [P] [US1] Create the `Language` model in `apps/api/app/career/models.py` with a typed proficiency enumeration, satisfying gate G9
-- [ ] T033 [P] [US1] Create the `CareerPreference` model in `apps/api/app/career/models.py`
-- [ ] T034 [US1] Add `source_language` to every content-bearing model in `apps/api/app/career/models.py`, satisfying FR-009 and gate G2
-- [ ] T035 [US1] Generate the Alembic migration for all User Story 1 entities in `apps/api/migrations/`
-- [ ] T036 [P] [US1] Define the request and response schemas in `apps/api/app/career/schemas.py`, matching `contracts/openapi.yaml`
-- [ ] T037 [US1] Implement date-range and salary-range validation in `apps/api/app/career/validation.py`, rejecting an end date before its start with a field-level reason per FR-014, and permitting overlapping experiences without warning
-- [ ] T038 [US1] Implement profile and section create, read, update and delete in `apps/api/app/career/service.py`
-- [ ] T039 [US1] Implement the reference warning in `apps/api/app/career/service.py`, returning what depends on an entry before deletion proceeds per FR-013
-- [ ] T040 [US1] Implement split deletion and restore in `apps/api/app/career/deletion.py`, hard deleting residence, nationality, visa type and visa expiry inside the same transaction and soft deleting the remainder with a 30-day purge date, per research.md R-002
-- [ ] T041 [US1] Implement profile export in `apps/api/app/career/export.py`, producing one archive holding a complete structured file and a readable document, including Japan-specific fields regardless of disclosure settings per FR-037, retaining nothing server-side
-- [ ] T042 [US1] Implement the section completeness report in `apps/api/app/career/service.py` per FR-015
-- [ ] T043 [US1] Implement the profile and section routes in `apps/api/app/career/router.py`, including `/profile`, `/profile/completeness`, `/profile/restore`, `/profile/export` and each section resource
-- [ ] T044 [US1] Regenerate the typed client into `packages/api-client/` from the contract
+- [X] T027 [P] [US1] Create the `Identity` model in `apps/api/app/career/models.py`, storing one name string so single-part names are valid
+- [X] T028 [P] [US1] Create the `JapanProfile` model in `apps/api/app/career/models.py` with every disclosure flag defaulting to false in the schema, satisfying gate G5
+- [X] T029 [P] [US1] Create the `WorkExperience` model in `apps/api/app/career/models.py` including `employer_name_normalised` and a nullable `ended_on` meaning ongoing
+- [X] T030 [P] [US1] Create the `Education` and `Certification` models in `apps/api/app/career/models.py`
+- [X] T031 [P] [US1] Create the `Skill` model and its many-to-many link to `WorkExperience` in `apps/api/app/career/models.py`
+- [X] T032 [P] [US1] Create the `Language` model in `apps/api/app/career/models.py` with a typed proficiency enumeration, satisfying gate G9
+- [X] T033 [P] [US1] Create the `CareerPreference` model in `apps/api/app/career/models.py`
+- [X] T034 [US1] Add `source_language` to every content-bearing model in `apps/api/app/career/models.py`, satisfying FR-009 and gate G2
+- [X] T035 [US1] Generate the Alembic migration for all User Story 1 entities in `apps/api/migrations/`
+- [X] T036 [P] [US1] Define the request and response schemas in `apps/api/app/career/schemas.py`, matching `contracts/openapi.yaml`
+- [X] T037 [US1] Implement date-range and salary-range validation in `apps/api/app/career/validation.py`, rejecting an end date before its start with a field-level reason per FR-014, and permitting overlapping experiences without warning
+- [X] T038 [US1] Implement profile and section create, read, update and delete in `apps/api/app/career/service.py`
+- [X] T039 [US1] Implement the reference warning in `apps/api/app/career/service.py`, returning what depends on an entry before deletion proceeds per FR-013
+- [X] T040 [US1] Implement split deletion and restore in `apps/api/app/career/deletion.py`, hard deleting residence, nationality, visa type and visa expiry inside the same transaction and soft deleting the remainder — including career stories and any pending proposed entries — with a 30-day purge date, per research.md R-002
+- [X] T041 [US1] Implement profile export in `apps/api/app/career/export.py`, producing one archive holding a complete structured file and a readable document, including Japan-specific fields regardless of disclosure settings per FR-037, retaining nothing server-side
+- [X] T042 [US1] Implement the section completeness report in `apps/api/app/career/service.py` per FR-015
+- [X] T043 [US1] Implement the profile and section routes in `apps/api/app/career/router.py`, including `/profile`, `/profile/completeness`, `/profile/restore`, `/profile/export` and each section resource
+- [X] T044 [US1] Regenerate the typed client into `packages/api-client/` from the contract
 - [ ] T045 [P] [US1] Build the profile overview page in `apps/web/app/[locale]/profile/page.tsx`
 - [ ] T046 [P] [US1] Build the identity and Japan-specific section forms in `apps/web/components/profile/identity-form.tsx` and `apps/web/components/profile/japan-form.tsx`, with disclosure controls per field
 - [ ] T047 [P] [US1] Build the work experience form and list in `apps/web/components/profile/experience-form.tsx`
 - [ ] T048 [P] [US1] Build the education, certification, skill and language section forms in `apps/web/components/profile/`
+- [ ] T048a [P] [US1] Build the career preferences form in `apps/web/components/profile/preference-form.tsx`, covering desired roles, locations, working arrangement and salary expectations per FR-004
+- [ ] T048b [P] [US1] Build the interface language switcher in `apps/web/components/locale-switcher.tsx`, persisting the choice through `PATCH /profile` so it applies on every device per FR-021 and research.md R-003
 - [ ] T049 [US1] Surface field-level validation messages from the API in `apps/web/components/profile/`, showing the reason rather than a generic failure
 - [ ] T050 [US1] Build the deletion and export flow in `apps/web/app/[locale]/profile/settings/page.tsx`, stating what is erased immediately and when the recovery window ends per FR-026
 - [ ] T051 [P] [US1] Add the English and Japanese strings for every User Story 1 screen to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
@@ -194,7 +196,7 @@ version is what lands. Covers quickstart.md Scenario 3.
 **Purpose**: Work that spans stories, plus the scheduled job and the traceability
 surface that later features consume.
 
-- [ ] T079 Implement the 30-day purge actor in `apps/worker/app/purge.py`, permanently erasing profiles past their purge date together with their snapshots, written to be idempotent so a retry is a no-op per research.md R-002
+- [ ] T079 Implement the 30-day purge actor in `apps/worker/app/purge.py`, permanently erasing profiles past their purge date together with their snapshots and any pending proposed entries, written to be idempotent so a retry is a no-op per research.md R-002
 - [ ] T080 Schedule the purge actor in `apps/worker/app/main.py`
 - [ ] T081 [P] Add worker tests for the purge, including the idempotency case, in `apps/worker/tests/test_purge.py`
 - [ ] T082 Implement snapshot capture and read in `apps/api/app/career/snapshots.py`, insert-only and returning captured content unchanged after the source entries are edited or deleted, per FR-028 to FR-030

@@ -1,0 +1,212 @@
+"""The /profile resource tree.
+
+No route takes a profile or user identifier: the owner comes from the verified
+session (research.md R-006), so a caller cannot ask for someone else's data.
+"""
+
+import uuid
+from typing import Annotated, Any
+
+from fastapi import APIRouter, Depends, Query, Response, status
+from sqlalchemy.orm import Session
+
+from app.career import deletion, export, models, schemas, service
+from app.core.errors import ConflictError
+from app.core.identity import CallerIdentity, current_identity
+from app.db.session import get_session
+
+router = APIRouter(prefix="/api/v1", tags=["profile"])
+
+Caller = Annotated[CallerIdentity, Depends(current_identity)]
+Db = Annotated[Session, Depends(get_session)]
+
+
+def _profile(session: Session, caller: CallerIdentity) -> models.CareerProfile:
+    return service.require_profile(session, caller.user_id)
+
+
+def _assemble(session: Session, profile: models.CareerProfile) -> dict[str, Any]:
+    return {
+        "id": profile.id,
+        "interface_locale": profile.interface_locale,
+        "identity": service.get_singleton(session, profile, models.Identity),
+        "japan": service.get_singleton(session, profile, models.JapanProfile),
+        "preferences": service.get_singleton(session, profile, models.CareerPreference),
+        **{name: service.list_entries(session, profile, name) for name in service.SECTION_MODELS},
+    }
+
+
+@router.get("/profile", response_model=schemas.ProfileOut)
+def get_profile(session: Db, caller: Caller):
+    return _assemble(session, _profile(session, caller))
+
+
+@router.post("/profile", response_model=schemas.ProfileOut, status_code=status.HTTP_201_CREATED)
+def create_profile(session: Db, caller: Caller):
+    profile = service.get_or_create_profile(session, caller.user_id)
+    return _assemble(session, profile)
+
+
+@router.patch("/profile", response_model=schemas.ProfileOut)
+def patch_profile(session: Db, caller: Caller, body: schemas.ProfilePatch):
+    """Interface locale only.
+
+    Changing it never alters stored content (FR-023): the entries keep the
+    language their author wrote them in.
+    """
+    profile = _profile(session, caller)
+    profile.interface_locale = body.interface_locale
+    session.flush()
+    return _assemble(session, profile)
+
+
+@router.delete("/profile", response_model=schemas.DeletionReceiptOut)
+def delete_profile(session: Db, caller: Caller):
+    profile = _profile(session, caller)
+    receipt = deletion.delete_profile(session, profile)
+    return {
+        "erased_immediately": receipt.erased_immediately,
+        "recoverable_until": receipt.recoverable_until.isoformat(),
+    }
+
+
+@router.post("/profile/restore", response_model=schemas.ProfileOut)
+def restore_profile(session: Db, caller: Caller):
+    profile = deletion.restore_profile(session, caller.user_id)
+    return _assemble(session, profile)
+
+
+@router.get("/profile/completeness")
+def get_completeness(session: Db, caller: Caller):
+    return service.completeness(session, _profile(session, caller))
+
+
+@router.post("/profile/export")
+def export_profile(session: Db, caller: Caller):
+    profile = _profile(session, caller)
+    archive = export.build_archive(session, profile)
+    return Response(
+        content=archive,
+        media_type="application/zip",
+        headers={"Content-Disposition": 'attachment; filename="step-job-profile.zip"'},
+    )
+
+
+# --- singleton sections -----------------------------------------------------
+
+
+@router.put("/profile/identity", response_model=schemas.IdentityOut)
+def put_identity(session: Db, caller: Caller, body: schemas.IdentityIn):
+    profile = _profile(session, caller)
+    return service.put_singleton(session, profile, models.Identity, body.model_dump())
+
+
+@router.put("/profile/japan", response_model=schemas.JapanProfileOut)
+def put_japan(session: Db, caller: Caller, body: schemas.JapanProfileIn):
+    profile = _profile(session, caller)
+    return service.put_singleton(session, profile, models.JapanProfile, body.model_dump())
+
+
+@router.put("/profile/preferences", response_model=schemas.CareerPreferenceOut)
+def put_preferences(session: Db, caller: Caller, body: schemas.CareerPreferenceIn):
+    profile = _profile(session, caller)
+    return service.put_singleton(session, profile, models.CareerPreference, body.model_dump())
+
+
+# --- work experience --------------------------------------------------------
+
+
+@router.get("/profile/experiences", response_model=list[schemas.WorkExperienceOut])
+def list_experiences(session: Db, caller: Caller):
+    return service.list_entries(session, _profile(session, caller), "experiences")
+
+
+@router.post(
+    "/profile/experiences",
+    response_model=schemas.WorkExperienceOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_experience(session: Db, caller: Caller, body: schemas.WorkExperienceIn):
+    profile = _profile(session, caller)
+    return service.create_experience(session, profile, body.model_dump())
+
+
+@router.patch("/profile/experiences/{experience_id}", response_model=schemas.WorkExperienceOut)
+def patch_experience(
+    session: Db, caller: Caller, experience_id: uuid.UUID, body: schemas.WorkExperiencePatch
+):
+    profile = _profile(session, caller)
+    return service.update_experience(
+        session, profile, experience_id, body.model_dump(exclude_unset=True)
+    )
+
+
+@router.delete("/profile/experiences/{experience_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_experience(
+    session: Db,
+    caller: Caller,
+    experience_id: uuid.UUID,
+    confirm: bool = Query(default=False),
+):
+    """FR-013: say what depends on this entry before removing it.
+
+    Without `confirm` the call reports references and changes nothing, so a user
+    cannot lose linked accomplishments without being told first.
+    """
+    profile = _profile(session, caller)
+    references = service.references_to_experience(session, profile, experience_id)
+    if references and not confirm:
+        raise ConflictError(
+            "This entry is referenced by other records. Repeat with confirm=true to delete it."
+        )
+    service.delete_experience(session, profile, experience_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# --- remaining sections -----------------------------------------------------
+
+_SECTION_SCHEMAS = {
+    "education": (schemas.EducationIn, schemas.EducationOut),
+    "certifications": (schemas.CertificationIn, schemas.CertificationOut),
+    "skills": (schemas.SkillIn, schemas.SkillOut),
+    "languages": (schemas.LanguageIn, schemas.LanguageOut),
+}
+
+
+def _register_section(section: str, schema_in: type, schema_out: type) -> None:
+    @router.get(f"/profile/{section}", response_model=list[schema_out], name=f"list_{section}")
+    def _list(session: Db, caller: Caller):
+        return service.list_entries(session, _profile(session, caller), section)
+
+    @router.post(
+        f"/profile/{section}",
+        response_model=schema_out,
+        status_code=status.HTTP_201_CREATED,
+        name=f"create_{section}",
+    )
+    def _create(session: Db, caller: Caller, body: schema_in):  # type: ignore[valid-type]
+        profile = _profile(session, caller)
+        return service.create_entry(session, profile, section, body.model_dump())
+
+    @router.patch(
+        f"/profile/{section}/{{entry_id}}", response_model=schema_out, name=f"patch_{section}"
+    )
+    def _patch(session: Db, caller: Caller, entry_id: uuid.UUID, body: schema_in):  # type: ignore[valid-type]
+        profile = _profile(session, caller)
+        return service.update_entry(
+            session, profile, section, entry_id, body.model_dump(exclude_unset=True)
+        )
+
+    @router.delete(
+        f"/profile/{section}/{{entry_id}}",
+        status_code=status.HTTP_204_NO_CONTENT,
+        name=f"delete_{section}",
+    )
+    def _delete(session: Db, caller: Caller, entry_id: uuid.UUID):
+        profile = _profile(session, caller)
+        service.delete_entry(session, profile, section, entry_id)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+for _section, (_in, _out) in _SECTION_SCHEMAS.items():
+    _register_section(_section, _in, _out)

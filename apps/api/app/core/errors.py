@@ -37,7 +37,9 @@ class ValidationFailed(AppError):
     generic failure, so every rejection carries field-level detail.
     """
 
-    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    # Literal rather than the starlette constant: the name changed between
+    # starlette versions, and the code did not.
+    status_code = 422
     code = "validation_failed"
 
     def __init__(self, failures: list[tuple[str, str]], message: str = "Validation failed") -> None:
