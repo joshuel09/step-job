@@ -9,6 +9,133 @@
     "language": "言語"
   },
   "profile": {
-    "title": "職務プロフィール"
+    "title": "職務プロフィール",
+    "subtitle": "経歴の入力は一度だけです。以降の書類はここから生成されます。",
+    "settings": {
+      "title": "設定",
+      "back": "プロフィールに戻る",
+      "exportTitle": "プロフィールの書き出し",
+      "exportExplanation": "入力内容をすべてダウンロードします。保存や移行に使えるデータファイルと、そのまま読める書類が含まれます。",
+      "export": "ダウンロード",
+      "deleteTitle": "プロフィールの削除",
+      "deleteExplanation": "Step Job から職務プロフィールを削除します。",
+      "delete": "プロフィールを削除",
+      "confirmHeading": "削除する前にご確認ください：",
+      "confirmImmediate": "在留資格・国籍・ビザの種類・在留期限は直ちに消去され、復元できません。",
+      "confirmRecoverable": "その他のデータは30日間復元できます。",
+      "confirmPermanent": "30日を過ぎると完全に消去されます。",
+      "confirmDelete": "削除する",
+      "cancel": "キャンセル",
+      "deleted": "プロフィールを削除しました",
+      "deletedExplanation": "Step Job のどこにも表示されなくなりました。",
+      "recoverableUntil": "{date} まで復元できます。",
+      "erasedNow": "直ちに消去され復元できない項目：{fields}",
+      "restore": "プロフィールを復元"
+    },
+    "identity": {
+      "title": "基本情報",
+      "fullNameLatin": "氏名（ローマ字）",
+      "fullNameJapanese": "氏名（日本語）",
+      "furigana": "フリガナ",
+      "furiganaHint": "日本語氏名の読み方です。",
+      "email": "メールアドレス",
+      "phone": "電話番号",
+      "save": "保存",
+      "saved": "保存しました"
+    },
+    "japan": {
+      "title": "日本での就労",
+      "privacyNote": "この項目はすべて任意です。各項目を「書類に含める」に設定しない限り、生成される書類には記載されません。設定はいつでも変更できます。",
+      "residence_status": "在留資格",
+      "nationality": "国籍",
+      "visa_type": "ビザの種類",
+      "visa_expires_on": "在留期限",
+      "work_authorisation": "日本での就労資格があります",
+      "japanese_qualification": "日本語能力資格",
+      "includeInDocuments": "生成する書類に含める",
+      "save": "保存",
+      "saved": "保存しました"
+    },
+    "experience": {
+      "title": "職歴",
+      "employer": "会社名",
+      "jobTitle": "職種・役職",
+      "employmentType": "雇用形態",
+      "startedOn": "開始日",
+      "endedOn": "終了日",
+      "ongoingHint": "現職の場合は空欄にしてください。",
+      "description": "業務内容",
+      "sourceLanguage": "記入言語",
+      "sourceLanguageHint": "この項目を書いた言語です。他の言語はここから生成されます。",
+      "present": "現在",
+      "add": "職歴を追加",
+      "delete": "削除",
+      "deleteWarning": "この職歴に紐づく実績があります。削除すると紐付けが解除されます。",
+      "deleteAnyway": "それでも削除する",
+      "employmentTypes": {
+        "permanent": "正社員",
+        "contract": "契約社員",
+        "part_time": "パート・アルバイト",
+        "internship": "インターン",
+        "freelance": "業務委託"
+      }
+    },
+    "education": {
+      "title": "学歴",
+      "institution": "学校名",
+      "qualification": "学位・資格",
+      "field_of_study": "専攻",
+      "started_on": "入学日",
+      "ended_on": "卒業日",
+      "options": {}
+    },
+    "certifications": {
+      "title": "資格",
+      "name": "資格名",
+      "issuer": "発行機関",
+      "issued_on": "取得日",
+      "expires_on": "有効期限",
+      "options": {}
+    },
+    "skills": {
+      "title": "スキル",
+      "name": "スキル",
+      "level": "レベル",
+      "options": {
+        "beginner": "初級",
+        "intermediate": "中級",
+        "advanced": "上級",
+        "expert": "エキスパート"
+      }
+    },
+    "languages": {
+      "title": "語学",
+      "language": "言語",
+      "proficiency": "レベル",
+      "qualification": "資格",
+      "options": {
+        "native": "ネイティブ",
+        "business": "ビジネスレベル",
+        "conversational": "日常会話レベル",
+        "basic": "初級"
+      }
+    },
+    "preferences": {
+      "title": "希望条件",
+      "desiredRoles": "希望職種",
+      "desiredLocations": "希望勤務地",
+      "commaSeparated": "複数ある場合はカンマで区切ってください。",
+      "workingArrangement": "勤務形態",
+      "salaryMin": "希望年収（下限）",
+      "salaryMax": "希望年収（上限）",
+      "currency": "通貨",
+      "save": "保存",
+      "saved": "保存しました",
+      "arrangements": {
+        "onsite": "出社",
+        "hybrid": "ハイブリッド",
+        "remote": "リモート"
+      }
+    }
   }
 }
