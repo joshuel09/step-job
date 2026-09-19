@@ -9,6 +9,133 @@
     "language": "Language"
   },
   "profile": {
-    "title": "Career profile"
+    "title": "Career profile",
+    "subtitle": "Enter your career once. Everything else is generated from it.",
+    "settings": {
+      "title": "Settings",
+      "back": "Back to profile",
+      "exportTitle": "Export your profile",
+      "exportExplanation": "Download everything you have entered: a data file you can keep or move elsewhere, and a readable document.",
+      "export": "Download export",
+      "deleteTitle": "Delete your profile",
+      "deleteExplanation": "This removes your career profile from Step Job.",
+      "delete": "Delete my profile",
+      "confirmHeading": "Before you delete, please read this:",
+      "confirmImmediate": "Your residence status, nationality, visa type and visa expiry are erased immediately and cannot be recovered.",
+      "confirmRecoverable": "Everything else can be restored for 30 days.",
+      "confirmPermanent": "After 30 days it is permanently erased.",
+      "confirmDelete": "Yes, delete my profile",
+      "cancel": "Cancel",
+      "deleted": "Your profile is deleted",
+      "deletedExplanation": "It is no longer visible anywhere in Step Job.",
+      "recoverableUntil": "You can restore it until {date}.",
+      "erasedNow": "Erased immediately and unrecoverable: {fields}",
+      "restore": "Restore my profile"
+    },
+    "identity": {
+      "title": "About you",
+      "fullNameLatin": "Name (Latin characters)",
+      "fullNameJapanese": "Name (Japanese characters)",
+      "furigana": "Furigana",
+      "furiganaHint": "The phonetic reading of your Japanese name.",
+      "email": "Email",
+      "phone": "Phone",
+      "save": "Save",
+      "saved": "Saved"
+    },
+    "japan": {
+      "title": "Working in Japan",
+      "privacyNote": "Every field here is optional and withheld from generated documents unless you include it. You can change that per field at any time.",
+      "residence_status": "Residence status",
+      "nationality": "Nationality",
+      "visa_type": "Visa type",
+      "visa_expires_on": "Visa expiry",
+      "work_authorisation": "I am authorised to work in Japan",
+      "japanese_qualification": "Japanese language qualification",
+      "includeInDocuments": "Include in generated documents",
+      "save": "Save",
+      "saved": "Saved"
+    },
+    "experience": {
+      "title": "Work experience",
+      "employer": "Employer",
+      "jobTitle": "Job title",
+      "employmentType": "Employment type",
+      "startedOn": "Start date",
+      "endedOn": "End date",
+      "ongoingHint": "Leave blank if this is your current role.",
+      "description": "What you did",
+      "sourceLanguage": "Written in",
+      "sourceLanguageHint": "The language you wrote this entry in. Other languages are generated from it.",
+      "present": "Present",
+      "add": "Add experience",
+      "delete": "Delete",
+      "deleteWarning": "Accomplishments are linked to this role and will lose their link.",
+      "deleteAnyway": "Delete anyway",
+      "employmentTypes": {
+        "permanent": "Permanent",
+        "contract": "Contract",
+        "part_time": "Part time",
+        "internship": "Internship",
+        "freelance": "Freelance"
+      }
+    },
+    "education": {
+      "title": "Education",
+      "institution": "Institution",
+      "qualification": "Qualification",
+      "field_of_study": "Field of study",
+      "started_on": "Start date",
+      "ended_on": "End date",
+      "options": {}
+    },
+    "certifications": {
+      "title": "Certifications",
+      "name": "Certification",
+      "issuer": "Issued by",
+      "issued_on": "Issued",
+      "expires_on": "Expires",
+      "options": {}
+    },
+    "skills": {
+      "title": "Skills",
+      "name": "Skill",
+      "level": "Level",
+      "options": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced",
+        "expert": "Expert"
+      }
+    },
+    "languages": {
+      "title": "Languages",
+      "language": "Language",
+      "proficiency": "Proficiency",
+      "qualification": "Qualification",
+      "options": {
+        "native": "Native",
+        "business": "Business",
+        "conversational": "Conversational",
+        "basic": "Basic"
+      }
+    },
+    "preferences": {
+      "title": "What you are looking for",
+      "desiredRoles": "Roles",
+      "desiredLocations": "Locations",
+      "commaSeparated": "Separate several with commas.",
+      "workingArrangement": "Working arrangement",
+      "salaryMin": "Salary from",
+      "salaryMax": "Salary to",
+      "currency": "Currency",
+      "save": "Save",
+      "saved": "Saved",
+      "arrangements": {
+        "onsite": "On site",
+        "hybrid": "Hybrid",
+        "remote": "Remote"
+      }
+    }
   }
 }

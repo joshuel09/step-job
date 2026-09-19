@@ -111,15 +111,15 @@ present and unchanged. Covers quickstart.md Scenario 1.
 - [X] T042 [US1] Implement the section completeness report in `apps/api/app/career/service.py` per FR-015
 - [X] T043 [US1] Implement the profile and section routes in `apps/api/app/career/router.py`, including `/profile`, `/profile/completeness`, `/profile/restore`, `/profile/export` and each section resource
 - [X] T044 [US1] Regenerate the typed client into `packages/api-client/` from the contract
-- [ ] T045 [P] [US1] Build the profile overview page in `apps/web/app/[locale]/profile/page.tsx`
-- [ ] T046 [P] [US1] Build the identity and Japan-specific section forms in `apps/web/components/profile/identity-form.tsx` and `apps/web/components/profile/japan-form.tsx`, with disclosure controls per field
-- [ ] T047 [P] [US1] Build the work experience form and list in `apps/web/components/profile/experience-form.tsx`
-- [ ] T048 [P] [US1] Build the education, certification, skill and language section forms in `apps/web/components/profile/`
-- [ ] T048a [P] [US1] Build the career preferences form in `apps/web/components/profile/preference-form.tsx`, covering desired roles, locations, working arrangement and salary expectations per FR-004
-- [ ] T048b [P] [US1] Build the interface language switcher in `apps/web/components/locale-switcher.tsx`, persisting the choice through `PATCH /profile` so it applies on every device per FR-021 and research.md R-003
-- [ ] T049 [US1] Surface field-level validation messages from the API in `apps/web/components/profile/`, showing the reason rather than a generic failure
-- [ ] T050 [US1] Build the deletion and export flow in `apps/web/app/[locale]/profile/settings/page.tsx`, stating what is erased immediately and when the recovery window ends per FR-026
-- [ ] T051 [P] [US1] Add the English and Japanese strings for every User Story 1 screen to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
+- [X] T045 [P] [US1] Build the profile overview page in `apps/web/app/[locale]/profile/page.tsx`
+- [X] T046 [P] [US1] Build the identity and Japan-specific section forms in `apps/web/components/profile/identity-form.tsx` and `apps/web/components/profile/japan-form.tsx`, with disclosure controls per field
+- [X] T047 [P] [US1] Build the work experience form and list in `apps/web/components/profile/experience-form.tsx`
+- [X] T048 [P] [US1] Build the education, certification, skill and language section forms in `apps/web/components/profile/`
+- [X] T048a [P] [US1] Build the career preferences form in `apps/web/components/profile/preference-form.tsx`, covering desired roles, locations, working arrangement and salary expectations per FR-004
+- [X] T048b [P] [US1] Build the interface language switcher in `apps/web/components/locale-switcher.tsx`, persisting the choice through `PATCH /profile` so it applies on every device per FR-021 and research.md R-003
+- [X] T049 [US1] Surface field-level validation messages from the API in `apps/web/components/profile/`, showing the reason rather than a generic failure
+- [X] T050 [US1] Build the deletion and export flow in `apps/web/app/[locale]/profile/settings/page.tsx`, stating what is erased immediately and when the recovery window ends per FR-026
+- [X] T051 [P] [US1] Add the English and Japanese strings for every User Story 1 screen to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
 
 **Checkpoint**: User Story 1 is fully functional and independently testable — a usable product on its own
 
