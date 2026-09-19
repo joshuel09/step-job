@@ -196,16 +196,16 @@ version is what lands. Covers quickstart.md Scenario 3.
 **Purpose**: Work that spans stories, plus the scheduled job and the traceability
 surface that later features consume.
 
-- [ ] T079 Implement the 30-day purge actor in `apps/worker/app/purge.py`, permanently erasing profiles past their purge date together with their snapshots and any pending proposed entries, written to be idempotent so a retry is a no-op per research.md R-002
-- [ ] T080 Schedule the purge actor in `apps/worker/app/main.py`
-- [ ] T081 [P] Add worker tests for the purge, including the idempotency case, in `apps/worker/tests/test_purge.py`
-- [ ] T082 Implement snapshot capture and read in `apps/api/app/career/snapshots.py`, insert-only and returning captured content unchanged after the source entries are edited or deleted, per FR-028 to FR-030
-- [ ] T083 Implement the snapshot routes in `apps/api/app/career/router.py`
-- [ ] T084 [P] Integration test for quickstart Scenario 4, proving a snapshot survives an edit of its source entry, in `apps/api/tests/integration/test_snapshot_traceability.py`
-- [ ] T085 [P] Playwright test for quickstart Scenario 6, switching the interface between English and Japanese and confirming stored content is untouched, in `apps/web/tests/e2e/locale-switch.spec.ts`
-- [ ] T086 Audit `apps/web/messages/ja.json` for completeness against `en.json` so no interface text is left untranslated per FR-022, and fail the build on a missing key
-- [ ] T087 [P] Add structured logging across the career module in `apps/api/app/career/`
-- [ ] T088 Run the full [quickstart.md](./quickstart.md) walkthrough against a fresh environment and record the result
+- [X] T079 Implement the 30-day purge actor in `apps/worker/app/purge.py`, permanently erasing profiles past their purge date together with their snapshots and any pending proposed entries, written to be idempotent so a retry is a no-op per research.md R-002
+- [X] T080 Schedule the purge actor in `apps/worker/app/main.py`
+- [X] T081 [P] Add worker tests for the purge, including the idempotency case, in `apps/worker/tests/test_purge.py`
+- [X] T082 Implement snapshot capture and read in `apps/api/app/career/snapshots.py`, insert-only and returning captured content unchanged after the source entries are edited or deleted, per FR-028 to FR-030
+- [X] T083 Implement the snapshot routes in `apps/api/app/career/router.py`
+- [X] T084 [P] Integration test for quickstart Scenario 4, proving a snapshot survives an edit of its source entry, in `apps/api/tests/integration/test_snapshot_traceability.py`
+- [X] T085 [P] Playwright test for quickstart Scenario 6, switching the interface between English and Japanese and confirming stored content is untouched, in `apps/web/tests/e2e/locale-switch.spec.ts`
+- [X] T086 Audit `apps/web/messages/ja.json` for completeness against `en.json` so no interface text is left untranslated per FR-022, and fail the build on a missing key
+- [X] T087 [P] Add structured logging across the career module in `apps/api/app/career/`
+- [X] T088 Run the full [quickstart.md](./quickstart.md) walkthrough against a fresh environment and record the result
 
 ---
 

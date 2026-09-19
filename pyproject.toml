@@ -17,3 +17,9 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# Both workspace packages are declared here rather than relied upon through the
+# editable install: the .pth files uv/hatchling generate carry no trailing
+# newline, so Python's site module silently skips them and neither package
+# reaches sys.path. Without this, tests only pass when cwd happens to be the
+# package directory.
+pythonpath = ["apps/api", "apps/worker"]

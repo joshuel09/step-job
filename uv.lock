@@ -739,6 +739,7 @@ source = { editable = "apps/worker" }
 dependencies = [
     { name = "apscheduler" },
     { name = "dramatiq", extra = ["redis"] },
+    { name = "pydantic-settings" },
     { name = "step-job-api" },
 ]
 
@@ -752,6 +753,7 @@ dev = [
 requires-dist = [
     { name = "apscheduler", specifier = ">=3.10" },
     { name = "dramatiq", extras = ["redis"], specifier = ">=1.17" },
+    { name = "pydantic-settings", specifier = ">=2.5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
     { name = "step-job-api", editable = "apps/api" },

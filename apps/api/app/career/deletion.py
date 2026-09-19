@@ -12,6 +12,7 @@ window closes. Reads exclude soft-deleted profiles at the data-access layer
 (see db/soft_delete.py), so FR-027 holds without each endpoint remembering.
 """
 
+import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -22,6 +23,8 @@ from app.career.models import CareerProfile, JapanProfile
 from app.core.errors import ConflictError, NotFoundError
 from app.core.settings import get_settings
 from app.db.soft_delete import with_deleted
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -44,6 +47,11 @@ def delete_profile(session: Session, profile: CareerProfile) -> DeletionReceipt:
     profile.deleted_at = now
     profile.purge_after = now + window
     session.flush()
+
+    logger.info(
+        "profile deleted",
+        extra={"profile_id": profile.id, "count": len(erased), "outcome": "soft_deleted"},
+    )
 
     return DeletionReceipt(erased_immediately=erased, recoverable_until=profile.purge_after)
 

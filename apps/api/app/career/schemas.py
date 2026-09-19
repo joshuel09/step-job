@@ -1,7 +1,7 @@
 """Request and response models, matching contracts/openapi.yaml."""
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -169,3 +169,16 @@ class ReferenceWarning(BaseModel):
 class DeletionReceiptOut(BaseModel):
     erased_immediately: list[str]
     recoverable_until: str
+
+
+class SnapshotCapture(BaseModel):
+    document_ref: str
+    entry_ids: list[uuid.UUID]
+
+
+class SnapshotOut(ORMModel):
+    id: uuid.UUID
+    document_ref: str
+    captured_at: datetime
+    captured_entry_ids: list[uuid.UUID]
+    payload: dict

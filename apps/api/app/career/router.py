@@ -10,7 +10,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
-from app.career import deletion, export, models, schemas, service
+from app.career import deletion, export, models, schemas, service, snapshots
 from app.core.errors import ConflictError
 from app.core.identity import CallerIdentity, current_identity
 from app.db.session import get_session
@@ -90,6 +90,27 @@ def export_profile(session: Db, caller: Caller):
         media_type="application/zip",
         headers={"Content-Disposition": 'attachment; filename="step-job-profile.zip"'},
     )
+
+
+# --- snapshots --------------------------------------------------------------
+
+
+@router.post(
+    "/profile/snapshots",
+    response_model=schemas.SnapshotOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def capture_snapshot(session: Db, caller: Caller, body: schemas.SnapshotCapture):
+    """Record what a document drew on, at the moment it was generated (FR-028)."""
+    profile = _profile(session, caller)
+    return snapshots.capture(session, profile, body.document_ref, body.entry_ids)
+
+
+@router.get("/profile/snapshots/{snapshot_id}", response_model=schemas.SnapshotOut)
+def get_snapshot(session: Db, caller: Caller, snapshot_id: uuid.UUID):
+    """Return the captured content unchanged, whatever has happened since (FR-029)."""
+    profile = _profile(session, caller)
+    return snapshots.read(session, profile, snapshot_id)
 
 
 # --- singleton sections -----------------------------------------------------

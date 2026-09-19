@@ -4,6 +4,9 @@ from fastapi import FastAPI
 
 from app.career.router import router as career_router
 from app.core.errors import AppError, app_error_handler
+from app.core.logging import configure as configure_logging
+
+configure_logging()
 
 app = FastAPI(
     title="Step Job — Master Career Profile",

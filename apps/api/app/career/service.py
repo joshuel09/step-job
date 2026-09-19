@@ -4,6 +4,7 @@ Business logic lives here rather than in the router or the web application, per
 the constitution: the API is the single source of business rules.
 """
 
+import logging
 import uuid
 from dataclasses import dataclass
 from typing import Any
@@ -14,6 +15,8 @@ from sqlalchemy.orm import Session
 from app.career import models
 from app.career.validation import check_date_range, check_salary_range, normalise_employer
 from app.core.errors import NotFoundError, ValidationFailed
+
+logger = logging.getLogger(__name__)
 
 SECTION_MODELS: dict[str, type] = {
     "experiences": models.WorkExperience,
@@ -136,6 +139,10 @@ def delete_experience(
     entry = _owned(session, profile, models.WorkExperience, entry_id)
     session.delete(entry)
     session.flush()
+    logger.info(
+        "experience deleted",
+        extra={"profile_id": profile.id, "entry_id": entry_id, "section": "experiences"},
+    )
 
 
 # --- generic sections -------------------------------------------------------
@@ -185,6 +192,9 @@ def delete_entry(
     entry = _owned(session, profile, SECTION_MODELS[section], entry_id)
     session.delete(entry)
     session.flush()
+    logger.info(
+        "entry deleted", extra={"profile_id": profile.id, "entry_id": entry_id, "section": section}
+    )
 
 
 def list_entries(session: Session, profile: models.CareerProfile, section: str) -> list[Any]:
