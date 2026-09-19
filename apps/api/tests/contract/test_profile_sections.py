@@ -29,8 +29,6 @@ DEFERRED = {
     "/profile/proposals/{proposal_id}/accept",
     "/profile/proposals/{proposal_id}/reject",
     "/profile/proposals/{proposal_id}/merge",
-    "/profile/snapshots",
-    "/profile/snapshots/{snapshot_id}",
 }
 
 

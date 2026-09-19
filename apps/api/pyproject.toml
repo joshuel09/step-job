@@ -29,3 +29,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
+
+[tool.pytest.ini_options]
+# The editable-install .pth files carry no trailing newline, so Python's site
+# module skips them and this package never reaches sys.path. Declared here so
+# the suite runs from any working directory rather than only from this one.
+pythonpath = ["."]

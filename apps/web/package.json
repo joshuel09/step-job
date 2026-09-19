@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/check-messages.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "check:messages": "node scripts/check-messages.mjs"
   },
   "dependencies": {
     "@step-job/api-client": "workspace:*",

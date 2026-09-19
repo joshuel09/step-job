@@ -301,3 +301,22 @@ Proves FR-021 to FR-023.
 
 Contract tests run against [contracts/openapi.yaml](./contracts/openapi.yaml);
 field-level rules they assert are defined in [data-model.md](./data-model.md).
+
+---
+
+## Walkthrough record
+
+Run on 2026-09-19 against a fresh PostgreSQL and a locally started API
+(T088). Scenarios 2 and 3 are covered by the automated suites rather than by
+hand, since the stories they belong to are not yet built.
+
+| Scenario | Result |
+|---|---|
+| 1 — Record a career and read it back | **Pass.** Experience created and returned unchanged; an end date before its start was rejected `422` with `ended_on: must be on or after started_on` |
+| 4 — Traceability survives an edit | **Pass.** After editing the role, the live entry read `Completely Different Title` while the snapshot still read `Software Engineer` |
+| 5 — Deletion splits correctly | **Pass.** Receipt named the four immediately-erased fields and a window 30 days out; profile returned `404` while deleted; restore returned everything except the erased fields |
+| 5b — The 30-day purge | **Pass.** A backdated profile was found and erased; a second run erased nothing, confirming idempotency; every table was empty afterwards, confirming the cascade |
+| 6 — Both interface languages | Covered by the Playwright suite in `apps/web/tests/e2e/locale-switch.spec.ts`; not run here, as it needs the web and API processes up together |
+| Export | **Pass.** Archive contained `profile.json` and `profile.md` |
+
+Scenarios 2 and 3 remain outstanding until User Stories 2 and 3 are built.

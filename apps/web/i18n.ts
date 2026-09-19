@@ -8,7 +8,13 @@ export type Locale = (typeof locales)[number];
 // persisted by the API and wins over anything the browser reports (R-003).
 export const defaultLocale: Locale = "en";
 
-export default getRequestConfig(async ({ locale }) => {
-  if (!locales.includes(locale as Locale)) notFound();
-  return { messages: (await import(`./messages/${locale}.json`)).default };
+export default getRequestConfig(async ({ requestLocale }) => {
+  const requested = await requestLocale;
+  const locale = locales.includes(requested as Locale) ? (requested as Locale) : defaultLocale;
+  if (requested && !locales.includes(requested as Locale)) notFound();
+
+  return {
+    locale,
+    messages: (await import(`./messages/${locale}.json`)).default,
+  };
 });
