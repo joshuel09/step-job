@@ -136,6 +136,30 @@
         "hybrid": "Hybrid",
         "remote": "Remote"
       }
-    }
+    },
+    "stories": {
+      "action": "Action",
+      "actionHint": "What did you actually do?",
+      "add": "Add story",
+      "back": "Back to profile",
+      "challenge": "Challenge",
+      "challengeHint": "What was difficult or wrong?",
+      "empty": "You have not recorded any stories yet.",
+      "explanation": "Record what you achieved while you still remember it. These become reusable examples for resumes and interview answers.",
+      "linkedRole": "Which role",
+      "linkedRoleHint": "Optional. Not every accomplishment belongs to a job you have recorded.",
+      "noMatches": "Nothing matched that.",
+      "noRole": "Not linked to a role",
+      "result": "Result",
+      "resultCount": "{count} stories",
+      "resultHint": "What changed because of it?",
+      "search": "Search your stories",
+      "searchPlaceholder": "Any word you remember",
+      "searching": "Searching…",
+      "sourceLanguage": "Written in",
+      "title": "Career stories",
+      "titleField": "What would you call this?"
+    },
+    "storiesNav": "Career stories"
   }
 }

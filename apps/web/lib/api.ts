@@ -11,6 +11,7 @@ export type Certification = Schemas["Certification"];
 export type Skill = Schemas["Skill"];
 export type Language = Schemas["Language"];
 export type CareerPreference = Schemas["CareerPreference"];
+export type CareerStory = Schemas["CareerStory"];
 export type Locale = Schemas["Locale"];
 
 /**
@@ -97,6 +98,14 @@ export const api = {
     request<void>(`/profile/${section}/${id}${confirm ? "?confirm=true" : ""}`, {
       method: "DELETE",
     }),
+
+  listStories: (q?: string) =>
+    request<CareerStory[]>(`/profile/stories${q ? `?q=${encodeURIComponent(q)}` : ""}`),
+  createStory: (body: unknown) =>
+    request<CareerStory>("/profile/stories", { method: "POST", body: JSON.stringify(body) }),
+  updateStory: (id: string, body: unknown) =>
+    request<CareerStory>(`/profile/stories/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteStory: (id: string) => request<void>(`/profile/stories/${id}`, { method: "DELETE" }),
 
   deleteProfile: () =>
     request<{ erased_immediately: string[]; recoverable_until: string }>("/profile", {

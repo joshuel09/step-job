@@ -136,22 +136,22 @@ Covers quickstart.md Scenario 2.
 
 ### Tests for User Story 2
 
-- [ ] T052 [P] [US2] Contract tests for the story routes in `apps/api/tests/contract/test_stories.py`
-- [ ] T053 [P] [US2] Integration test for quickstart Scenario 2, storing and retrieving an accomplishment, in `apps/api/tests/integration/test_career_stories.py`
+- [X] T052 [P] [US2] Contract tests for the story routes in `apps/api/tests/contract/test_stories.py`
+- [X] T053 [P] [US2] Integration test for quickstart Scenario 2, storing and retrieving an accomplishment, in `apps/api/tests/integration/test_career_stories.py`
 
 ### Implementation for User Story 2
 
-- [ ] T054 [P] [US2] Create the `CareerStory` model in `apps/api/app/career/models.py` with a nullable link to `WorkExperience`
-- [ ] T055 [US2] Generate the Alembic migration for `CareerStory` in `apps/api/migrations/`
-- [ ] T056 [US2] Implement story create, read, update and delete plus keyword search across title, challenge, action and result in `apps/api/app/career/stories.py`
-- [ ] T057 [US2] Extend the reference warning in `apps/api/app/career/service.py` so deleting a work experience reports the stories that link to it
-- [ ] T058 [US2] Include linked stories in the work experience detail response in `apps/api/app/career/router.py`
-- [ ] T059 [US2] Implement the story routes in `apps/api/app/career/router.py`
-- [ ] T060 [US2] Regenerate the typed client into `packages/api-client/` from the contract
-- [ ] T061 [P] [US2] Build the story form and list in `apps/web/components/profile/story-form.tsx`
-- [ ] T062 [P] [US2] Show linked stories alongside their work experience in `apps/web/components/profile/experience-form.tsx`
-- [ ] T063 [P] [US2] Build story keyword search in `apps/web/app/[locale]/profile/stories/page.tsx`
-- [ ] T064 [P] [US2] Add the English and Japanese strings for every User Story 2 screen to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
+- [X] T054 [P] [US2] Create the `CareerStory` model in `apps/api/app/career/models.py` with a nullable link to `WorkExperience`
+- [X] T055 [US2] Generate the Alembic migration for `CareerStory` in `apps/api/migrations/`
+- [X] T056 [US2] Implement story create, read, update and delete plus keyword search across title, challenge, action and result in `apps/api/app/career/stories.py`
+- [X] T057 [US2] Extend the reference warning in `apps/api/app/career/service.py` so deleting a work experience reports the stories that link to it
+- [X] T058 [US2] Include linked stories in the work experience detail response in `apps/api/app/career/router.py`
+- [X] T059 [US2] Implement the story routes in `apps/api/app/career/router.py`
+- [X] T060 [US2] Regenerate the typed client into `packages/api-client/` from the contract
+- [X] T061 [P] [US2] Build the story form and list in `apps/web/components/profile/story-form.tsx`
+- [X] T062 [P] [US2] Show linked stories alongside their work experience in `apps/web/components/profile/experience-form.tsx`
+- [X] T063 [P] [US2] Build story keyword search in `apps/web/app/[locale]/profile/stories/page.tsx`
+- [X] T064 [P] [US2] Add the English and Japanese strings for every User Story 2 screen to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
 
 **Checkpoint**: User Stories 1 and 2 both work independently
 

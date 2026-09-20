@@ -23,8 +23,6 @@ CONTRACT = (
 # Documented but delivered by later stories; listed so the gap is deliberate
 # rather than silent.
 DEFERRED = {
-    "/profile/stories",
-    "/profile/stories/{story_id}",
     "/profile/proposals",
     "/profile/proposals/{proposal_id}/accept",
     "/profile/proposals/{proposal_id}/reject",
@@ -62,15 +60,28 @@ def test_deferred_paths_are_still_documented(contract):
     assert DEFERRED <= set(contract["paths"])
 
 
-@pytest.mark.parametrize(
-    "path",
-    ["/profile", "/profile/experiences", "/profile/japan", "/profile/export"],
-)
-def test_documented_methods_are_all_served(contract, path):
-    documented = {m.upper() for m in contract["paths"][path] if m != "parameters"}
-    served: set[str] = set()
-    for route in app.routes:
-        if getattr(route, "path", "").removeprefix("/api/v1") == path:
-            served |= {m for m in route.methods if m not in {"HEAD", "OPTIONS"}}
+def test_documented_methods_are_all_served(contract):
+    """Every documented method on every implemented path.
 
-    assert documented <= served, f"{path}: missing {sorted(documented - served)}"
+    Checking a hand-picked list of paths let a documented GET slip through
+    unimplemented, because PATCH and DELETE on the same path made it look served.
+    """
+    served: dict[str, set[str]] = {}
+    for route in app.routes:
+        path = getattr(route, "path", "")
+        if path.startswith("/api/v1/profile"):
+            key = path.removeprefix("/api/v1")
+            served.setdefault(key, set()).update(
+                m for m in route.methods if m not in {"HEAD", "OPTIONS"}
+            )
+
+    gaps: dict[str, list[str]] = {}
+    for path, spec in contract["paths"].items():
+        if path in DEFERRED:
+            continue
+        documented = {m.upper() for m in spec if m != "parameters"}
+        missing = documented - served.get(path, set())
+        if missing:
+            gaps[path] = sorted(missing)
+
+    assert not gaps, f"documented but not served: {gaps}"

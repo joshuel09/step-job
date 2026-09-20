@@ -136,6 +136,30 @@
         "hybrid": "ハイブリッド",
         "remote": "リモート"
       }
-    }
+    },
+    "stories": {
+      "action": "行動",
+      "actionHint": "実際に何をしましたか？",
+      "add": "ストーリーを追加",
+      "back": "プロフィールに戻る",
+      "challenge": "課題",
+      "challengeHint": "何が難しかった、または問題でしたか？",
+      "empty": "まだストーリーが登録されていません。",
+      "explanation": "覚えているうちに実績を記録しておきましょう。職務経歴書や面接の回答で繰り返し使えます。",
+      "linkedRole": "関連する職歴",
+      "linkedRoleHint": "任意です。登録した職歴に紐づかない実績もあります。",
+      "noMatches": "該当するものはありません。",
+      "noRole": "職歴に紐づけない",
+      "result": "成果",
+      "resultCount": "{count}件のストーリー",
+      "resultHint": "その結果どう変わりましたか？",
+      "search": "ストーリーを検索",
+      "searchPlaceholder": "覚えている言葉で検索",
+      "searching": "検索中…",
+      "sourceLanguage": "記入言語",
+      "title": "実績ストーリー",
+      "titleField": "この実績の名前"
+    },
+    "storiesNav": "実績ストーリー"
   }
 }
