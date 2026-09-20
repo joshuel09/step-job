@@ -12,7 +12,7 @@ import {
   LanguageSection,
   SkillSection,
 } from "@/components/profile/simple-sections";
-import { api, type Profile } from "@/lib/api";
+import { api, type CareerStory, type Profile } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -25,11 +25,19 @@ async function loadProfile(): Promise<Profile | null> {
   }
 }
 
+async function loadStories(): Promise<CareerStory[]> {
+  try {
+    return await api.listStories();
+  } catch {
+    return [];
+  }
+}
+
 export default async function ProfilePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("profile");
-  const profile = await loadProfile();
+  const [profile, stories] = await Promise.all([loadProfile(), loadStories()]);
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
@@ -40,6 +48,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
         </div>
         <div className="flex items-center gap-3">
           <LocaleSwitcher />
+          <Link href={`/${locale}/profile/stories`} className="text-sm underline">
+            {t("storiesNav")}
+          </Link>
           <Link href={`/${locale}/profile/settings`} className="text-sm underline">
             {t("settings")}
           </Link>
@@ -47,7 +58,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
       </header>
 
       <IdentityForm initial={profile?.identity} />
-      <ExperienceForm existing={profile?.experiences ?? []} />
+      <ExperienceForm existing={profile?.experiences ?? []} stories={stories} />
       <EducationSection entries={(profile?.education ?? []) as Record<string, unknown>[]} />
       <CertificationSection
         entries={(profile?.certifications ?? []) as Record<string, unknown>[]}

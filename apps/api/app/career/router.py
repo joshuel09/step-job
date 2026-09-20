@@ -10,7 +10,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
-from app.career import deletion, export, models, schemas, service, snapshots
+from app.career import deletion, export, models, schemas, service, snapshots, stories
 from app.core.errors import ConflictError
 from app.core.identity import CallerIdentity, current_identity
 from app.db.session import get_session
@@ -92,6 +92,43 @@ def export_profile(session: Db, caller: Caller):
     )
 
 
+# --- career stories ---------------------------------------------------------
+
+
+@router.get("/profile/stories", response_model=list[schemas.CareerStoryOut])
+def list_stories(session: Db, caller: Caller, q: str | None = Query(default=None)):
+    """Stories, optionally filtered by keyword across all four fields."""
+    profile = _profile(session, caller)
+    return stories.search(session, profile, q)
+
+
+@router.post(
+    "/profile/stories",
+    response_model=schemas.CareerStoryOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_story(session: Db, caller: Caller, body: schemas.CareerStoryIn):
+    profile = _profile(session, caller)
+    return stories.create(session, profile, body.model_dump())
+
+
+@router.get("/profile/stories/{story_id}", response_model=schemas.CareerStoryOut)
+def get_story(session: Db, caller: Caller, story_id: uuid.UUID):
+    return stories.get(session, _profile(session, caller), story_id)
+
+
+@router.patch("/profile/stories/{story_id}", response_model=schemas.CareerStoryOut)
+def patch_story(session: Db, caller: Caller, story_id: uuid.UUID, body: schemas.CareerStoryPatch):
+    profile = _profile(session, caller)
+    return stories.update(session, profile, story_id, body.model_dump(exclude_unset=True))
+
+
+@router.delete("/profile/stories/{story_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_story(session: Db, caller: Caller, story_id: uuid.UUID):
+    stories.delete(session, _profile(session, caller), story_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 # --- snapshots --------------------------------------------------------------
 
 
@@ -150,6 +187,16 @@ def list_experiences(session: Db, caller: Caller):
 def create_experience(session: Db, caller: Caller, body: schemas.WorkExperienceIn):
     profile = _profile(session, caller)
     return service.create_experience(session, profile, body.model_dump())
+
+
+@router.get(
+    "/profile/experiences/{experience_id}", response_model=schemas.WorkExperienceDetail
+)
+def get_experience(session: Db, caller: Caller, experience_id: uuid.UUID):
+    """A role with the accomplishments recorded against it (User Story 2)."""
+    profile = _profile(session, caller)
+    experience = service._owned(session, profile, models.WorkExperience, experience_id)
+    return experience
 
 
 @router.patch("/profile/experiences/{experience_id}", response_model=schemas.WorkExperienceOut)

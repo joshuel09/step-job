@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { api, ApiError, ValidationError, type WorkExperience } from "@/lib/api";
+import { api, ApiError, ValidationError, type CareerStory, type WorkExperience } from "@/lib/api";
 
 import {
   Field,
@@ -19,7 +19,13 @@ import {
 
 const EMPLOYMENT_TYPES = ["permanent", "contract", "part_time", "internship", "freelance"] as const;
 
-export function ExperienceForm({ existing }: { existing: WorkExperience[] }) {
+export function ExperienceForm({
+  existing,
+  stories = [],
+}: {
+  existing: WorkExperience[];
+  stories?: CareerStory[];
+}) {
   const t = useTranslations("profile.experience");
   const router = useRouter();
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -84,6 +90,19 @@ export function ExperienceForm({ existing }: { existing: WorkExperience[] }) {
                 <p className="text-xs opacity-70">
                   {entry.started_on} – {entry.ended_on ?? t("present")}
                 </p>
+                {/* Accomplishments recorded against this role, so the link is
+                    visible before the user considers deleting it. */}
+                {stories.filter((s) => s.work_experience_id === entry.id).length > 0 && (
+                  <ul className="mt-2 flex flex-col gap-1">
+                    {stories
+                      .filter((s) => s.work_experience_id === entry.id)
+                      .map((story) => (
+                        <li key={story.id} className="text-xs opacity-80">
+                          ★ {story.title}
+                        </li>
+                      ))}
+                  </ul>
+                )}
                 {confirming === entry.id && (
                   <p role="alert" className="mt-2 text-xs text-amber-700 dark:text-amber-400">
                     {t("deleteWarning")}{" "}

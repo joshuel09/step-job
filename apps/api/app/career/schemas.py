@@ -139,6 +139,40 @@ class CareerPreferenceOut(CareerPreferenceIn, ORMModel):
     pass
 
 
+class CareerStoryIn(BaseModel):
+    work_experience_id: uuid.UUID | None = None
+    title: str
+    challenge: str
+    action: str
+    result: str
+    source_language: Locale = Locale.en
+
+
+class CareerStoryPatch(BaseModel):
+    work_experience_id: uuid.UUID | None = None
+    title: str | None = None
+    challenge: str | None = None
+    action: str | None = None
+    result: str | None = None
+    source_language: Locale | None = None
+
+
+class CareerStoryOut(ORMModel):
+    id: uuid.UUID
+    work_experience_id: uuid.UUID | None = None
+    title: str
+    challenge: str
+    action: str
+    result: str
+    source_language: Locale
+
+
+class WorkExperienceDetail(WorkExperienceOut):
+    """A role together with the accomplishments recorded against it."""
+
+    stories: list[CareerStoryOut] = []
+
+
 class ProfilePatch(BaseModel):
     interface_locale: Locale
 
