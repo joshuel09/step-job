@@ -9,6 +9,8 @@ from app.career.models import (
     EmploymentType,
     LanguageProficiency,
     Locale,
+    ProposalStatus,
+    ProposedEntryType,
     SkillLevel,
     WorkingArrangement,
 )
@@ -171,6 +173,37 @@ class WorkExperienceDetail(WorkExperienceOut):
     """A role together with the accomplishments recorded against it."""
 
     stories: list[CareerStoryOut] = []
+
+
+class ProposedEntryIn(BaseModel):
+    entry_type: ProposedEntryType
+    source: str
+    payload: dict
+
+
+class ProposedEntryOut(ORMModel):
+    id: uuid.UUID
+    entry_type: ProposedEntryType
+    source: str
+    status: ProposalStatus
+    payload: dict
+    possible_duplicate_of: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
+
+
+class ProposalAccept(BaseModel):
+    payload: dict | None = None
+
+
+class ProposalMerge(BaseModel):
+    target_entry_id: uuid.UUID
+    payload: dict | None = None
+
+
+class AcceptedProposal(BaseModel):
+    proposal_id: uuid.UUID
+    created_entry_id: uuid.UUID
+    entry_type: ProposedEntryType
 
 
 class ProfilePatch(BaseModel):

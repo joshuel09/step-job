@@ -169,23 +169,23 @@ version is what lands. Covers quickstart.md Scenario 3.
 
 ### Tests for User Story 3
 
-- [ ] T065 [P] [US3] Contract tests for the proposal routes in `apps/api/tests/contract/test_proposals.py`
-- [ ] T066 [P] [US3] Integration test for quickstart Scenario 3, including the check that a pending proposal is invisible to profile reads, in `apps/api/tests/integration/test_proposal_review.py`
-- [ ] T067 [P] [US3] Unit tests for duplicate matching in `apps/api/tests/unit/test_duplicates.py`, covering employer name normalisation, overlapping ranges, an ongoing role with no end date, and a non-overlapping promotion that must not match
+- [X] T065 [P] [US3] Contract tests for the proposal routes in `apps/api/tests/contract/test_proposals.py`
+- [X] T066 [P] [US3] Integration test for quickstart Scenario 3, including the check that a pending proposal is invisible to profile reads, in `apps/api/tests/integration/test_proposal_review.py`
+- [X] T067 [P] [US3] Unit tests for duplicate matching in `apps/api/tests/unit/test_duplicates.py`, covering employer name normalisation, overlapping ranges, an ongoing role with no end date, and a non-overlapping promotion that must not match
 
 ### Implementation for User Story 3
 
-- [ ] T068 [P] [US3] Create the `ProposedEntry` model in `apps/api/app/career/models.py` with a typed status enumeration and a recorded source, in its own table so it is never joined into profile reads
-- [ ] T069 [US3] Generate the Alembic migration for `ProposedEntry` in `apps/api/migrations/`
-- [ ] T070 [US3] Implement employer name normalisation and date-overlap matching in `apps/api/app/career/duplicates.py` per research.md R-004, treating a missing end date as ongoing
-- [ ] T071 [US3] Implement proposal intake in `apps/api/app/career/proposals.py`, flagging possible duplicates as suggestions only
-- [ ] T072 [US3] Implement accept, reject and merge in `apps/api/app/career/proposals.py`, writing the user's corrected payload rather than the original proposal content per FR-019, and rejecting a second review with a conflict since both outcomes are terminal
-- [ ] T073 [US3] Implement the merge rule in `apps/api/app/career/proposals.py` so career stories follow the surviving work experience rather than being orphaned
-- [ ] T074 [US3] Implement the proposal routes in `apps/api/app/career/router.py`, including accept, reject and merge
-- [ ] T075 [US3] Regenerate the typed client into `packages/api-client/` from the contract
-- [ ] T076 [P] [US3] Build the review queue in `apps/web/app/[locale]/profile/review/page.tsx`, showing each proposal with its source
-- [ ] T077 [P] [US3] Build the proposal edit, accept, reject and merge controls in `apps/web/components/profile/proposal-review.tsx`, making "keep both" available wherever a merge is offered
-- [ ] T078 [P] [US3] Add the English and Japanese strings for every User Story 3 screen to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
+- [X] T068 [P] [US3] Create the `ProposedEntry` model in `apps/api/app/career/models.py` with a typed status enumeration and a recorded source, in its own table so it is never joined into profile reads
+- [X] T069 [US3] Generate the Alembic migration for `ProposedEntry` in `apps/api/migrations/`
+- [X] T070 [US3] Implement employer name normalisation and date-overlap matching in `apps/api/app/career/duplicates.py` per research.md R-004, treating a missing end date as ongoing
+- [X] T071 [US3] Implement proposal intake in `apps/api/app/career/proposals.py`, flagging possible duplicates as suggestions only
+- [X] T072 [US3] Implement accept, reject and merge in `apps/api/app/career/proposals.py`, writing the user's corrected payload rather than the original proposal content per FR-019, and rejecting a second review with a conflict since both outcomes are terminal
+- [X] T073 [US3] Implement the merge rule in `apps/api/app/career/proposals.py` so career stories follow the surviving work experience rather than being orphaned
+- [X] T074 [US3] Implement the proposal routes in `apps/api/app/career/router.py`, including accept, reject and merge
+- [X] T075 [US3] Regenerate the typed client into `packages/api-client/` from the contract
+- [X] T076 [P] [US3] Build the review queue in `apps/web/app/[locale]/profile/review/page.tsx`, showing each proposal with its source
+- [X] T077 [P] [US3] Build the proposal edit, accept, reject and merge controls in `apps/web/components/profile/proposal-review.tsx`, making "keep both" available wherever a merge is offered
+- [X] T078 [P] [US3] Add the English and Japanese strings for every User Story 3 screen to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
 
 **Checkpoint**: All three user stories are independently functional
 

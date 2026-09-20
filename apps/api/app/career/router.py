@@ -10,7 +10,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
-from app.career import deletion, export, models, schemas, service, snapshots, stories
+from app.career import deletion, export, models, proposals, schemas, service, snapshots, stories
 from app.core.errors import ConflictError
 from app.core.identity import CallerIdentity, current_identity
 from app.db.session import get_session
@@ -127,6 +127,67 @@ def patch_story(session: Db, caller: Caller, story_id: uuid.UUID, body: schemas.
 def delete_story(session: Db, caller: Caller, story_id: uuid.UUID):
     stories.delete(session, _profile(session, caller), story_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# --- proposed entries -------------------------------------------------------
+
+
+@router.get("/profile/proposals", response_model=list[schemas.ProposedEntryOut])
+def list_proposals(
+    session: Db,
+    caller: Caller,
+    status_filter: Annotated[
+        models.ProposalStatus, Query(alias="status")
+    ] = models.ProposalStatus.pending,
+):
+    """Proposals awaiting review. Never part of the profile (FR-018)."""
+    profile = _profile(session, caller)
+    return proposals.list_for(session, profile, status_filter)
+
+
+@router.post(
+    "/profile/proposals",
+    response_model=list[schemas.ProposedEntryOut],
+    status_code=status.HTTP_201_CREATED,
+)
+def submit_proposals(session: Db, caller: Caller, body: list[schemas.ProposedEntryIn]):
+    """The contract an import source delivers into. Adds nothing to the profile."""
+    profile = _profile(session, caller)
+    return proposals.submit(session, profile, [item.model_dump() for item in body])
+
+
+@router.post(
+    "/profile/proposals/{proposal_id}/accept",
+    response_model=schemas.AcceptedProposal,
+    status_code=status.HTTP_201_CREATED,
+)
+def accept_proposal(
+    session: Db, caller: Caller, proposal_id: uuid.UUID, body: schemas.ProposalAccept | None = None
+):
+    profile = _profile(session, caller)
+    proposal, entry = proposals.accept(
+        session, profile, proposal_id, body.payload if body else None
+    )
+    return {
+        "proposal_id": proposal.id,
+        "created_entry_id": entry.id,
+        "entry_type": proposal.entry_type,
+    }
+
+
+@router.post("/profile/proposals/{proposal_id}/reject", status_code=status.HTTP_204_NO_CONTENT)
+def reject_proposal(session: Db, caller: Caller, proposal_id: uuid.UUID):
+    proposals.reject(session, _profile(session, caller), proposal_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/profile/proposals/{proposal_id}/merge", response_model=schemas.WorkExperienceOut)
+def merge_proposal(
+    session: Db, caller: Caller, proposal_id: uuid.UUID, body: schemas.ProposalMerge
+):
+    """Fold a proposal into an existing role. Never automatic (FR-034)."""
+    profile = _profile(session, caller)
+    return proposals.merge(session, profile, proposal_id, body.target_entry_id, body.payload)
 
 
 # --- snapshots --------------------------------------------------------------

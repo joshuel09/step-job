@@ -20,14 +20,9 @@ CONTRACT = (
     / "openapi.yaml"
 )
 
-# Documented but delivered by later stories; listed so the gap is deliberate
-# rather than silent.
-DEFERRED = {
-    "/profile/proposals",
-    "/profile/proposals/{proposal_id}/accept",
-    "/profile/proposals/{proposal_id}/reject",
-    "/profile/proposals/{proposal_id}/merge",
-}
+# Every documented path is now implemented. Kept as an empty set so a future
+# story can defer a path explicitly rather than by omission.
+DEFERRED: set[str] = set()
 
 
 @pytest.fixture(scope="module")

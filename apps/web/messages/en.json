@@ -160,6 +160,27 @@
       "title": "Career stories",
       "titleField": "What would you call this?"
     },
-    "storiesNav": "Career stories"
+    "storiesNav": "Career stories",
+    "review": {
+      "title": "Review suggested entries",
+      "back": "Back to profile",
+      "explanation": "Entries brought in from elsewhere wait here. Nothing joins your profile until you accept it, and you can correct anything first.",
+      "empty": "Nothing is waiting for review.",
+      "from": "From {source}",
+      "possibleDuplicate": "This may be the same role as {role}, which you already have.",
+      "accept": "Add to my profile",
+      "keepBoth": "Keep both",
+      "merge": "Merge into the existing one",
+      "reject": "Discard",
+      "types": {
+        "work_experience": "Work experience",
+        "education": "Education",
+        "certification": "Certification",
+        "skill": "Skill",
+        "language": "Language",
+        "career_story": "Career story"
+      }
+    },
+    "reviewNav": "Review queue"
   }
 }

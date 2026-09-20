@@ -70,6 +70,9 @@ class CareerProfile(Entity):
     skills: Mapped[list["Skill"]] = relationship(cascade="all, delete-orphan")
     languages: Mapped[list["Language"]] = relationship(cascade="all, delete-orphan")
     stories: Mapped[list["CareerStory"]] = relationship(cascade="all, delete-orphan")
+    # Pending proposals are erased with the profile too: a suggestion holding
+    # someone's career must not outlive the profile it was offered to.
+    proposals: Mapped[list["ProposedEntry"]] = relationship(cascade="all, delete-orphan")
 
     @property
     def is_deleted(self) -> bool:
@@ -341,3 +344,55 @@ class CareerStory(Entity, ProfileOwned):
     )
 
     experience: Mapped[WorkExperience | None] = relationship(back_populates="stories")
+
+
+class ProposalStatus(enum.StrEnum):
+    pending = "pending"
+    accepted = "accepted"
+    rejected = "rejected"
+
+
+class ProposedEntryType(enum.StrEnum):
+    work_experience = "work_experience"
+    education = "education"
+    certification = "certification"
+    skill = "skill"
+    language = "language"
+    career_story = "career_story"
+
+
+class ProposedEntry(Entity, ProfileOwned):
+    """Career information suggested by an outside source, awaiting review.
+
+    Deliberately its own table, never joined into a profile read. FR-018 requires
+    that nothing suggested by a source is visible to any feature until the user
+    accepts it, and keeping proposals structurally separate is what makes that
+    true rather than a convention every future query has to remember.
+
+    `accepted` and `rejected` are terminal: a decision is not revisited.
+    """
+
+    __tablename__ = "proposed_entry"
+
+    entry_type: Mapped[ProposedEntryType] = mapped_column(
+        Enum(ProposedEntryType, name="proposed_entry_type"), nullable=False
+    )
+    source: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[ProposalStatus] = mapped_column(
+        Enum(ProposalStatus, name="proposal_status"),
+        default=ProposalStatus.pending,
+        server_default="pending",
+        nullable=False,
+        index=True,
+    )
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
+
+    # A suggestion only. Nothing merges without the user choosing to (FR-034).
+    possible_duplicate_of: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), default=None
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+
+    @property
+    def is_reviewed(self) -> bool:
+        return self.status is not ProposalStatus.pending
