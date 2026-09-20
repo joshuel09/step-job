@@ -160,6 +160,27 @@
       "title": "実績ストーリー",
       "titleField": "この実績の名前"
     },
-    "storiesNav": "実績ストーリー"
+    "storiesNav": "実績ストーリー",
+    "review": {
+      "title": "取り込んだ項目の確認",
+      "back": "プロフィールに戻る",
+      "explanation": "外部から取り込んだ項目はここで待機します。承認するまでプロフィールには反映されません。内容は事前に修正できます。",
+      "empty": "確認待ちの項目はありません。",
+      "from": "取得元：{source}",
+      "possibleDuplicate": "既に登録されている「{role}」と同じ職歴の可能性があります。",
+      "accept": "プロフィールに追加",
+      "keepBoth": "両方を残す",
+      "merge": "既存の項目に統合",
+      "reject": "破棄",
+      "types": {
+        "work_experience": "職歴",
+        "education": "学歴",
+        "certification": "資格",
+        "skill": "スキル",
+        "language": "語学",
+        "career_story": "実績ストーリー"
+      }
+    },
+    "reviewNav": "確認待ち"
   }
 }

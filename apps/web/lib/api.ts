@@ -12,6 +12,7 @@ export type Skill = Schemas["Skill"];
 export type Language = Schemas["Language"];
 export type CareerPreference = Schemas["CareerPreference"];
 export type CareerStory = Schemas["CareerStory"];
+export type ProposedEntry = Schemas["ProposedEntry"];
 export type Locale = Schemas["Locale"];
 
 /**
@@ -106,6 +107,21 @@ export const api = {
   updateStory: (id: string, body: unknown) =>
     request<CareerStory>(`/profile/stories/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   deleteStory: (id: string) => request<void>(`/profile/stories/${id}`, { method: "DELETE" }),
+
+  listProposals: (status = "pending") =>
+    request<ProposedEntry[]>(`/profile/proposals?status=${status}`),
+  acceptProposal: (id: string, payload?: Record<string, unknown>) =>
+    request<{ proposal_id: string; created_entry_id: string; entry_type: string }>(
+      `/profile/proposals/${id}/accept`,
+      { method: "POST", body: JSON.stringify({ payload: payload ?? null }) },
+    ),
+  rejectProposal: (id: string) =>
+    request<void>(`/profile/proposals/${id}/reject`, { method: "POST" }),
+  mergeProposal: (id: string, target_entry_id: string, payload?: Record<string, unknown>) =>
+    request<WorkExperience>(`/profile/proposals/${id}/merge`, {
+      method: "POST",
+      body: JSON.stringify({ target_entry_id, payload: payload ?? null }),
+    }),
 
   deleteProfile: () =>
     request<{ erased_immediately: string[]; recoverable_until: string }>("/profile", {
