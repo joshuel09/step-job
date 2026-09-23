@@ -1,0 +1,321 @@
+openapi: 3.1.0
+
+# The HTTP surface for AI resume import.
+#
+# Each feature keeps its own contract file (research.md R-006); the typed client
+# is generated from every one of them and continuous integration diffs the whole
+# generated directory. As in feature 001, no route takes a profile or user
+# identifier — the owner comes from the verified session.
+
+info:
+  title: Step Job — AI Resume Import
+  version: 1.0.0
+  description: >
+    Reads a PDF, a DOCX or pasted text and delivers structured career information
+    into the review queue defined by feature 001. Nothing here writes to a
+    profile: every extracted entry becomes a proposal the user must accept.
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: imports
+    description: Starting an import and following it to an outcome
+
+security:
+  - sessionIdentity: []
+
+paths:
+  /profile/imports:
+    get:
+      tags: [imports]
+      summary: List this profile's imports
+      description: >
+        The minimal record kept after review, so a user can see where an entry in
+        their profile came from (FR-019a). Carries no filename (FR-019b).
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/ImportStatus" }
+      responses:
+        "200":
+          description: Imports, most recent first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Import" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+
+    post:
+      tags: [imports]
+      summary: Import career information from pasted text
+      description: >
+        Extraction begins immediately. If it completes within the deadline the
+        response carries a terminal status; otherwise it returns `running` and
+        the client polls this import until it settles (research.md R-002).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  description: Any free text describing the user's career
+                  minLength: 1
+      responses:
+        "201":
+          description: Import created; check `status` for whether it has finished
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Import" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+
+  /profile/imports/upload:
+    post:
+      tags: [imports]
+      summary: Import career information from a PDF or DOCX
+      description: >
+        The document is read into memory, its text extracted, and its bytes
+        released. It is never written to disk or object storage (FR-004,
+        research.md R-005), so there is nothing to delete afterwards.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: A PDF or DOCX document
+      responses:
+        "201":
+          description: Import created; check `status` for whether it has finished
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Import" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "413":
+          description: The document is larger than this feature accepts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "415":
+          description: >
+            Not a format this feature accepts. Distinguished from a document that
+            is the right format but cannot be read (FR-003).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+
+  /profile/imports/{import_id}:
+    parameters:
+      - $ref: "#/components/parameters/ImportId"
+    get:
+      tags: [imports]
+      summary: Follow an import to its outcome
+      description: >
+        Polled while an import is running. Always reaches a terminal status
+        (SC-007), whether it finished in the request or in the background.
+      responses:
+        "200":
+          description: The import
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportDetail" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /profile/imports/{import_id}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/ImportId"
+    post:
+      tags: [imports]
+      summary: Abandon an import before its proposals reach review
+      description: Supports FR-018 — a user may abandon an import they started.
+      responses:
+        "200":
+          description: Cancelled; no proposals were created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Import" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Already finished; there is nothing to abandon
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+components:
+  securitySchemes:
+    sessionIdentity:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: >
+        A verified session established at the web layer. The API derives the
+        profile owner from it and never accepts a user identifier from the
+        request.
+
+  parameters:
+    ImportId:
+      name: import_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    Unauthorised:
+      description: No verified identity
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: No such import in the caller's profile
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ValidationFailed:
+      description: The submitted values were rejected, with the offending field named
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ValidationError" }
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+
+    ValidationError:
+      type: object
+      required: [code, message, failures]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        failures:
+          type: array
+          items:
+            type: object
+            required: [field, reason]
+            properties:
+              field: { type: string }
+              reason: { type: string }
+
+    ImportStatus:
+      type: string
+      enum: [pending, running, completed, failed]
+
+    SourceKind:
+      type: string
+      enum: [pasted_text, pdf, docx]
+
+    FailureReason:
+      type: string
+      description: >
+        Why an import failed. The values separate outcomes that look alike to a
+        user but have different remedies: a document that cannot be read will
+        never succeed, while an unavailable service is worth trying later
+        (FR-017b).
+      enum:
+        - unreadable_document
+        - unsupported_format
+        - no_career_information
+        - service_unavailable
+        - extraction_failed
+
+    Import:
+      type: object
+      description: >
+        The record kept after review. Carries no filename, by decision — a name
+        can reveal where someone was applying (FR-019b).
+      required: [id, source_kind, status, started_at, entry_count]
+      properties:
+        id: { type: string, format: uuid }
+        source_kind: { $ref: "#/components/schemas/SourceKind" }
+        status: { $ref: "#/components/schemas/ImportStatus" }
+        failure_reason:
+          oneOf:
+            - $ref: "#/components/schemas/FailureReason"
+            - type: "null"
+        started_at: { type: string, format: date-time }
+        completed_at:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        entry_count:
+          type: integer
+          description: Proposals created. Zero is a valid completed outcome.
+
+    ImportDetail:
+      allOf:
+        - $ref: "#/components/schemas/Import"
+        - type: object
+          properties:
+            outcome:
+              oneOf:
+                - $ref: "#/components/schemas/ExtractionOutcome"
+                - type: "null"
+
+    ExtractionOutcome:
+      type: object
+      description: What was found, and what was looked for and not found (FR-016).
+      properties:
+        found:
+          type: object
+          additionalProperties: { type: integer }
+          description: Count of entries proposed, by kind
+        not_found:
+          type: array
+          items: { type: string }
+          description: >
+            Kinds of career information the source did not contain, so a user
+            can see what is missing rather than assume it was lost.
+        message:
+          type: string
+          description: A plain explanation the user can act on
+
+    # Additions to feature 001's ProposedEntry, documented here because this
+    # feature creates them. See ../../001-master-career-profile/contracts/openapi.yaml
+    # for the entry itself.
+    FieldEvidence:
+      type: object
+      description: >
+        The passage of source text a value was taken from. A field appears here
+        only if its quote was verified against the source; a field whose quote
+        could not be found is absent from the proposal entirely (FR-008).
+      required: [quote, verified]
+      properties:
+        quote:
+          type: string
+          description: The passage from the source document
+        verified:
+          type: boolean
+          description: >
+            Always true in stored evidence. Present so the shape is explicit
+            about what the verifier decided.
+
+    Conflict:
+      type: object
+      description: >
+        A disagreement within the source. Flagged, never resolved: choosing the
+        more likely reading would mean deciding what a user's career was
+        (FR-012b).
+      required: [fields, reason]
+      properties:
+        fields:
+          type: array
+          items: { type: string }
+        reason: { type: string }
