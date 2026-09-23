@@ -8,6 +8,16 @@
 
 **Input**: User description: "AI resume import — extract structured career information from a PDF, DOCX, or pasted text and deliver it into the Master Career Profile's review queue as proposed entries, so the user approves everything before it becomes part of their profile."
 
+## Clarifications
+
+### Session 2026-09-22
+
+- Q: How long is the source evidence for each extracted value retained, given the uploaded document itself is discarded? → A: Until the proposal is accepted or rejected, then discarded with the review decision
+- Q: Does an import complete while the user waits, or continue in the background? → A: Wait first, and hand off to the background if it takes longer than a few seconds
+- Q: What happens when a source document contradicts itself? → A: Propose what the document says, flag the conflict, and let the user resolve it in review
+- Q: What should a user see when the extraction service is unavailable? → A: Retry a few times automatically, then report that the service is unavailable and the document was not used
+- Q: Is a record of past imports kept once their proposals have been reviewed? → A: A minimal record — the kind of source and when it ran — without the filename
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Paste my career and let the system structure it (Priority: P1)
@@ -122,6 +132,11 @@ recorded as Japanese.
 - Text that gives a month and year but no day, or a year alone. The date is
   recorded at the precision stated, never padded to a precision the source does
   not support.
+- A resume states an end date earlier than its start date. Both are proposed as
+  written, with the conflict flagged, because the user knows which is wrong and
+  the system does not.
+- The same role appears twice with different dates. One entry is proposed, the
+  disagreement is flagged, and both readings are visible in the evidence.
 - Text listing a role with no employer, or an employer with no role. The entry is
   proposed with the missing field empty and marked as not found.
 - Overlapping roles in the source. Both are proposed; overlapping employment is
@@ -133,8 +148,17 @@ recorded as Japanese.
   possible duplicates.
 - Extraction fails part way through. No partial set of proposals is created; the
   user is told it failed and can try again.
+- The extraction service is briefly unavailable. The system retries and the user
+  never learns anything went wrong.
+- The extraction service stays unavailable. The user is told the service is down
+  rather than that their document was faulty, so they know to return later.
 - A user starts an import and navigates away. The import either completes and the
   proposals are waiting, or it fails and says so; it does not hang unresolved.
+- An import is handed off to the background and the user closes the browser
+  entirely. It still completes, and its outcome is waiting when they return.
+- A user starts a second import while the first is still running in the
+  background. Both run and both produce their own result; neither replaces the
+  other.
 
 ## Requirements *(mandatory)*
 
@@ -151,6 +175,15 @@ recorded as Japanese.
   finished or failed.
 - **FR-005**: The system MUST report progress while an import is running, and
   MUST reach a definite outcome — proposals created, or a stated reason why not.
+- **FR-005a**: An import MUST attempt to complete while the user waits. If it has
+  not finished within a few seconds, it MUST continue in the background and the
+  user MUST be free to leave the screen without losing it.
+- **FR-005b**: A user MUST be able to see that an import is still running, and
+  MUST be told when its proposals are ready, whether or not they stayed on the
+  screen.
+- **FR-005c**: An import that has been handed off MUST reach the same outcomes as
+  one completed in place. Being slow MUST NOT change what is produced, and MUST
+  NOT relax FR-017 — a failure in the background still creates no proposals.
 
 **Extracting**
 
@@ -172,6 +205,15 @@ recorded as Japanese.
   the original text as the evidence for that value.
 - **FR-012**: Where one document describes the same role more than once, the
   system MUST propose it once.
+- **FR-012a**: Where a source contradicts itself — the same role given different
+  dates, or a date range that ends before it begins — the system MUST propose
+  what the document states and MUST mark the conflict, naming the fields that
+  disagree.
+- **FR-012b**: The system MUST NOT resolve a contradiction by choosing the more
+  likely reading. Deciding what a user's career was, rather than reporting what
+  the document says, is the fabrication Principle IV forbids.
+- **FR-012c**: A flagged conflict MUST be resolvable by the user during review,
+  and the entry MUST be acceptable once they have corrected it.
 
 **Delivering into review**
 
@@ -182,10 +224,28 @@ recorded as Japanese.
   may reach the profile except by the user accepting it in review.
 - **FR-015**: Each proposal MUST carry its source evidence through to review, so
   the user can see what each value was based on before accepting it.
+- **FR-015a**: Source evidence MUST be discarded when its proposal is accepted or
+  rejected. It exists so the user can judge a value before accepting it; once
+  that judgement is made, retaining fragments of a resume — which may state
+  residence status, an address or a previous salary — serves no remaining
+  purpose.
+- **FR-015b**: Discarding evidence MUST NOT alter the accepted entry. What the
+  user approved stays in the profile exactly as approved.
 - **FR-016**: Where extraction produces nothing usable, the system MUST create no
   proposals and MUST tell the user what it could not find.
 - **FR-017**: Where extraction fails part way, the system MUST create no
   proposals at all rather than an incomplete set.
+- **FR-017a**: Where the extraction service is unavailable or does not respond,
+  the system MUST retry a limited number of times before giving up. A brief
+  outage MUST NOT cost the user their import.
+- **FR-017b**: Once retries are exhausted, the system MUST tell the user that the
+  service is unavailable and that their document was not used, distinguishing
+  this from a document it could not read. The two have different remedies: one
+  is worth trying again later, the other never will be.
+- **FR-017c**: The system MUST NOT retry indefinitely. A user MUST NOT be left
+  waiting on a recovery that may not come.
+- **FR-017d**: A failed import MUST leave nothing behind — no proposals, and no
+  retained document.
 
 **Keeping the user in control**
 
@@ -194,12 +254,22 @@ recorded as Japanese.
   the review queue.
 - **FR-019**: Users MUST be able to import more than once, and each import MUST be
   distinguishable in review by what it came from.
+- **FR-019a**: The system MUST keep a record of each import — the kind of source
+  and when it ran — after its proposals have been reviewed, so a user can see
+  where an entry in their profile originally came from.
+- **FR-019b**: That record MUST NOT include the uploaded filename. A name such as
+  the company someone was applying to reveals their job search, and nothing in
+  this feature needs it once extraction is done.
+- **FR-019c**: Import records MUST be erased with the profile, on the same terms
+  as the entries they produced.
 - **FR-020**: The system MUST NOT begin an import without the user starting it.
 
 ### Key Entities
 
 - **Import**: one attempt to bring career information in from a source, with its
-  kind — pasted text, PDF, DOCX — its outcome, and when it ran.
+  kind — pasted text, PDF, DOCX — its outcome, and when it ran. Deliberately not
+  the filename: it survives the import, and a name can reveal where someone was
+  applying.
 - **Extracted Entry**: a single piece of career information found in a source,
   before it becomes a proposal: what kind of entry it is, its fields, the
   language it was written in, and the evidence for each field.
@@ -218,15 +288,26 @@ recorded as Japanese.
 - **SC-002**: 100% of proposed field values can be shown alongside the source
   text they were taken from.
 - **SC-003**: 0% of proposed fields contain information that does not appear in
-  the source document.
+  the source document, including where the source contradicts itself.
+- **SC-003a**: 100% of self-contradictory entries are flagged rather than
+  silently resolved.
 - **SC-004**: 100% of extracted entries pass through review; none reach a profile
   without the user accepting them.
 - **SC-005**: A user importing a complete resume spends less than a quarter of
   the time they would have spent entering the same career by hand.
 - **SC-006**: 100% of uploaded documents are no longer held by the system once
   the import has finished or failed.
+- **SC-006a**: 100% of source evidence is discarded once its proposal has been
+  reviewed; none survives an accepted or rejected proposal.
 - **SC-007**: Every import reaches a stated outcome; none are left in an
-  indeterminate state.
+  indeterminate state, whether it finished while the user waited or after they
+  left the screen.
+- **SC-007a**: A user who leaves during an import finds its result waiting for
+  them, in 100% of cases.
+- **SC-007b**: A failed import leaves no proposals and no retained document, in
+  100% of cases.
+- **SC-009**: A user can tell where any profile entry originally came from, for
+  100% of entries created by import.
 - **SC-008**: 90% of users importing a resume accept at least one proposal
   without needing to correct it first.
 
