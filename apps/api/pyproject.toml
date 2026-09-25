@@ -12,6 +12,12 @@ dependencies = [
     "sqlalchemy>=2.0",
     "alembic>=1.13",
     "psycopg[binary]>=3.2",
+    # Deterministic document text extraction. Not a model task: using one would
+    # add a fabrication surface where none is needed (research.md R-005).
+    "pypdf>=5.0",
+    "python-docx>=1.1",
+    # Used only behind the AIProvider abstraction (constitution gate G12).
+    "openai>=1.50",
 ]
 
 [project.optional-dependencies]
@@ -35,3 +41,8 @@ packages = ["app"]
 # module skips them and this package never reaches sys.path. Declared here so
 # the suite runs from any working directory rather than only from this one.
 pythonpath = ["."]
+markers = [
+    # The one test that calls a real provider. Excluded by default: a test whose
+    # outcome depends on a model's mood tests nothing.
+    "live: calls a real model provider; requires a key and is skipped without one",
+]
