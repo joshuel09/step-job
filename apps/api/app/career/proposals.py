@@ -64,6 +64,26 @@ def get(
     return proposal
 
 
+def _record_decision(proposal: models.ProposedEntry, status: models.ProposalStatus) -> None:
+    """Mark a proposal reviewed and discard its evidence.
+
+    Feature 002 attaches, to each proposal, the passages of source text its
+    values came from. That evidence exists so the user can judge a value before
+    accepting it. Once the decision is made it is only a fragment of someone's
+    resume — which may state residence status, an address or a previous salary —
+    with no remaining purpose (FR-015a of feature 002).
+
+    Cleared here, in the same call that records the decision, so the two cannot
+    come apart: the caller commits one transaction, and a process dying
+    immediately afterwards cannot leave evidence behind a reviewed proposal.
+
+    The accepted entry is untouched. What the user approved stays as approved.
+    """
+    proposal.status = status
+    proposal.reviewed_at = datetime.now(UTC)
+    proposal.evidence = None
+
+
 def _require_pending(proposal: models.ProposedEntry) -> None:
     if proposal.is_reviewed:
         # Accepted and rejected are terminal: a decision is not revisited, and a
@@ -133,8 +153,7 @@ def accept(
     except TypeError as error:
         raise ValidationFailed([("payload", f"cannot be accepted as written: {error}")]) from error
 
-    proposal.status = models.ProposalStatus.accepted
-    proposal.reviewed_at = datetime.now(UTC)
+    _record_decision(proposal, models.ProposalStatus.accepted)
     session.flush()
 
     logger.info(
@@ -153,8 +172,7 @@ def reject(session: Session, profile: models.CareerProfile, proposal_id: uuid.UU
     proposal = get(session, profile, proposal_id)
     _require_pending(proposal)
 
-    proposal.status = models.ProposalStatus.rejected
-    proposal.reviewed_at = datetime.now(UTC)
+    _record_decision(proposal, models.ProposalStatus.rejected)
     session.flush()
 
     logger.info(
@@ -186,8 +204,7 @@ def merge(
 
     entry = service.update_experience(session, profile, target_entry_id, merged)
 
-    proposal.status = models.ProposalStatus.accepted
-    proposal.reviewed_at = datetime.now(UTC)
+    _record_decision(proposal, models.ProposalStatus.accepted)
     session.flush()
 
     logger.info(

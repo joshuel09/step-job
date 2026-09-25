@@ -190,6 +190,12 @@ class ProposedEntryOut(ORMModel):
     possible_duplicate_of: uuid.UUID | None = None
     reviewed_at: datetime | None = None
 
+    # Added by feature 002. Evidence is present only while the proposal awaits
+    # review; it is cleared when the decision is recorded.
+    import_id: uuid.UUID | None = None
+    evidence: dict | None = None
+    conflicts: list | None = None
+
 
 class ProposalAccept(BaseModel):
     payload: dict | None = None

@@ -84,3 +84,35 @@ def client(session) -> Iterator[TestClient]:
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
+
+
+# --- feature 002: the model boundary ----------------------------------------
+
+SAMPLE_RESUME = """\
+Software Engineer, Example Corp
+April 2021 to March 2024
+Built and maintained internal services.
+
+Skills: Ruby, PostgreSQL, TypeScript
+"""
+
+
+@pytest.fixture
+def source_text() -> str:
+    """Invented career text. No real person's details belong in a fixture."""
+    return SAMPLE_RESUME
+
+
+@pytest.fixture
+def fake_provider():
+    """A provider that never reaches the network.
+
+    Returns a factory so a test can pick the behaviour it needs — honest
+    extraction, a fabricated quote, a transient outage — without patching.
+    """
+    from app.ai.fake import FakeAIProvider
+
+    def make(behaviour: str = "extract", **kwargs):
+        return FakeAIProvider(behaviour, **kwargs)
+
+    return make

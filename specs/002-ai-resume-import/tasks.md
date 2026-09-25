@@ -36,13 +36,13 @@ so the diff to a shipped feature is deliberate and reviewable.
 **Purpose**: Configuration and the two mechanisms that currently protect only one
 contract and would silently stop protecting anything once a second appeared.
 
-- [ ] T001 Add the document and provider dependencies to `apps/api/pyproject.toml` — PDF and DOCX text extraction, and the provider client used only behind the abstraction
-- [ ] T002 [P] Add provider settings to `apps/api/app/core/settings.py` — which provider to use, its key, and the in-request deadline from research.md R-002, defaulting to the fake provider
+- [X] T001 Add the document and provider dependencies to `apps/api/pyproject.toml` — PDF and DOCX text extraction, and the provider client used only behind the abstraction
+- [X] T002 [P] Add provider settings to `apps/api/app/core/settings.py` — which provider to use, its key, and the in-request deadline from research.md R-002, defaulting to the fake provider
 - [ ] T003 [P] Document the provider key and deadline in `apps/api/.env.example`, without a value
-- [ ] T004 Rename the generated client to `packages/api-client/src/schema-001.ts` and re-export from `packages/api-client/src/index.ts`
-- [ ] T005 Extend the generation script in `packages/api-client/package.json` to produce one module per contract file, including `schema-002.ts`
-- [ ] T006 Update the staleness check in `.github/workflows/ci.yml` to diff the whole `packages/api-client/src/` directory rather than one named file
-- [ ] T007 Add a `live` pytest marker in `apps/api/pyproject.toml` so the one test that calls a real provider can be excluded by default
+- [X] T004 Rename the generated client to `packages/api-client/src/schema-001.ts` and re-export from `packages/api-client/src/index.ts`
+- [X] T005 Extend the generation script in `packages/api-client/package.json` to produce one module per contract file, including `schema-002.ts`
+- [X] T006 Update the staleness check in `.github/workflows/ci.yml` to diff the whole `packages/api-client/src/` directory rather than one named file
+- [X] T007 Add a `live` pytest marker in `apps/api/pyproject.toml` so the one test that calls a real provider can be excluded by default
 
 ---
 
@@ -55,28 +55,28 @@ enforceable, and the schema both stories write into.
 
 ### The model boundary (constitution gate G12)
 
-- [ ] T008 Define the extraction output schema in `apps/api/app/ai/schemas.py` — the structured shape a provider must return, with a quoted source passage required for every field it fills
-- [ ] T009 Define the `AIProvider` protocol in `apps/api/app/ai/provider.py`, the only thing feature code may import, with the three failure classes from research.md R-004 as distinct exceptions
-- [ ] T010 [P] Implement `apps/api/app/ai/fake.py` — scripted results with no network access, including behaviours for unavailable, unparseable, and a field whose quote is absent from the source
-- [ ] T011 [P] Implement `apps/api/app/ai/openai_provider.py` against the protocol, requesting structured output and translating provider errors into the protocol's failure classes
-- [ ] T012 Wire provider selection in `apps/api/app/ai/__init__.py` so the fake is the default and no feature module ever imports a provider directly
+- [X] T008 Define the extraction output schema in `apps/api/app/ai/schemas.py` — the structured shape a provider must return, with a quoted source passage required for every field it fills
+- [X] T009 Define the `AIProvider` protocol in `apps/api/app/ai/provider.py`, the only thing feature code may import, with the three failure classes from research.md R-004 as distinct exceptions
+- [X] T010 [P] Implement `apps/api/app/ai/fake.py` — scripted results with no network access, including behaviours for unavailable, unparseable, and a field whose quote is absent from the source
+- [X] T011 [P] Implement `apps/api/app/ai/openai_provider.py` against the protocol, requesting structured output and translating provider errors into the protocol's failure classes
+- [X] T012 Wire provider selection in `apps/api/app/ai/__init__.py` so the fake is the default and no feature module ever imports a provider directly
 
 ### The verifier
 
-- [ ] T013 Implement the evidence verifier in `apps/api/app/imports/evidence.py` — a field survives only if its quoted passage is found in the source text, whitespace-normalised and otherwise exact, per research.md R-001
+- [X] T013 Implement the evidence verifier in `apps/api/app/imports/evidence.py` — a field survives only if its quoted passage is found in the source text, whitespace-normalised and otherwise exact, per research.md R-001
 
 ### Changes to feature 001
 
-- [ ] T014 Add `evidence`, `conflicts` and `import_id` as nullable columns on `ProposedEntry` in `apps/api/app/career/models.py`, keeping proposals created by other means valid without them
-- [ ] T015 Clear `evidence` when a proposal is accepted or rejected in `apps/api/app/career/proposals.py`, inside the same transaction that records the decision, so FR-015a survives a process dying immediately afterwards
-- [ ] T016 Expose `evidence` and `conflicts` on the proposal response in `apps/api/app/career/schemas.py`
-- [ ] T017 [P] Extend the contract test in `apps/api/tests/contract/test_profile_sections.py` to read every contract file rather than one named path, per research.md R-006
+- [X] T014 Add `evidence`, `conflicts` and `import_id` as nullable columns on `ProposedEntry` in `apps/api/app/career/models.py`, keeping proposals created by other means valid without them
+- [X] T015 Clear `evidence` when a proposal is accepted or rejected in `apps/api/app/career/proposals.py`, inside the same transaction that records the decision, so FR-015a survives a process dying immediately afterwards
+- [X] T016 Expose `evidence` and `conflicts` on the proposal response in `apps/api/app/career/schemas.py`
+- [X] T017 [P] Extend the contract test in `apps/api/tests/contract/test_profile_sections.py` to read every contract file rather than one named path, per research.md R-006
 
 ### This feature's own foundation
 
-- [ ] T018 Create the `Import` model in `apps/api/app/imports/models.py` with typed status and source-kind enumerations and a typed failure reason, and deliberately no filename column per FR-019b
-- [ ] T019 Generate the Alembic migration in `apps/api/migrations/` covering the new import table and the three columns added to `proposed_entry`
-- [ ] T020 [P] Add fixtures to `apps/api/tests/conftest.py` providing a fake provider and a source text fixture
+- [X] T018 Create the `Import` model in `apps/api/app/imports/models.py` with typed status and source-kind enumerations and a typed failure reason, and deliberately no filename column per FR-019b
+- [X] T019 Generate the Alembic migration in `apps/api/migrations/` covering the new import table and the three columns added to `proposed_entry`
+- [X] T020 [P] Add fixtures to `apps/api/tests/conftest.py` providing a fake provider and a source text fixture
 
 **Checkpoint**: the boundary and the verifier exist — user story work can begin
 

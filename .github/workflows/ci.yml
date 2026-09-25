@@ -74,8 +74,15 @@ jobs:
       - name: Generated client is current
         run: |
           pnpm gen:api
-          git diff --exit-code packages/api-client/src/schema.ts \
+          # The whole directory, not one named file: a check that names a single
+          # contract does not fail when a second appears, it just stops covering
+          # it. --exit-code alone misses newly generated files, so untracked
+          # output is checked too.
+          git diff --exit-code packages/api-client/src/ \
             || { echo "::error::Generated client is stale. Run 'pnpm gen:api' and commit."; exit 1; }
+          test -z "$(git ls-files --others --exclude-standard packages/api-client/src/)" \
+            || { echo "::error::A contract generated a client that is not committed."; \
+                 git ls-files --others --exclude-standard packages/api-client/src/; exit 1; }
       - name: Translations complete
         run: pnpm --filter web check:messages
       - name: Web tests

@@ -393,6 +393,28 @@ class ProposedEntry(Entity, ProfileOwned):
     )
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
+    # Added by feature 002. All nullable, so proposals created by any other
+    # means — a test fixture, a future integration — remain valid without them.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), default=None, index=True
+    )
+
+    # Per field, the passage of source text the value was taken from. A field
+    # only appears here if that passage was verified against the source; an
+    # unverifiable field is absent from the proposal entirely rather than
+    # present with a warning.
+    #
+    # Cleared when the proposal is reviewed: evidence exists so a user can judge
+    # a value before accepting it, and afterwards it is only a fragment of
+    # someone's resume with no remaining purpose.
+    evidence: Mapped[dict | None] = mapped_column(JSONB, default=None)
+
+    # Fields whose values disagree within the source. Flagged, never resolved —
+    # choosing the likelier reading would mean deciding what a user's career
+    # was. Retained after review, because it holds no document text and is part
+    # of why a proposal was rejected.
+    conflicts: Mapped[list | None] = mapped_column(JSONB, default=None)
+
     @property
     def is_reviewed(self) -> bool:
         return self.status is not ProposalStatus.pending
