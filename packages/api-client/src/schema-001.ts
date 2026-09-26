@@ -1703,6 +1703,24 @@ export interface components {
             possible_duplicate_of?: string | null;
             /** Format: date-time */
             reviewed_at?: string | null;
+            /**
+             * Format: uuid
+             * @description The import that created this proposal, where one did.
+             */
+            import_id?: string | null;
+            /** @description Per field, the passage of source text the value came from. A field appears only if that passage was verified against the source; an unverifiable field is absent from the proposal entirely. Cleared when the proposal is reviewed, because afterwards it is a fragment of a resume with no purpose left. */
+            evidence?: {
+                [key: string]: {
+                    /** @description The passage of source text this value was taken from */
+                    quote: string;
+                    verified: boolean;
+                };
+            } | null;
+            /** @description Fields whose values disagree within the source. Flagged, never resolved: choosing the likelier reading would mean deciding what a user's career was. */
+            conflicts?: {
+                fields: string[];
+                reason: string;
+            }[] | null;
         };
         AcceptedProposal: {
             /** Format: uuid */

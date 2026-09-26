@@ -1055,6 +1055,47 @@ components:
                 overlapping date range (FR-032). A suggestion only.
             reviewed_at: { type: string, format: date-time, nullable: true }
 
+            # Added by feature 002. All nullable: a proposal created by any
+            # other means is valid without them.
+            import_id:
+              type: string
+              format: uuid
+              nullable: true
+              description: The import that created this proposal, where one did.
+            evidence:
+              type: object
+              nullable: true
+              additionalProperties:
+                type: object
+                required: [quote, verified]
+                properties:
+                  quote:
+                    type: string
+                    description: The passage of source text this value was taken from
+                  verified:
+                    type: boolean
+              description: >
+                Per field, the passage of source text the value came from. A
+                field appears only if that passage was verified against the
+                source; an unverifiable field is absent from the proposal
+                entirely. Cleared when the proposal is reviewed, because
+                afterwards it is a fragment of a resume with no purpose left.
+            conflicts:
+              type: array
+              nullable: true
+              items:
+                type: object
+                required: [fields, reason]
+                properties:
+                  fields:
+                    type: array
+                    items: { type: string }
+                  reason: { type: string }
+              description: >
+                Fields whose values disagree within the source. Flagged, never
+                resolved: choosing the likelier reading would mean deciding what
+                a user's career was.
+
     AcceptedProposal:
       type: object
       properties:

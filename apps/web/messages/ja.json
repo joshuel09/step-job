@@ -179,8 +179,44 @@
         "skill": "スキル",
         "language": "語学",
         "career_story": "実績ストーリー"
+      },
+      "fromSource": "文書の該当箇所",
+      "conflict": "文書内で記載が矛盾しています：{reason}。追加する前に修正してください。"
+    },
+    "reviewNav": "確認待ち",
+    "import": {
+      "title": "経歴の取り込み",
+      "subtitle": "すでに書いたものがあれば、入力し直さずに取り込めます。",
+      "back": "プロフィールに戻る",
+      "pasteTitle": "経歴を貼り付ける",
+      "pasteExplanation": "職務経歴書、求人サイトのプロフィール、これまでに書いた経歴など、何でも貼り付けてください。読み取った内容をお見せします。承認するまでプロフィールには反映されません。",
+      "pastePlaceholder": "経歴に関する内容をここに貼り付けてください。",
+      "read": "読み取る",
+      "reading": "読み取り中…",
+      "found": "{count}件の項目が見つかりました",
+      "notFound": "見つからなかった項目：{kinds}",
+      "nothingAddedYet": "まだプロフィールには追加されていません。内容を確認してから判断してください。",
+      "goToReview": "読み取り結果を確認する",
+      "historyTitle": "取り込み履歴",
+      "sources": {
+        "pasted_text": "貼り付けたテキスト",
+        "pdf": "PDF",
+        "docx": "Word 文書"
+      },
+      "statuses": {
+        "pending": "開始中",
+        "running": "読み取り中",
+        "completed": "完了",
+        "failed": "未完了"
+      },
+      "failures": {
+        "unreadable_document": "この文書を読み取れませんでした。文字情報のないスキャン画像の可能性があります。",
+        "unsupported_format": "この形式のファイルは読み取れません。",
+        "no_career_information": "読み取りましたが、確認できる経歴情報が見つかりませんでした。",
+        "service_unavailable": "読み取りサービスが現在利用できません。文書は使用されていません。しばらくしてからお試しください。",
+        "extraction_failed": "読み取り中に問題が発生しました。もう一度お試しください。"
       }
     },
-    "reviewNav": "確認待ち"
+    "importNav": "取り込み"
   }
 }

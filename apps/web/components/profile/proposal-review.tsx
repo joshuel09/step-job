@@ -50,6 +50,8 @@ export function ProposalReview({
         const payload = proposal.payload as Record<string, string>;
         const corrections = editing[proposal.id!] ?? {};
         const duplicate = experiences.find((e) => e.id === proposal.possible_duplicate_of);
+        const evidence = proposal.evidence as Record<string, { quote: string }> | null;
+        const conflicts = (proposal.conflicts ?? []) as { fields?: string[]; reason: string }[];
         const busy = pending === proposal.id;
 
         return (
@@ -75,17 +77,48 @@ export function ProposalReview({
               </p>
             )}
 
+            {conflicts.length > 0 && (
+              <ul
+                role="alert"
+                className="mb-3 rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+              >
+                {/* Flagged, not resolved. The document disagrees with itself and
+                    the user knows which reading is right (FR-012a). */}
+                {conflicts.map((conflict, index) => (
+                  <li key={index}>{t("conflict", { reason: conflict.reason })}</li>
+                ))}
+              </ul>
+            )}
+
             <div className="flex flex-col gap-2">
-              {Object.entries(payload).map(([field, value]) => (
-                <label key={field} className="flex flex-col gap-1">
-                  <span className="text-xs font-medium opacity-70">{field}</span>
-                  <input
-                    defaultValue={String(value ?? "")}
-                    onChange={(event) => edit(proposal.id!, field, event.target.value)}
-                    className="rounded border border-neutral-300 bg-transparent px-2 py-1 text-sm dark:border-neutral-700"
-                  />
-                </label>
-              ))}
+              {Object.entries(payload).map(([field, value]) => {
+                const quote = evidence?.[field]?.quote;
+                const conflicted = conflicts.some((c) => c.fields?.includes(field));
+
+                return (
+                  <label key={field} className="flex flex-col gap-1">
+                    <span className="text-xs font-medium opacity-70">{field}</span>
+                    <input
+                      defaultValue={String(value ?? "")}
+                      onChange={(event) => edit(proposal.id!, field, event.target.value)}
+                      aria-invalid={conflicted || undefined}
+                      className={`rounded border bg-transparent px-2 py-1 text-sm ${
+                        conflicted
+                          ? "border-amber-500"
+                          : "border-neutral-300 dark:border-neutral-700"
+                      }`}
+                    />
+                    {/* The passage this value was taken from. A user should be
+                        able to see a value was read rather than guessed — which
+                        is the whole reason the extraction records it. */}
+                    {quote && (
+                      <span className="text-xs italic opacity-60">
+                        {t("fromSource")}: “{quote}”
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
