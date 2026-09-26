@@ -94,28 +94,28 @@ and 2.
 
 ### Tests for User Story 1
 
-- [ ] T021 [P] [US1] Unit tests for the evidence verifier in `apps/api/tests/unit/test_evidence.py` — a present quote survives, an absent quote is dropped, a missing quote is dropped, whitespace differences are tolerated, a near-miss is dropped
-- [ ] T022 [P] [US1] Integration test for quickstart Scenario 2 in `apps/api/tests/integration/test_extraction_truthfulness.py`, proving a fabricated field never becomes a proposal
-- [ ] T023 [P] [US1] Integration test for quickstart Scenario 1 in `apps/api/tests/integration/test_import_pasted_text.py`, including the check that proposals are invisible to the profile
-- [ ] T024 [P] [US1] Integration test for quickstart Scenario 7 in `apps/api/tests/integration/test_evidence_lifecycle.py`, proving evidence is discarded at review and the accepted entry is unchanged
-- [ ] T025 [P] [US1] Contract tests for the import routes in `apps/api/tests/contract/test_imports.py`
+- [X] T021 [P] [US1] Unit tests for the evidence verifier in `apps/api/tests/unit/test_evidence.py` — a present quote survives, an absent quote is dropped, a missing quote is dropped, whitespace differences are tolerated, a near-miss is dropped
+- [X] T022 [P] [US1] Integration test for quickstart Scenario 2 in `apps/api/tests/integration/test_extraction_truthfulness.py`, proving a fabricated field never becomes a proposal
+- [X] T023 [P] [US1] Integration test for quickstart Scenario 1 in `apps/api/tests/integration/test_import_pasted_text.py`, including the check that proposals are invisible to the profile
+- [X] T024 [P] [US1] Integration test for quickstart Scenario 7 in `apps/api/tests/integration/test_evidence_lifecycle.py`, proving evidence is discarded at review and the accepted entry is unchanged
+- [X] T025 [P] [US1] Contract tests for the import routes in `apps/api/tests/contract/test_imports.py`
 
 ### Implementation for User Story 1
 
-- [ ] T026 [US1] Write the extraction prompt in `apps/api/app/imports/prompts.py`, with a docstring naming the verifier as the enforcement so constitution gate G13 has a defined place to check
-- [ ] T027 [US1] Implement conflict detection in `apps/api/app/imports/conflicts.py` — flag fields that disagree, never resolve them, per FR-012a and FR-012b
-- [ ] T028 [US1] Implement extraction orchestration in `apps/api/app/imports/extraction.py`: source text in, verified entries out, with unverifiable fields dropped before anything is built
-- [ ] T029 [US1] Implement within-document deduplication in `apps/api/app/imports/extraction.py` so a role described twice is proposed once, per FR-012
-- [ ] T030 [US1] Implement the import lifecycle in `apps/api/app/imports/service.py` — states, the in-request deadline, and the outcome record from FR-016
-- [ ] T031 [US1] Implement proposal creation from verified entries in `apps/api/app/imports/service.py`, writing only to the proposal table and never to the profile
-- [ ] T032 [US1] Define request and response models in `apps/api/app/imports/schemas.py` matching `contracts/openapi.yaml`
-- [ ] T033 [US1] Implement the paste and read routes in `apps/api/app/imports/router.py` — create from text, list, and follow one to its outcome
-- [ ] T034 [US1] Register the import router in `apps/api/app/main.py`
-- [ ] T035 [US1] Regenerate both typed clients into `packages/api-client/src/`
-- [ ] T036 [P] [US1] Build the paste form in `apps/web/components/profile/import-form.tsx`
-- [ ] T037 [P] [US1] Build the import page in `apps/web/app/[locale]/profile/import/page.tsx`
-- [ ] T038 [US1] Show evidence and conflicts beside each proposed value in `apps/web/components/profile/proposal-review.tsx`, so a user can see what a value was based on before accepting it
-- [ ] T039 [P] [US1] Add the English and Japanese strings for User Story 1 to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
+- [X] T026 [US1] Write the extraction prompt in `apps/api/app/imports/prompts.py`, with a docstring naming the verifier as the enforcement so constitution gate G13 has a defined place to check
+- [X] T027 [US1] Implement conflict detection in `apps/api/app/imports/conflicts.py` — flag fields that disagree, never resolve them, per FR-012a and FR-012b
+- [X] T028 [US1] Implement extraction orchestration in `apps/api/app/imports/extraction.py`: source text in, verified entries out, with unverifiable fields dropped before anything is built
+- [X] T029 [US1] Implement within-document deduplication in `apps/api/app/imports/extraction.py` so a role described twice is proposed once, per FR-012
+- [X] T030 [US1] Implement the import lifecycle in `apps/api/app/imports/service.py` — states, the in-request deadline, and the outcome record from FR-016
+- [X] T031 [US1] Implement proposal creation from verified entries in `apps/api/app/imports/service.py`, writing only to the proposal table and never to the profile
+- [X] T032 [US1] Define request and response models in `apps/api/app/imports/schemas.py` matching `contracts/openapi.yaml`
+- [X] T033 [US1] Implement the paste and read routes in `apps/api/app/imports/router.py` — create from text, list, and follow one to its outcome
+- [X] T034 [US1] Register the import router in `apps/api/app/main.py`
+- [X] T035 [US1] Regenerate both typed clients into `packages/api-client/src/`
+- [X] T036 [P] [US1] Build the paste form in `apps/web/components/profile/import-form.tsx`
+- [X] T037 [P] [US1] Build the import page in `apps/web/app/[locale]/profile/import/page.tsx`
+- [X] T038 [US1] Show evidence and conflicts beside each proposed value in `apps/web/components/profile/proposal-review.tsx`, so a user can see what a value was based on before accepting it
+- [X] T039 [P] [US1] Add the English and Japanese strings for User Story 1 to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
 
 **Checkpoint**: pasting works end to end, and a fabricated field cannot reach a proposal
 

@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from app.career.router import router as career_router
 from app.core.errors import AppError, app_error_handler
 from app.core.logging import configure as configure_logging
+from app.imports.router import router as imports_router
 
 configure_logging()
 
@@ -24,3 +25,4 @@ async def health() -> dict[str, str]:
 
 
 app.include_router(career_router)
+app.include_router(imports_router)

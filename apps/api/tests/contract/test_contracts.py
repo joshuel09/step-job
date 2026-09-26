@@ -27,13 +27,9 @@ SPECS = Path(__file__).resolve().parents[4] / "specs"
 # failure.
 DEFERRED: dict[str, set[str]] = {
     "001-master-career-profile": set(),
-    # Feature 002 is mid-implementation: the import routes arrive with User
-    # Story 1. Remove these as they land.
+    # Feature 002 is mid-implementation: file upload arrives with User Story 2.
     "002-ai-resume-import": {
-        "/profile/imports",
         "/profile/imports/upload",
-        "/profile/imports/{import_id}",
-        "/profile/imports/{import_id}/cancel",
     },
 }
 

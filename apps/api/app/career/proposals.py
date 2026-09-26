@@ -119,6 +119,38 @@ def submit(
     return created
 
 
+# What each kind of entry cannot be created without. A proposal may legitimately
+# lack these — feature 002 leaves a field empty when the source does not support
+# it, which is the correct behaviour — so acceptance has to say which field is
+# missing rather than failing at the database.
+REQUIRED_ON_ACCEPT: dict[models.ProposedEntryType, tuple[str, ...]] = {
+    models.ProposedEntryType.work_experience: ("employer_name", "job_title", "started_on"),
+    models.ProposedEntryType.education: ("institution",),
+    models.ProposedEntryType.certification: ("name",),
+    models.ProposedEntryType.skill: ("name",),
+    models.ProposedEntryType.language: ("language", "proficiency"),
+    models.ProposedEntryType.career_story: ("title", "challenge", "action", "result"),
+}
+
+
+def _check_acceptable(proposal: models.ProposedEntry, payload: dict) -> None:
+    """Refuse an incomplete proposal with the field named.
+
+    An import that found no start date produces a proposal without one, and a
+    user completing it in review is the intended path (FR-012c of feature 002).
+    What must not happen is the request failing with a database error that tells
+    them nothing about which field to fill in.
+    """
+    missing = [
+        name
+        for name in REQUIRED_ON_ACCEPT.get(proposal.entry_type, ())
+        if payload.get(name) in (None, "")
+    ]
+    if missing:
+        reason = "is required before this entry can be added to your profile"
+        raise ValidationFailed([(name, reason) for name in missing])
+
+
 def _build_entry(
     session: Session, profile: models.CareerProfile, proposal: models.ProposedEntry, payload: dict
 ) -> Any:
@@ -147,6 +179,7 @@ def accept(
     _require_pending(proposal)
 
     payload = {**proposal.payload, **(corrections or {})}
+    _check_acceptable(proposal, payload)
 
     try:
         entry = _build_entry(session, profile, proposal, payload)

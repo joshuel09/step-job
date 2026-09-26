@@ -179,8 +179,44 @@
         "skill": "Skill",
         "language": "Language",
         "career_story": "Career story"
+      },
+      "fromSource": "From your document",
+      "conflict": "Your document disagrees with itself here: {reason}. Please correct it before adding this."
+    },
+    "reviewNav": "Review queue",
+    "import": {
+      "title": "Import your career",
+      "subtitle": "Bring in what you have already written rather than typing it again.",
+      "back": "Back to profile",
+      "pasteTitle": "Paste your career",
+      "pasteExplanation": "Paste a resume, a profile from a job site, or anything you have written about your work. We read it and show you what we found — nothing joins your profile until you approve it.",
+      "pastePlaceholder": "Paste anything about your career here.",
+      "read": "Read this",
+      "reading": "Reading…",
+      "found": "Found {count} entries to review",
+      "notFound": "Nothing found for: {kinds}",
+      "nothingAddedYet": "Nothing has been added to your profile yet. Review what we found to decide.",
+      "goToReview": "Review what was found",
+      "historyTitle": "Past imports",
+      "sources": {
+        "pasted_text": "Pasted text",
+        "pdf": "PDF",
+        "docx": "Word document"
+      },
+      "statuses": {
+        "pending": "Starting",
+        "running": "Reading",
+        "completed": "Done",
+        "failed": "Did not finish"
+      },
+      "failures": {
+        "unreadable_document": "We could not read that document. It may be a scan with no text in it.",
+        "unsupported_format": "We cannot read that kind of file.",
+        "no_career_information": "We read it, but found no career information we could confirm.",
+        "service_unavailable": "The service that reads documents is unavailable right now. Your document was not used — please try again later.",
+        "extraction_failed": "Something went wrong reading that. Please try again."
       }
     },
-    "reviewNav": "Review queue"
+    "importNav": "Import"
   }
 }

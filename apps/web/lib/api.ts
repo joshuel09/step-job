@@ -1,6 +1,7 @@
-import type { components } from "@step-job/api-client";
+import type { Components002, components } from "@step-job/api-client";
 
 type Schemas = components["schemas"];
+type ImportSchemas = Components002["schemas"];
 
 export type Profile = Schemas["Profile"];
 export type Identity = Schemas["Identity"];
@@ -13,6 +14,7 @@ export type Language = Schemas["Language"];
 export type CareerPreference = Schemas["CareerPreference"];
 export type CareerStory = Schemas["CareerStory"];
 export type ProposedEntry = Schemas["ProposedEntry"];
+export type CareerImport = ImportSchemas["ImportDetail"];
 export type Locale = Schemas["Locale"];
 
 /**
@@ -122,6 +124,13 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ target_entry_id, payload: payload ?? null }),
     }),
+
+  listImports: () => request<CareerImport[]>("/profile/imports"),
+  getImport: (id: string) => request<CareerImport>(`/profile/imports/${id}`),
+  importText: (text: string) =>
+    request<CareerImport>("/profile/imports", { method: "POST", body: JSON.stringify({ text }) }),
+  cancelImport: (id: string) =>
+    request<CareerImport>(`/profile/imports/${id}/cancel`, { method: "POST" }),
 
   deleteProfile: () =>
     request<{ erased_immediately: string[]; recoverable_until: string }>("/profile", {
