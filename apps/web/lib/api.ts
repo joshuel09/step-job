@@ -125,6 +125,30 @@ export const api = {
       body: JSON.stringify({ target_entry_id, payload: payload ?? null }),
     }),
 
+  uploadImport: async (file: File): Promise<CareerImport> => {
+    // Multipart: the browser sets its own Content-Type with the boundary, so
+    // the JSON default from `request` cannot be used here.
+    const body = new FormData();
+    body.append("file", file);
+
+    const response = await fetch(`${BASE}/profile/imports/upload`, {
+      method: "POST",
+      body,
+      credentials: "include",
+      cache: "no-store",
+    });
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new ApiError(
+        response.status,
+        payload?.code ?? "error",
+        payload?.message ?? response.statusText,
+      );
+    }
+    return payload as CareerImport;
+  },
+
   listImports: () => request<CareerImport[]>("/profile/imports"),
   getImport: (id: string) => request<CareerImport>(`/profile/imports/${id}`),
   importText: (text: string) =>

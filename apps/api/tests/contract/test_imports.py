@@ -14,8 +14,8 @@ CONTRACT = (
     / "openapi.yaml"
 )
 
-# Arrives with User Story 2.
-DEFERRED = {"/profile/imports/upload"}
+# Nothing deferred: every documented import path is implemented.
+DEFERRED: set[str] = set()
 
 
 @pytest.fixture(scope="module")

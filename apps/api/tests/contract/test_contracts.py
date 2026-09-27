@@ -27,10 +27,9 @@ SPECS = Path(__file__).resolve().parents[4] / "specs"
 # failure.
 DEFERRED: dict[str, set[str]] = {
     "001-master-career-profile": set(),
-    # Feature 002 is mid-implementation: file upload arrives with User Story 2.
-    "002-ai-resume-import": {
-        "/profile/imports/upload",
-    },
+    # Every documented path in both features is implemented. Kept as empty
+    # sets so a future story defers a path deliberately rather than by omission.
+    "002-ai-resume-import": set(),
 }
 
 

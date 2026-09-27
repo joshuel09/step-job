@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { api, ValidationError, type CareerImport } from "@/lib/api";
+import { api, ApiError, ValidationError, type CareerImport } from "@/lib/api";
 
 import { Section, SubmitButton, TextArea, toFieldErrors, type FieldErrors } from "./form-primitives";
 
@@ -64,8 +64,70 @@ export function ImportForm({ onComplete }: { onComplete?: (result: CareerImport)
         <SubmitButton pending={pending}>{pending ? t("reading") : t("read")}</SubmitButton>
       </form>
 
+      <hr className="my-5 border-neutral-200 dark:border-neutral-800" />
+
+      <UploadField
+        onResult={(imported) => {
+          setResult(imported);
+          onComplete?.(imported);
+          router.refresh();
+        }}
+      />
+
       {result && <ImportResult result={result} />}
     </Section>
+  );
+}
+
+const ACCEPTED = ".pdf,.docx";
+
+function UploadField({ onResult }: { onResult: (result: CareerImport) => void }) {
+  const t = useTranslations("profile.import");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setPending(true);
+    setError(null);
+    try {
+      onResult(await api.uploadImport(file));
+    } catch (caught) {
+      // 413 and 415 are refusals with a reason the user can act on, not faults.
+      if (caught instanceof ApiError) setError(caught.message);
+      else throw caught;
+    } finally {
+      setPending(false);
+      event.target.value = "";
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="text-sm font-medium">{t("uploadTitle")}</h3>
+      {/* The accepted formats are stated before the user tries, per FR-003. */}
+      <p className="text-xs opacity-70">{t("uploadExplanation")}</p>
+
+      <label className="flex flex-col gap-1">
+        <span className="sr-only">{t("uploadTitle")}</span>
+        <input
+          type="file"
+          accept={ACCEPTED}
+          disabled={pending}
+          onChange={onChange}
+          className="text-sm file:mr-3 file:rounded file:border file:border-neutral-300 file:bg-transparent file:px-3 file:py-1.5 file:text-sm dark:file:border-neutral-700"
+        />
+      </label>
+
+      {pending && <p className="text-xs opacity-70">{t("reading")}</p>}
+      {error && (
+        <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 

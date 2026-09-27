@@ -24,6 +24,7 @@ from app.ai.schemas import (
 )
 
 _DATE = re.compile(r"\b(19|20)\d{2}\b|令和|平成|昭和")
+_ROLE = re.compile(r"engineer|developer|designer|manager|エンジニア|デザイナー", re.I)
 
 
 class FakeBehaviour(enum.StrEnum):
@@ -89,7 +90,16 @@ class FakeAIProvider:
         return ExtractionResult(entries=[self._entry(text)], not_found=[])
 
     def _entry(self, text: str) -> ExtractedEntry:
-        first_line = next((line for line in text.splitlines() if line.strip()), text)
+        lines = [line for line in text.splitlines() if line.strip()]
+
+        # A role line, wherever it appears. A document does not helpfully open
+        # with one — a resume usually starts with a name — so scanning for it
+        # is what a real extraction does and what keeps the fake honest against
+        # fixtures as well as pasted snippets.
+        first_line = next(
+            (line for line in lines if "," in line and _ROLE.search(line)),
+            next(iter(lines), text),
+        )
         language = SourceLanguage.ja if re.search(r"[ぁ-んァ-ン一-龯]", text) else SourceLanguage.en
 
         quote = self._quote(first_line)
