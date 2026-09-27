@@ -215,7 +215,9 @@
         "no_career_information": "We read it, but found no career information we could confirm.",
         "service_unavailable": "The service that reads documents is unavailable right now. Your document was not used — please try again later.",
         "extraction_failed": "Something went wrong reading that. Please try again."
-      }
+      },
+      "uploadTitle": "Or upload a file",
+      "uploadExplanation": "PDF or Word documents. We read the text and do not keep the file — you already have the original."
     },
     "importNav": "Import"
   }

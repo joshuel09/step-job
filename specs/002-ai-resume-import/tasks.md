@@ -131,20 +131,20 @@ equivalent proposals; nothing was persisted. Covers quickstart Scenarios 3 and 6
 
 ### Tests for User Story 2
 
-- [ ] T040 [P] [US2] Unit tests for document text extraction in `apps/api/tests/unit/test_documents.py`, including the no-text-layer threshold that distinguishes a scanned page from a readable one
-- [ ] T041 [P] [US2] Integration test for quickstart Scenario 3 in `apps/api/tests/integration/test_import_upload.py`, asserting nothing was written to disk
-- [ ] T042 [P] [US2] Integration test for quickstart Scenario 6 in `apps/api/tests/integration/test_import_failures.py`, proving a service outage is reported as unavailable rather than as an unreadable document, with retries bounded and nothing left behind
-- [ ] T043 [P] [US2] Add invented-content test fixtures in `apps/api/tests/fixtures/` — a readable PDF, a DOCX, and a PDF with no text layer
+- [X] T040 [P] [US2] Unit tests for document text extraction in `apps/api/tests/unit/test_documents.py`, including the no-text-layer threshold that distinguishes a scanned page from a readable one
+- [X] T041 [P] [US2] Integration test for quickstart Scenario 3 in `apps/api/tests/integration/test_import_upload.py`, asserting nothing was written to disk
+- [X] T042 [P] [US2] Integration test for quickstart Scenario 6 in `apps/api/tests/integration/test_import_failures.py`, proving a service outage is reported as unavailable rather than as an unreadable document, with retries bounded and nothing left behind
+- [X] T043 [P] [US2] Add invented-content test fixtures in `apps/api/tests/fixtures/` — a readable PDF, a DOCX, and a PDF with no text layer
 
 ### Implementation for User Story 2
 
-- [ ] T044 [US2] Implement PDF and DOCX text extraction in `apps/api/app/imports/documents.py`, reading bytes from the upload and releasing them without writing, per research.md R-005
-- [ ] T045 [US2] Implement unreadable and unsupported detection in `apps/api/app/imports/documents.py`, returning the distinct failure reasons from data-model.md
-- [ ] T046 [US2] Implement bounded retry in `apps/api/app/imports/service.py`, separating an unavailable service from an unusable response, per FR-017a to FR-017c
-- [ ] T047 [US2] Implement the upload route in `apps/api/app/imports/router.py`, the project's first multipart endpoint, with a size limit
-- [ ] T048 [US2] Regenerate both typed clients into `packages/api-client/src/`
-- [ ] T049 [P] [US2] Add file upload to `apps/web/components/profile/import-form.tsx` with the accepted formats stated before the user tries, per FR-003
-- [ ] T050 [P] [US2] Add the English and Japanese strings for User Story 2 to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
+- [X] T044 [US2] Implement PDF and DOCX text extraction in `apps/api/app/imports/documents.py`, reading bytes from the upload and releasing them without writing, per research.md R-005
+- [X] T045 [US2] Implement unreadable and unsupported detection in `apps/api/app/imports/documents.py`, returning the distinct failure reasons from data-model.md
+- [X] T046 [US2] Implement bounded retry in `apps/api/app/imports/service.py`, separating an unavailable service from an unusable response, per FR-017a to FR-017c
+- [X] T047 [US2] Implement the upload route in `apps/api/app/imports/router.py`, the project's first multipart endpoint, with a size limit
+- [X] T048 [US2] Regenerate both typed clients into `packages/api-client/src/`
+- [X] T049 [P] [US2] Add file upload to `apps/web/components/profile/import-form.tsx` with the accepted formats stated before the user tries, per FR-003
+- [X] T050 [P] [US2] Add the English and Japanese strings for User Story 2 to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
 
 **Checkpoint**: file import works, and no document is ever at rest
 

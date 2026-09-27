@@ -101,6 +101,33 @@ def cancel(session: Session, profile: career_models.CareerProfile, import_id: uu
     return record
 
 
+def read_document(
+    session: Session,
+    record: Import,
+    data: bytes,
+    filename: str | None,
+    content_type: str | None,
+) -> str:
+    """Turn an uploaded document into text, or fail saying which problem it is.
+
+    The distinction matters more than it looks. "We could not read your
+    document" and "our service is down" produce the same blank result, and only
+    one of them is worth coming back for.
+    """
+    from app.imports.documents import DocumentError, DocumentProblem, extract_text
+
+    try:
+        return extract_text(data, filename, content_type)
+    except DocumentError as error:
+        reason = {
+            DocumentProblem.unreadable: FailureReason.unreadable_document,
+            DocumentProblem.unsupported: FailureReason.unsupported_format,
+            DocumentProblem.too_large: FailureReason.unsupported_format,
+        }[error.problem]
+        fail(session, record, reason, error.message)
+        raise
+
+
 def run(
     session: Session,
     profile: career_models.CareerProfile,

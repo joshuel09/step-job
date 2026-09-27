@@ -16,6 +16,9 @@ dependencies = [
     # add a fabrication surface where none is needed (research.md R-005).
     "pypdf>=5.0",
     "python-docx>=1.1",
+    # Required by FastAPI for the upload route, this project's first multipart
+    # endpoint. Without it the route raises at import time, not at request time.
+    "python-multipart>=0.0.12",
     # Used only behind the AIProvider abstraction (constitution gate G12).
     "openai>=1.50",
 ]
@@ -27,6 +30,8 @@ dev = [
     "httpx>=0.27",
     "ruff>=0.6",
     "pyyaml>=6.0",
+    # Generates the document fixtures; see tests/fixtures/make_fixtures.py.
+    "reportlab>=4.2",
 ]
 
 [build-system]

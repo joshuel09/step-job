@@ -8,13 +8,14 @@ read someone else's imports.
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.career import service as career_service
 from app.core.identity import CallerIdentity, current_identity
 from app.db.session import get_session
 from app.imports import schemas, service
+from app.imports.documents import DocumentError, DocumentProblem
 from app.imports.models import ImportStatus, SourceKind
 
 router = APIRouter(prefix="/api/v1", tags=["imports"])
@@ -50,6 +51,53 @@ def create_paste_import(session: Db, caller: Caller, body: schemas.PasteImportIn
 
     record = service.create(session, profile, SourceKind.pasted_text)
     service.run(session, profile, record, body.text)
+    return record
+
+
+@router.post(
+    "/profile/imports/upload",
+    response_model=schemas.ImportDetailOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_upload_import(
+    session: Db, caller: Caller, file: Annotated[UploadFile, File()]
+):
+    """Import from a PDF or DOCX.
+
+    The document is read into memory, its text extracted, and its bytes
+    released when this handler returns. Nothing writes it to disk or to object
+    storage, so there is nothing to delete afterwards and no failure path that
+    leaves a resume at rest (FR-004).
+
+    The filename is used to help identify the format and is then discarded. It
+    is never stored: a name such as the company someone was applying to reveals
+    their job search (FR-019b).
+    """
+    profile = career_service.require_profile(session, caller.user_id)
+
+    data = await file.read()
+
+    kind = SourceKind.pdf if (file.content_type or "").endswith("pdf") else SourceKind.docx
+    record = service.create(session, profile, kind)
+
+    try:
+        text = service.read_document(session, record, data, file.filename, file.content_type)
+    except DocumentError as error:
+        # The import record already carries the reason; the response says which
+        # kind of problem it was so the client can respond appropriately.
+        if error.problem is DocumentProblem.too_large:
+            raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, error.message) from error
+        if error.problem is DocumentProblem.unsupported:
+            raise HTTPException(
+                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, error.message
+            ) from error
+        return record
+    finally:
+        # Explicit, though the reference would go out of scope anyway: the point
+        # of this handler is that the document does not outlive the request.
+        del data
+
+    service.run(session, profile, record, text)
     return record
 
 
