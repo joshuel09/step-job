@@ -161,16 +161,16 @@ quickstart Scenario 8.
 
 ### Tests for User Story 3
 
-- [ ] T051 [P] [US3] Unit tests for era-year conversion in `apps/api/tests/unit/test_dates.py`, covering each era, a boundary year, and an unrecognised era failing visibly rather than producing a confident wrong year
-- [ ] T052 [P] [US3] Integration test for quickstart Scenario 8 in `apps/api/tests/integration/test_import_japanese.py`, asserting the converted date, the original text as evidence, and that nothing was translated
-- [ ] T053 [P] [US3] Add an invented 職務経歴書 fixture in `apps/api/tests/fixtures/`
+- [X] T051 [P] [US3] Unit tests for era-year conversion in `apps/api/tests/unit/test_dates.py`, covering each era, a boundary year, and an unrecognised era failing visibly rather than producing a confident wrong year
+- [X] T052 [P] [US3] Integration test for quickstart Scenario 8 in `apps/api/tests/integration/test_import_japanese.py`, asserting the converted date, the original text as evidence, and that nothing was translated
+- [X] T053 [P] [US3] Add an invented 職務経歴書 fixture in `apps/api/tests/fixtures/`
 
 ### Implementation for User Story 3
 
-- [ ] T054 [US3] Implement deterministic era-year conversion in `apps/api/app/imports/dates.py`, per research.md R-007, with the original text preserved as the evidence for the converted value
-- [ ] T055 [US3] Implement source-language detection per entry in `apps/api/app/imports/extraction.py`, with no translation step, per FR-010
-- [ ] T056 [US3] Extend the extraction prompt in `apps/api/app/imports/prompts.py` to read Japanese resume conventions as structure, restating in its docstring how Principle IV is preserved, per gate G13
-- [ ] T057 [P] [US3] Add the English and Japanese strings for User Story 3 to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
+- [X] T054 [US3] Implement deterministic era-year conversion in `apps/api/app/imports/dates.py`, per research.md R-007, with the original text preserved as the evidence for the converted value
+- [X] T055 [US3] Implement source-language detection per entry in `apps/api/app/imports/extraction.py`, with no translation step, per FR-010
+- [X] T056 [US3] Extend the extraction prompt in `apps/api/app/imports/prompts.py` to read Japanese resume conventions as structure, restating in its docstring how Principle IV is preserved, per gate G13
+- [X] T057 [P] [US3] Add the English and Japanese strings for User Story 3 to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
 
 **Checkpoint**: all three stories work independently
 

@@ -25,6 +25,9 @@ from app.ai.schemas import (
 
 _DATE = re.compile(r"\b(19|20)\d{2}\b|令和|平成|昭和")
 _ROLE = re.compile(r"engineer|developer|designer|manager|エンジニア|デザイナー", re.I)
+# Japanese documents separate a role from its employer with 、not a comma, so a
+# fake that only knows about ASCII would find nothing in a 職務経歴書.
+_SEPARATOR = re.compile(r"[,、]")
 
 
 class FakeBehaviour(enum.StrEnum):
@@ -97,13 +100,14 @@ class FakeAIProvider:
         # is what a real extraction does and what keeps the fake honest against
         # fixtures as well as pasted snippets.
         first_line = next(
-            (line for line in lines if "," in line and _ROLE.search(line)),
+            (line for line in lines if _SEPARATOR.search(line) and _ROLE.search(line)),
             next(iter(lines), text),
         )
         language = SourceLanguage.ja if re.search(r"[ぁ-んァ-ン一-龯]", text) else SourceLanguage.en
 
+        title = "エンジニア" if language is SourceLanguage.ja else "Software Engineer"
         quote = self._quote(first_line)
-        fields = {"job_title": ExtractedField(value="Software Engineer", quote=quote)}
+        fields = {"job_title": ExtractedField(value=title, quote=quote)}
 
         # Behaviours that represent a *correct* extraction also quote the
         # employer, so the entry has everything a work experience needs. Only
@@ -111,8 +115,8 @@ class FakeAIProvider:
         # could pass because a field was missing rather than because the
         # verifier rejected it.
         honest = {FakeBehaviour.extract, FakeBehaviour.whitespace_variant}
-        if self.behaviour in honest and "," in first_line:
-            employer = first_line.split(",", 1)[1].strip()
+        if self.behaviour in honest and _SEPARATOR.search(first_line):
+            employer = _SEPARATOR.split(first_line, maxsplit=1)[1].strip()
             fields["employer_name"] = ExtractedField(value=employer, quote=self._quote(first_line))
 
             # A real resume states its dates, and an entry without a start date

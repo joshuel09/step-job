@@ -46,6 +46,9 @@ export function ImportForm({ onComplete }: { onComplete?: (result: CareerImport)
   return (
     <Section title={t("pasteTitle")}>
       <p className="mb-3 text-sm opacity-80">{t("pasteExplanation")}</p>
+      {/* Said up front, because a user with a 職務経歴書 needs to know their
+          document will be read rather than flattened into English. */}
+      <p className="mb-3 text-xs opacity-70">{t("japaneseNote")}</p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <TextArea
