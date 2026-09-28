@@ -17,6 +17,7 @@ from typing import Any
 from app.ai.provider import AIProvider
 from app.ai.schemas import ExtractedEntryType
 from app.imports import conflicts as conflict_detection
+from app.imports import dates as date_conversion
 from app.imports.evidence import verify_entry
 
 logger = logging.getLogger(__name__)
@@ -91,7 +92,15 @@ def extract(provider: AIProvider, source: str) -> ExtractionOutcome:
             outcome.dropped_entries += 1
             continue
 
+        # The language the source text was written in, recorded per entry. A
+        # document mixing languages produces entries in the languages they were
+        # written in, and nothing is translated (FR-010).
         values["source_language"] = str(raw.source_language)
+
+        # Era years become calendar dates here, after verification rather than
+        # before it. The evidence still quotes the document's own words — 令和3年4月
+        # — so the user confirms the conversion instead of trusting it (FR-011).
+        values = date_conversion.normalise_dates(values)
 
         entry = VerifiedEntry(
             entry_type=raw.entry_type,

@@ -217,7 +217,9 @@
         "extraction_failed": "Something went wrong reading that. Please try again."
       },
       "uploadTitle": "Or upload a file",
-      "uploadExplanation": "PDF or Word documents. We read the text and do not keep the file — you already have the original."
+      "uploadExplanation": "PDF or Word documents. We read the text and do not keep the file — you already have the original.",
+      "japaneseNote": "Japanese resumes are read as they are written. Era years such as 令和3年 are converted to calendar dates, and the original wording is shown beside them so you can check it. Nothing is translated.",
+      "convertedFrom": "Converted from"
     },
     "importNav": "Import"
   }

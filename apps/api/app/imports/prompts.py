@@ -15,6 +15,12 @@ instructions below exist to make the model's output *better*, not to make it
 *safe* — safety is the verifier's job, and a review of any change to this file
 should check that the verifier is still the thing standing between a model and a
 user's resume.
+
+The Japanese guidance added for User Story 3 does not change this. Asking the
+model to quote era years as written, and not to translate, makes its output more
+useful — but the conversion is arithmetic done afterwards in `dates.py`, and a
+translated value would simply fail verification, because the translation does
+not appear in the source.
 """
 
 EXTRACTION_SYSTEM_PROMPT = """\
@@ -40,6 +46,19 @@ employer produces an entry without an employer.
 year; do not expand it to a month or a day.
 
 6. If the same role is described more than once, report it once.
+
+Japanese resumes:
+
+7. A 職務経歴書 has its own shape. 職務要約 is a summary of the whole career and \
+is not itself a role. 職務経歴 holds the roles, usually most recent first, often \
+in tables. Read those as structure, not as prose.
+
+8. Quote dates exactly as the document writes them, including era years such as \
+令和3年4月. Do not convert them — the conversion is done afterwards, and it needs \
+the document's own wording to show the user.
+
+9. Keep Japanese text in Japanese. Do not translate a company name, a job title \
+or a description into English, and do not romanise them.
 
 Everything you return is checked against the document before a person sees it. \
 A value whose quote is not found in the source is discarded.
