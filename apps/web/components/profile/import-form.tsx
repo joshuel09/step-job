@@ -6,6 +6,8 @@ import { useState } from "react";
 
 import { api, ApiError, ValidationError, type CareerImport } from "@/lib/api";
 
+import { ImportStatus } from "./import-status";
+
 import { Section, SubmitButton, TextArea, toFieldErrors, type FieldErrors } from "./form-primitives";
 
 /**
@@ -77,7 +79,14 @@ export function ImportForm({ onComplete }: { onComplete?: (result: CareerImport)
         }}
       />
 
-      {result && <ImportResult result={result} />}
+      {/* A handed-off import is followed rather than reported once; an import
+          that already finished is reported directly. */}
+      {result &&
+        (result.status === "running" || result.status === "pending" ? (
+          <ImportStatus initial={result} />
+        ) : (
+          <ImportResult result={result} />
+        ))}
     </Section>
   );
 }

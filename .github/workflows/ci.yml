@@ -32,7 +32,8 @@ jobs:
         run: uv run alembic upgrade head
         working-directory: apps/api
       - name: API tests
-        run: uv run pytest
+        # -m "not live": the live test calls a real provider. CI never does.
+        run: uv run pytest -m "not live"
         working-directory: apps/api
 
   worker:

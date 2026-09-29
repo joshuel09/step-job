@@ -50,7 +50,7 @@ def create_paste_import(session: Db, caller: Caller, body: schemas.PasteImportIn
     profile = career_service.require_profile(session, caller.user_id)
 
     record = service.create(session, profile, SourceKind.pasted_text)
-    service.run(session, profile, record, body.text)
+    service.start(session, profile, record, body.text)
     return record
 
 
@@ -97,7 +97,7 @@ async def create_upload_import(
         # of this handler is that the document does not outlive the request.
         del data
 
-    service.run(session, profile, record, text)
+    service.start(session, profile, record, text)
     return record
 
 
