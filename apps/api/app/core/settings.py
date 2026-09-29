@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     ai_model: str = "gpt-4o-mini"
 
+    # Only used to hand a slow import to the worker; the API runs no actors.
+    redis_url: str = "redis://localhost:6379/0"
+
     # How long an import may run inside the request before it is handed to the
     # worker (research.md R-002). A setting so tests can force the handoff.
     import_deadline_seconds: float = 8.0

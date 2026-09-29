@@ -181,17 +181,17 @@ quickstart Scenario 8.
 **Purpose**: The handoff, cancellation, the history record, and the checks that
 confirm the whole thing.
 
-- [ ] T058 Implement the handed-off extraction actor in `apps/worker/worker/extraction.py`, reaching the same outcomes as an in-request import, per FR-005c
-- [ ] T059 Register the extraction actor in `apps/worker/worker/main.py`
-- [ ] T060 [P] Worker tests for the handoff in `apps/worker/tests/test_extraction.py`, including that a background failure still creates no proposals
-- [ ] T061 Integration test for quickstart Scenario 4 in `apps/api/tests/integration/test_import_handoff.py`, proving an import survives the user leaving and produces the same result as one completed in place
-- [ ] T062 Implement import cancellation in `apps/api/app/imports/service.py` and `router.py`, per FR-018
-- [ ] T063 [P] Build import status polling in `apps/web/components/profile/import-status.tsx`, so a handed-off import is visible and its result announced
-- [ ] T064 [P] Build the import history view in `apps/web/app/[locale]/profile/import/page.tsx`, showing source kind and time and never a filename, per FR-019a and FR-019b
-- [ ] T065 [P] Integration test for quickstart Scenario 5 in `apps/api/tests/integration/test_import_conflicts.py`, proving a self-contradictory source is flagged with its dates as written
-- [ ] T066 [P] Add structured logging across `apps/api/app/imports/`, recording outcomes and never document content, following the existing allow-list formatter
-- [ ] T067 Add the live provider smoke test in `apps/api/tests/live/test_live_extraction.py`, marked `live` and skipped without a key, asserting every proposed field carries verified evidence
-- [ ] T068 Run the full [quickstart.md](./quickstart.md) walkthrough against a fresh environment and record the result
+- [X] T058 Implement the handed-off extraction actor in `apps/worker/worker/extraction.py`, reaching the same outcomes as an in-request import, per FR-005c
+- [X] T059 Register the extraction actor in `apps/worker/worker/main.py`
+- [X] T060 [P] Worker tests for the handoff in `apps/worker/tests/test_extraction.py`, including that a background failure still creates no proposals
+- [X] T061 Integration test for quickstart Scenario 4 in `apps/api/tests/integration/test_import_handoff.py`, proving an import survives the user leaving and produces the same result as one completed in place
+- [X] T062 Implement import cancellation in `apps/api/app/imports/service.py` and `router.py`, per FR-018
+- [X] T063 [P] Build import status polling in `apps/web/components/profile/import-status.tsx`, so a handed-off import is visible and its result announced
+- [X] T064 [P] Build the import history view in `apps/web/app/[locale]/profile/import/page.tsx`, showing source kind and time and never a filename, per FR-019a and FR-019b
+- [X] T065 [P] Integration test for quickstart Scenario 5 in `apps/api/tests/integration/test_import_conflicts.py`, proving a self-contradictory source is flagged with its dates as written
+- [X] T066 [P] Add structured logging across `apps/api/app/imports/`, recording outcomes and never document content, following the existing allow-list formatter
+- [X] T067 Add the live provider smoke test in `apps/api/tests/live/test_live_extraction.py`, marked `live` and skipped without a key, asserting every proposed field carries verified evidence
+- [X] T068 Run the full [quickstart.md](./quickstart.md) walkthrough against a fresh environment and record the result
 
 ---
 

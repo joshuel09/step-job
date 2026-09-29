@@ -263,3 +263,26 @@ field — that is the system working, not failing.
 
 Field-level rules these assert are defined in [data-model.md](./data-model.md);
 the routes in [contracts/openapi.yaml](./contracts/openapi.yaml).
+
+---
+
+## Walkthrough record
+
+Run on 2026-09-29 against a fresh PostgreSQL and a locally started API, with the
+fake provider (T068).
+
+| Scenario | Result |
+|---|---|
+| 1 — Paste a career | **Pass.** Completed, one entry proposed |
+| 2 — A fabricated field never becomes a proposal | **Pass.** Proposed value `Software Engineer` carries the quote `Software Engineer, Example Corp`; the profile held 0 experiences afterwards |
+| 3 — Upload a PDF | **Pass.** Completed with one entry; 0 files left on disk |
+| 3b — A scan with no text layer | **Pass.** Failed with `unreadable_document`, not a service error |
+| 4 — A slow import hands off | Covered by `test_import_handoff.py`; not run here, as forcing the deadline needs the worker process |
+| 5 — A contradiction is flagged | Covered by `test_import_conflicts.py` |
+| 6 — The service being down | Covered by `test_import_failures.py`; the fake scripts the outage |
+| 7 — Evidence discarded at review | **Pass.** `evidence` was `None` after acceptance, and the accepted entry kept its approved value |
+| 8 — Japanese era dates | **Pass.** `令和3年4月` → `2021-04-01`, evidence quoting the original, language recorded as `ja` |
+| Import history | **Pass.** Three records, no filename field on any of them |
+
+The scenarios marked as covered by tests are ones needing a second process or a
+scripted provider failure; each has an automated test asserting the same thing.

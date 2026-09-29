@@ -11,6 +11,7 @@ import logging
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+from .extraction import extract_import
 from .purge import purge_expired_profiles
 from .settings import get_worker_settings
 
@@ -18,7 +19,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message
 logger = logging.getLogger(__name__)
 
 # Imported for dramatiq's CLI to discover; referenced so linters keep it.
-__all__ = ["purge_expired_profiles"]
+__all__ = ["extract_import", "purge_expired_profiles"]
 
 
 def main() -> None:

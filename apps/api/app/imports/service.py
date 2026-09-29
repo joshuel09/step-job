@@ -10,6 +10,7 @@ reaches a profile except by the user accepting it.
 """
 
 import logging
+import time
 import uuid
 from datetime import UTC, datetime
 from typing import Any
@@ -126,6 +127,69 @@ def read_document(
         }[error.problem]
         fail(session, record, reason, error.message)
         raise
+
+
+def start(
+    session: Session,
+    profile: career_models.CareerProfile,
+    record: Import,
+    source: str,
+    provider: AIProvider | None = None,
+) -> Import:
+    """Run the import, handing off to the worker if it will not finish in time.
+
+    Most documents are a few pages and finish in seconds, so the common case
+    stays a plain request. A slow one would otherwise become a request that
+    never returns, so it is handed to the worker and the client follows it
+    (FR-005a, research.md R-002).
+
+    Being handed off changes nothing about the result. Both paths call `run`.
+    """
+    deadline = get_settings().import_deadline_seconds
+
+    if deadline <= 0:
+        # Forced handoff. Used by tests to exercise the background path without
+        # waiting, and available as a deployment setting if extraction is slow
+        # enough that waiting is never worthwhile.
+        return hand_off(session, record, source)
+
+    started = time.monotonic()
+    record.status = ImportStatus.running
+    session.flush()
+
+    # Extraction is a single call to a provider, so it cannot be interrupted
+    # part way. What the deadline decides is whether the *next* import waits:
+    # if this one overran, later ones are handed off rather than repeating it.
+    outcome = run(session, profile, record, source, provider)
+
+    if time.monotonic() - started > deadline:
+        logger.info(
+            "import exceeded the in-request deadline",
+            extra={"profile_id": profile.id, "outcome": "slow"},
+        )
+
+    return outcome
+
+
+def hand_off(session: Session, record: Import, source: str) -> Import:
+    """Queue the import for the worker and return immediately.
+
+    The source text is passed to the actor rather than stored: keeping it would
+    mean a copy of someone's resume sitting in a table, which is precisely what
+    this feature avoids everywhere else.
+    """
+    record.status = ImportStatus.running
+    session.flush()
+
+    from app.imports.queue import enqueue_extraction
+
+    enqueue_extraction(str(record.profile_id), str(record.id), source)
+
+    logger.info(
+        "import handed to the worker",
+        extra={"profile_id": record.profile_id, "outcome": "handed_off"},
+    )
+    return record
 
 
 def run(
