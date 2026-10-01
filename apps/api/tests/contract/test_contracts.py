@@ -30,6 +30,13 @@ DEFERRED: dict[str, set[str]] = {
     # Every documented path in both features is implemented. Kept as empty
     # sets so a future story defers a path deliberately rather than by omission.
     "002-ai-resume-import": set(),
+    # Specified and planned; not yet built. Listed so the gap is deliberate —
+    # and so this test keeps covering the two features that are built, rather
+    # than failing on a third nobody has started.
+    "003-rirekisho-generator": {
+        "/profile/documents/rirekisho",
+        "/profile/documents/rirekisho/readiness",
+    },
 }
 
 
