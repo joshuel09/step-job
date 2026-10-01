@@ -1,0 +1,208 @@
+openapi: 3.1.0
+
+# The HTTP surface for generating a 履歴書.
+#
+# As elsewhere, no route takes a profile or user identifier — the owner comes
+# from the verified session. Generated documents are not retained, so there is
+# no route to fetch one by identifier: a document is produced and streamed, and
+# what persists is the snapshot recording what it was based on.
+
+info:
+  title: Step Job — 履歴書 Generator
+  version: 1.0.0
+  description: >
+    Produces a Japanese 履歴書 from the Master Career Profile. Every line comes
+    from a profile entry; nothing is invented to fill a conventional blank, and
+    Japan-specific fields appear only where the user has marked them includable.
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: documents
+    description: Producing documents from the profile
+
+security:
+  - sessionIdentity: []
+
+paths:
+  /profile/documents/rirekisho/readiness:
+    get:
+      tags: [documents]
+      summary: What is missing before generating
+      description: >
+        Reports what a document would lack, so the user can fix it first rather
+        than discover it after printing. Also names the entries written in
+        English, which will appear in English — the user may add a Japanese
+        version to their profile, which this feature does not write for them
+        (research.md R-001).
+      responses:
+        "200":
+          description: The report
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReadinessReport" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404":
+          description: No profile exists yet for this user
+
+  /profile/documents/rirekisho:
+    post:
+      tags: [documents]
+      summary: Generate a 履歴書
+      description: >
+        Produces the document and streams it. Nothing is retained: the profile
+        and the snapshot of what was used are what persist (FR-005, FR-016).
+
+        With `preview=true` the same document is returned for display rather
+        than download. The content is identical — only the disposition differs,
+        so a user never previews one thing and downloads another.
+      parameters:
+        - name: preview
+          in: query
+          description: Return the document for display rather than as a download.
+          schema: { type: boolean, default: false }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RirekishoRequest" }
+      responses:
+        "200":
+          description: The document
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+          headers:
+            Content-Disposition:
+              description: >
+                `attachment` by default, `inline` when previewing.
+              schema: { type: string }
+            X-Document-Pages:
+              description: >
+                How many pages the document runs to. A history that does not fit
+                the conventional two produces more pages rather than losing
+                entries (FR-018a), and the interface uses this to say so.
+              schema: { type: integer }
+            X-Snapshot-Id:
+              description: >
+                The snapshot recording what this document was based on, so its
+                statements stay traceable after the entries change (FR-016).
+              schema: { type: string, format: uuid }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404":
+          description: No profile exists yet for this user
+        "422":
+          description: >
+            The profile lacks something a document cannot be meaningful without
+            — a name above all. The response names what is missing rather than
+            producing a document with it blank (FR-015).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+components:
+  securitySchemes:
+    sessionIdentity:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: >
+        A verified session established at the web layer. The API derives the
+        profile owner from it and never accepts a user identifier from the
+        request.
+
+  responses:
+    Unauthorised:
+      description: No verified identity
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+
+    ValidationError:
+      type: object
+      required: [code, message, failures]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        failures:
+          type: array
+          items:
+            type: object
+            required: [field, reason]
+            properties:
+              field: { type: string }
+              reason: { type: string }
+
+    DateConvention:
+      type: string
+      description: >
+        Which calendar the dates are written in. One convention is used
+        throughout a document; the two never appear together (FR-019).
+      enum: [seireki, wareki]
+      default: seireki
+
+    PaperSize:
+      type: string
+      enum: [a4, b5]
+      default: a4
+
+    RirekishoRequest:
+      type: object
+      description: >
+        The conventions chosen for this document. Neither affects what the
+        document says, only how it reads.
+      properties:
+        date_convention: { $ref: "#/components/schemas/DateConvention" }
+        paper_size: { $ref: "#/components/schemas/PaperSize" }
+
+    ReadinessReport:
+      type: object
+      description: >
+        What a document would lack. Separates what cannot be left out from what
+        will simply be blank, because the two need different responses from the
+        user.
+      required: [can_generate, missing_required, missing_optional, entries_without_japanese]
+      properties:
+        can_generate:
+          type: boolean
+          description: False only when something essential is absent.
+        missing_required:
+          type: array
+          items: { type: string }
+          description: >
+            Fields without which a document is not meaningful, named so the
+            user can supply them (FR-015).
+        missing_optional:
+          type: array
+          items: { type: string }
+          description: >
+            Fields that will be blank in the document. Listed rather than
+            silently omitted, so nothing is a surprise after printing (FR-022c).
+        entries_without_japanese:
+          type: array
+          items: { $ref: "#/components/schemas/EnglishEntry" }
+          description: >
+            Entries written in English, which will appear in English. The user
+            may add a Japanese version to their profile; this feature does not
+            write one for them.
+
+    EnglishEntry:
+      type: object
+      required: [entry_id, entry_type, label]
+      properties:
+        entry_id: { type: string, format: uuid }
+        entry_type:
+          type: string
+          enum: [work_experience, education, certification]
+        label:
+          type: string
+          description: How the entry reads now, so the user can recognise it.
