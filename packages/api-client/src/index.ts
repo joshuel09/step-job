@@ -7,5 +7,8 @@ export type { paths as Paths001, components as Components001 } from "./schema-00
 // 002-ai-resume-import
 export type { paths as Paths002, components as Components002 } from "./schema-002";
 
+// 003-rirekisho-generator
+export type { paths as Paths003, components as Components003 } from "./schema-003";
+
 // Feature 001's names, unprefixed, for existing callers.
 export type { paths, components } from "./schema-001";
