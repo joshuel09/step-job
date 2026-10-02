@@ -159,6 +159,13 @@ class Identity(Entity, ProfileOwned):
     email: Mapped[str | None] = mapped_column(String(320), default=None)
     phone: Mapped[str | None] = mapped_column(String(50), default=None)
 
+    # Added by feature 003. A 履歴書 conventionally carries both, and Principle I
+    # says a user tells us these once rather than per document. Optional, so an
+    # existing profile stays valid and a document leaves them blank rather than
+    # inventing them.
+    date_of_birth: Mapped[date | None] = mapped_column(Date, default=None)
+    address: Mapped[str | None] = mapped_column(String(500), default=None)
+
 
 class JapanProfile(Entity, ProfileOwned):
     """Japan-specific hiring circumstances.

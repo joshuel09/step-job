@@ -61,6 +61,21 @@ export function IdentityForm({ initial }: { initial?: Identity | null }) {
           <TextInput name="furigana" errors={errors} defaultValue={initial?.furigana ?? ""} />
         </Field>
 
+        {/* Added for the 履歴書, which conventionally carries both. Recorded
+            once on the profile rather than asked for per document. */}
+        <Field label={t("dateOfBirth")} name="date_of_birth" errors={errors}>
+          <TextInput
+            name="date_of_birth"
+            type="date"
+            errors={errors}
+            defaultValue={initial?.date_of_birth ?? ""}
+          />
+        </Field>
+
+        <Field label={t("address")} name="address" errors={errors} hint={t("addressHint")}>
+          <TextInput name="address" errors={errors} defaultValue={initial?.address ?? ""} />
+        </Field>
+
         <Field label={t("email")} name="email" errors={errors}>
           <TextInput name="email" type="email" errors={errors} defaultValue={initial?.email ?? ""} />
         </Field>

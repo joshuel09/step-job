@@ -124,3 +124,61 @@ def normalise_dates(values: dict[str, str]) -> dict[str, str]:
             converted[field] = parsed.isoformat()
 
     return converted
+
+
+# --- the other direction -----------------------------------------------------
+#
+# Feature 003 renders calendar dates as era years for a 履歴書. It lives here,
+# beside the parsing, rather than in that feature, so both directions share the
+# one era table. Two copies would eventually disagree, and the disagreement
+# would surface as a date that imports one way and prints another.
+
+# Each era's first Gregorian year, newest first. An era applies from its start
+# year onwards until the next one begins.
+ERA_STARTS: list[tuple[str, int]] = [
+    ("令和", 2019),
+    ("平成", 1989),
+    ("昭和", 1926),
+    ("大正", 1912),
+    ("明治", 1868),
+]
+
+
+def year_to_era(year: int) -> tuple[str, int]:
+    """The era name and year for a calendar year.
+
+    Boundary years are ambiguous — 2019 was both 平成31年 and 令和元年, depending
+    on the month — and this returns the later era, which is what a document
+    written now would use. A caller needing the month-accurate answer has the
+    date and can decide; this function does not guess on their behalf.
+    """
+    for name, start in ERA_STARTS:
+        if year >= start:
+            return name, year - start + 1
+    raise UnknownEraError(f"{year} predates the eras this table covers")
+
+
+def format_japanese_date(value: date, *, era: bool = True) -> str:
+    """Write a date the way a Japanese document does.
+
+    With `era=False` this is 西暦 — a calendar year in Japanese form. With
+    `era=True` it is 和暦. One convention is used throughout a document; mixing
+    them within one is what FR-019 of feature 003 forbids.
+    """
+    if not era:
+        return f"{value.year}年{value.month}月{value.day}日"
+
+    name, era_year = year_to_era(value.year)
+    # An era's first year is written 元年, never 1年.
+    written = FIRST_YEAR if era_year == 1 else str(era_year)
+    return f"{name}{written}年{value.month}月{value.day}日"
+
+
+def format_year_month(value: date, *, era: bool = True) -> str:
+    """The same, to month precision, as a 学歴・職歴 table uses."""
+    if not era:
+        return f"{value.year}年{value.month}月"
+
+    name, era_year = year_to_era(value.year)
+    written = FIRST_YEAR if era_year == 1 else str(era_year)
+    return f"{name}{written}年{value.month}月"

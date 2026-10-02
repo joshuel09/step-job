@@ -27,6 +27,11 @@ class IdentityIn(BaseModel):
     email: str | None = None
     phone: str | None = None
 
+    # Added by feature 003 for the 履歴書. Optional: a profile without them is
+    # valid, and a document leaves the fields blank rather than inventing them.
+    date_of_birth: date | None = None
+    address: str | None = None
+
 
 class IdentityOut(IdentityIn, ORMModel):
     pass

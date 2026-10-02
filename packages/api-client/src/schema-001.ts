@@ -1578,6 +1578,10 @@ export interface components {
             furigana?: string | null;
             email?: string | null;
             phone?: string | null;
+            /** Format: date */
+            date_of_birth?: string | null;
+            /** @description The applicant's current address, 現住所 */
+            address?: string | null;
         };
         /** @description Every field optional. Disclosure flags default false and govern whether a field may appear in a generated document (FR-006); they do not affect export (FR-037). */
         JapanProfile: {

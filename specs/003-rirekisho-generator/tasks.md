@@ -35,9 +35,9 @@ so the diff to working software is deliberate.
 **Purpose**: The PDF dependency and the font, which is the quiet failure in this
 feature.
 
-- [ ] T001 Promote the PDF library in `apps/api/pyproject.toml` from a development dependency to a runtime one, per research.md R-002
-- [ ] T002 Add one open-licensed Japanese font and its licence text to `apps/api/app/rirekisho/fonts/`, choosing a font whose licence permits redistribution
-- [ ] T003 Register the font at application start in `apps/api/app/rirekisho/render.py`, failing loudly at startup if it cannot be loaded rather than at render time
+- [X] T001 Promote the PDF library in `apps/api/pyproject.toml` from a development dependency to a runtime one, per research.md R-002
+- [X] T002 Add one open-licensed Japanese font and its licence text to `apps/api/app/rirekisho/fonts/`, choosing a font whose licence permits redistribution
+- [X] T003 Register the font at application start in `apps/api/app/rirekisho/render.py`, failing loudly at startup if it cannot be loaded rather than at render time
 
 ---
 
@@ -50,21 +50,21 @@ from feature 002.
 
 ### Changes to feature 001 — four touch points
 
-- [ ] T004 Add `date_of_birth` and `address` as nullable columns on `Identity` in `apps/api/app/career/models.py`, both optional so existing profiles stay valid
-- [ ] T005 Generate the Alembic migration for those two columns in `apps/api/migrations/`
-- [ ] T006 [P] Add the two fields to `IdentityIn` and `IdentityOut` in `apps/api/app/career/schemas.py`
-- [ ] T007 [P] Document the two fields on the `Identity` schema in `specs/001-master-career-profile/contracts/openapi.yaml`
-- [ ] T008 [P] Add the two fields to the identity form in `apps/web/components/profile/identity-form.tsx` — without this the generator has fields no user can fill in
+- [X] T004 Add `date_of_birth` and `address` as nullable columns on `Identity` in `apps/api/app/career/models.py`, both optional so existing profiles stay valid
+- [X] T005 Generate the Alembic migration for those two columns in `apps/api/migrations/`
+- [X] T006 [P] Add the two fields to `IdentityIn` and `IdentityOut` in `apps/api/app/career/schemas.py`
+- [X] T007 [P] Document the two fields on the `Identity` schema in `specs/001-master-career-profile/contracts/openapi.yaml`
+- [X] T008 [P] Add the two fields to the identity form in `apps/web/components/profile/identity-form.tsx` — without this the generator has fields no user can fill in
 
 ### Change to feature 002
 
-- [ ] T009 Add calendar-date-to-era rendering beside the existing era parsing in `apps/api/app/imports/dates.py`, sharing the one era table so the two directions cannot drift, per research.md R-005
-- [ ] T010 [P] Unit tests for era rendering in `apps/api/tests/unit/test_dates.py`, covering each era, the 平成 to 令和 boundary, and that rendering then parsing returns the original date
+- [X] T009 Add calendar-date-to-era rendering beside the existing era parsing in `apps/api/app/imports/dates.py`, sharing the one era table so the two directions cannot drift, per research.md R-005
+- [X] T010 [P] Unit tests for era rendering in `apps/api/tests/unit/test_dates.py`, covering each era, the 平成 to 令和 boundary, and that rendering then parsing returns the original date
 
 ### This feature's foundation
 
-- [ ] T011 Define the request and response models in `apps/api/app/rirekisho/schemas.py`, matching `contracts/openapi.yaml`
-- [ ] T012 [P] Add a fixture profile with invented content in `apps/api/tests/conftest.py` — identity, education and two work experiences, one ongoing
+- [X] T011 Define the request and response models in `apps/api/app/rirekisho/schemas.py`, matching `contracts/openapi.yaml`
+- [X] T012 [P] Add a fixture profile with invented content in `apps/api/tests/conftest.py` — identity, education and two work experiences, one ongoing
 
 **Checkpoint**: the profile holds what a 履歴書 needs and dates render both ways
 
