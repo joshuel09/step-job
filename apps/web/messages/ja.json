@@ -41,7 +41,10 @@
       "email": "メールアドレス",
       "phone": "電話番号",
       "save": "保存",
-      "saved": "保存しました"
+      "saved": "保存しました",
+      "dateOfBirth": "生年月日",
+      "address": "現住所",
+      "addressHint": "履歴書に記載される項目です。"
     },
     "japan": {
       "title": "日本での就労",

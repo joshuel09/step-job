@@ -116,3 +116,64 @@ def fake_provider():
         return FakeAIProvider(behaviour, **kwargs)
 
     return make
+
+
+# --- feature 003: a profile complete enough to produce a 履歴書 ---------------
+
+
+@pytest.fixture
+def rirekisho_profile(session, user_id):
+    """A profile with everything a 履歴書 needs, in invented content.
+
+    One ongoing role and one finished one, so the table exercises both 退社 and
+    現在に至る without a test having to build them.
+    """
+    from datetime import date
+
+    from app.career import models, service
+
+    profile = service.get_or_create_profile(session, user_id)
+
+    session.add(
+        models.Identity(
+            profile_id=profile.id,
+            full_name_latin="Taro Yamada",
+            full_name_japanese="山田太郎",
+            furigana="ヤマダタロウ",
+            date_of_birth=date(1990, 5, 15),
+            address="東京都新宿区サンプル1-2-3",
+        )
+    )
+    session.add(
+        models.Education(
+            profile_id=profile.id,
+            institution="サンプル大学",
+            qualification="学士",
+            started_on=date(2009, 4, 1),
+            ended_on=date(2013, 3, 31),
+        )
+    )
+    session.add(
+        models.WorkExperience(
+            profile_id=profile.id,
+            employer_name="株式会社サンプル",
+            employer_name_normalised="サンプル",
+            job_title="エンジニア",
+            started_on=date(2013, 4, 1),
+            ended_on=date(2021, 3, 31),
+            source_language=models.Locale.ja,
+        )
+    )
+    session.add(
+        models.WorkExperience(
+            profile_id=profile.id,
+            employer_name="Example Corp",
+            employer_name_normalised="example",
+            job_title="Software Engineer",
+            started_on=date(2021, 4, 1),
+            ended_on=None,
+            source_language=models.Locale.en,
+        )
+    )
+    session.flush()
+    return profile

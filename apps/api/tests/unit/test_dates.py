@@ -11,8 +11,11 @@ import pytest
 from app.imports.dates import (
     UnknownEraError,
     era_to_year,
+    format_japanese_date,
+    format_year_month,
     normalise_dates,
     parse_japanese_date,
+    year_to_era,
 )
 
 
@@ -110,3 +113,74 @@ class TestNormaliseDates:
         result = normalise_dates({"issued_on": "平成30年10月", "expires_on": "令和5年10月"})
         assert result["issued_on"] == "2018-10-01"
         assert result["expires_on"] == "2023-10-01"
+
+
+class TestYearToEra:
+    """Rendering a calendar year as an era year — the reverse of parsing."""
+
+    @pytest.mark.parametrize(
+        ("year", "expected"),
+        [
+            (2024, ("令和", 6)),
+            (2021, ("令和", 3)),
+            (2019, ("令和", 1)),
+            (2018, ("平成", 30)),
+            (1989, ("平成", 1)),
+            (1988, ("昭和", 63)),
+            (1970, ("昭和", 45)),
+            (1926, ("昭和", 1)),
+            (1912, ("大正", 1)),
+            (1868, ("明治", 1)),
+        ],
+    )
+    def test_known_years_render(self, year, expected):
+        assert year_to_era(year) == expected
+
+    def test_a_boundary_year_renders_as_the_later_era(self):
+        """2019 was both 平成31年 and 令和元年; a document written now says 令和."""
+        assert year_to_era(2019) == ("令和", 1)
+
+    def test_a_year_before_the_table_is_refused(self):
+        with pytest.raises(UnknownEraError):
+            year_to_era(1800)
+
+
+class TestFormatting:
+    def test_an_era_date(self):
+        assert format_japanese_date(date(2021, 4, 1)) == "令和3年4月1日"
+
+    def test_the_first_year_of_an_era_is_written_gannen(self):
+        assert format_japanese_date(date(2019, 5, 1)) == "令和元年5月1日"
+
+    def test_a_western_date_in_japanese_form(self):
+        assert format_japanese_date(date(2021, 4, 1), era=False) == "2021年4月1日"
+
+    def test_year_and_month_only(self):
+        assert format_year_month(date(2021, 4, 1)) == "令和3年4月"
+        assert format_year_month(date(2021, 4, 1), era=False) == "2021年4月"
+
+
+class TestRoundTrip:
+    """The reason both directions live in one module.
+
+    Two copies of the era table would eventually disagree, and the disagreement
+    would surface as a date that imports one way and prints another.
+    """
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            date(2024, 3, 31),
+            date(2021, 4, 1),
+            date(2019, 5, 1),
+            date(2018, 10, 15),
+            date(1995, 7, 20),
+            date(1970, 1, 1),
+        ],
+    )
+    def test_rendering_then_parsing_returns_the_original(self, value):
+        assert parse_japanese_date(format_japanese_date(value)) == value
+
+    @pytest.mark.parametrize("value", [date(2024, 3, 1), date(2019, 5, 1), date(1988, 12, 1)])
+    def test_year_and_month_round_trips_to_the_first_of_that_month(self, value):
+        assert parse_japanese_date(format_year_month(value)) == value

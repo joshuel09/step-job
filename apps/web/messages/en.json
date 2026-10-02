@@ -41,7 +41,10 @@
       "email": "Email",
       "phone": "Phone",
       "save": "Save",
-      "saved": "Saved"
+      "saved": "Saved",
+      "dateOfBirth": "Date of birth",
+      "address": "Current address",
+      "addressHint": "Used on a 履歴書, which conventionally asks for it."
     },
     "japan": {
       "title": "Working in Japan",

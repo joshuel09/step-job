@@ -883,6 +883,18 @@ components:
         email: { type: string, nullable: true }
         phone: { type: string, nullable: true }
 
+        # Added by feature 003. A 履歴書 conventionally carries both, and a user
+        # records them once on their profile rather than per document. Optional,
+        # so a profile without them is valid and a document leaves them blank.
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        address:
+          type: string
+          nullable: true
+          description: The applicant's current address, 現住所
+
     JapanProfile:
       type: object
       description: >
