@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     # may never come (FR-017c).
     ai_max_retries: int = 3
 
+    # Where the web app is served from. The API and the interface are separate
+    # origins, so every browser request is cross-origin and needs this.
+    web_origins: str = "http://localhost:3000"
+
     # How long a deleted profile remains recoverable before it is purged.
     # Fixed by FR-025; exposed here so tests can exercise the boundary without
     # waiting, not so that deployments can quietly lengthen retention.

@@ -57,6 +57,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
           <Link href={`/${locale}/profile/review`} className="text-sm underline">
             {t("reviewNav")}
           </Link>
+          <Link
+            href={`/${locale}/profile/documents/rirekisho`}
+            className="text-sm underline"
+          >
+            {t("rirekishoNav")}
+          </Link>
           <Link href={`/${locale}/profile/settings`} className="text-sm underline">
             {t("settings")}
           </Link>

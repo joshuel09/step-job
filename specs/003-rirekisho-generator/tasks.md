@@ -81,25 +81,25 @@ Covers quickstart Scenarios 0 and 1.
 
 ### Tests for User Story 1
 
-- [ ] T013 [P] [US1] Unit tests for the 学歴・職歴 projection in `apps/api/tests/unit/test_rirekisho_rows.py` — education before employment, oldest first within each block, two rows per entry, 現在に至る for an unfinished role, 以上 last, overlapping entries both present and unreconciled
-- [ ] T014 [P] [US1] Integration test for quickstart Scenario 0 in `apps/api/tests/integration/test_rirekisho_font.py`, extracting text from a generated document and asserting 履歴書 appears as text — the check that fails loudly when the font is missing
-- [ ] T015 [P] [US1] Integration test for quickstart Scenario 1 in `apps/api/tests/integration/test_rirekisho_generate.py`, asserting the table contents and that a snapshot id is returned
-- [ ] T016 [P] [US1] Integration test asserting a snapshot still shows what a document used after its entries are edited, in `apps/api/tests/integration/test_rirekisho_traceability.py`
-- [ ] T017 [P] [US1] Contract tests for the document routes in `apps/api/tests/contract/test_rirekisho.py`
+- [X] T013 [P] [US1] Unit tests for the 学歴・職歴 projection in `apps/api/tests/unit/test_rirekisho_rows.py` — education before employment, oldest first within each block, two rows per entry, 現在に至る for an unfinished role, 以上 last, overlapping entries both present and unreconciled
+- [X] T014 [P] [US1] Integration test for quickstart Scenario 0, extracting text from a generated document and asserting 履歴書 appears as text — the check that fails loudly when the font is missing. Landed as `apps/api/tests/unit/test_rirekisho_font.py` (registration) plus `test_the_japanese_is_readable` and `test_the_glyphs_are_embedded` in `apps/api/tests/integration/test_rirekisho_generate.py` (a real document), rather than at the single path named here
+- [X] T015 [P] [US1] Integration test for quickstart Scenario 1 in `apps/api/tests/integration/test_rirekisho_generate.py`, asserting the table contents and that a snapshot id is returned
+- [X] T016 [P] [US1] Integration test asserting a snapshot still shows what a document used after its entries are edited, in `apps/api/tests/integration/test_rirekisho_traceability.py`
+- [X] T017 [P] [US1] Contract tests for the document routes in `apps/api/tests/contract/test_rirekisho.py`
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Implement the 学歴・職歴 projection in `apps/api/app/rirekisho/rows.py` as a pure function from entries to ordered rows, with no knowledge of PDFs, per research.md R-006
-- [ ] T019 [US1] Carry the id of the entry that produced each row through the projection in `apps/api/app/rirekisho/rows.py`, so any line in the document can be traced to what it came from per FR-012
-- [ ] T020 [US1] Implement the document layout in `apps/api/app/rirekisho/render.py`, drawing the conventional form at A4
-- [ ] T021 [US1] Implement generation and snapshot capture in `apps/api/app/rirekisho/service.py`, capturing in the same transaction as the render so a failed render leaves no record of a document that never existed, per research.md R-003
-- [ ] T022 [US1] Implement the generate route in `apps/api/app/rirekisho/router.py`, streaming the document and returning the snapshot id and page count as headers
-- [ ] T023 [US1] Register the router in `apps/api/app/main.py`
-- [ ] T024 [US1] Remove `/profile/documents/rirekisho` from the deferred list in `apps/api/tests/contract/test_contracts.py`, now that it is implemented
-- [ ] T025 [US1] Regenerate all three typed clients into `packages/api-client/src/`
-- [ ] T026 [P] [US1] Build the document page in `apps/web/app/[locale]/profile/documents/rirekisho/page.tsx`
-- [ ] T027 [P] [US1] Build the generate control in `apps/web/components/profile/rirekisho-form.tsx`
-- [ ] T028 [P] [US1] Add the English and Japanese strings for User Story 1 to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
+- [X] T018 [US1] Implement the 学歴・職歴 projection in `apps/api/app/rirekisho/rows.py` as a pure function from entries to ordered rows, with no knowledge of PDFs, per research.md R-006
+- [X] T019 [US1] Carry the id of the entry that produced each row through the projection in `apps/api/app/rirekisho/rows.py`, so any line in the document can be traced to what it came from per FR-012
+- [X] T020 [US1] Implement the document layout in `apps/api/app/rirekisho/render.py`, drawing the conventional form at A4
+- [X] T021 [US1] Implement generation and snapshot capture in `apps/api/app/rirekisho/service.py`, capturing in the same transaction as the render so a failed render leaves no record of a document that never existed, per research.md R-003
+- [X] T022 [US1] Implement the generate route in `apps/api/app/rirekisho/router.py`, streaming the document and returning the snapshot id and page count as headers
+- [X] T023 [US1] Register the router in `apps/api/app/main.py`
+- [X] T024 [US1] Remove `/profile/documents/rirekisho` from the deferred list in `apps/api/tests/contract/test_contracts.py`, now that it is implemented
+- [X] T025 [US1] Regenerate all three typed clients into `packages/api-client/src/`
+- [X] T026 [P] [US1] Build the document page in `apps/web/app/[locale]/profile/documents/rirekisho/page.tsx`
+- [X] T027 [P] [US1] Build the generate control in `apps/web/components/profile/rirekisho-form.tsx`
+- [X] T028 [P] [US1] Add the English and Japanese strings for User Story 1 to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
 
 **Checkpoint**: a 履歴書 is produced, readable, and traceable
 
