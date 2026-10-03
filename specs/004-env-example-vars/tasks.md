@@ -28,7 +28,7 @@ None. No dependencies, scaffolding or migrations.
 
 ## Phase 2: Foundational
 
-- [ ] T001 Confirm the defaults and formats to document: `ai_provider`, `openai_api_key` and `web_origins` in `apps/api/app/core/settings.py`, the accepted provider names in `get_provider()` in `apps/api/app/ai/__init__.py`, and comma splitting of origins in `apps/api/app/main.py`
+- [X] T001 Confirm the defaults and formats to document: `ai_provider`, `openai_api_key` and `web_origins` in `apps/api/app/core/settings.py`, the accepted provider names in `get_provider()` in `apps/api/app/ai/__init__.py`, and comma splitting of origins in `apps/api/app/main.py`
 
 ---
 
@@ -38,8 +38,8 @@ None. No dependencies, scaffolding or migrations.
 
 **Independent Test**: quickstart.md steps 1 and 4.
 
-- [ ] T002 [US1] Add `AI_PROVIDER=fake` and `OPENAI_API_KEY=` (empty) to `apps/api/.env.example`, grouped together (FR-001, FR-002, FR-008, FR-009)
-- [ ] T003 [US1] Add `WEB_ORIGINS=http://localhost:3000` to `apps/api/.env.example` (FR-003, FR-008)
+- [X] T002 [US1] Add `AI_PROVIDER=fake` and `OPENAI_API_KEY=` (empty) to `apps/api/.env.example`, grouped together (FR-001, FR-002, FR-008, FR-009)
+- [X] T003 [US1] Add `WEB_ORIGINS=http://localhost:3000` to `apps/api/.env.example` (FR-003, FR-008)
 
 **Checkpoint**: Copying the example to `.env` changes no behaviour, and the web app's default origin is allowed.
 
@@ -51,9 +51,9 @@ None. No dependencies, scaffolding or migrations.
 
 **Independent Test**: quickstart.md step 2. The comments answer "what values?" and "when is this read?" without opening the code.
 
-- [ ] T004 [US2] Above `AI_PROVIDER` in `apps/api/.env.example`, add a comment naming `fake` and `openai` and saying `fake` keeps local work and CI off the network (FR-004, FR-005)
-- [ ] T005 [US2] Above `OPENAI_API_KEY` in `apps/api/.env.example`, add a comment saying it is only read when `AI_PROVIDER=openai` (FR-004, FR-006)
-- [ ] T006 [US2] Above `WEB_ORIGINS` in `apps/api/.env.example`, add a comment saying it is where the web app is served from, that a wrong value means the browser is refused, and that several addresses are separated by commas (FR-004, FR-007)
+- [X] T004 [US2] Above `AI_PROVIDER` in `apps/api/.env.example`, add a comment naming `fake` and `openai` and saying `fake` keeps local work and CI off the network (FR-004, FR-005)
+- [X] T005 [US2] Above `OPENAI_API_KEY` in `apps/api/.env.example`, add a comment saying it is only read when `AI_PROVIDER=openai` (FR-004, FR-006)
+- [X] T006 [US2] Above `WEB_ORIGINS` in `apps/api/.env.example`, add a comment saying it is where the web app is served from, that a wrong value means the browser is refused, and that several addresses are separated by commas (FR-004, FR-007)
 
 **Checkpoint**: Every added variable has a comment in the file's existing style.
 
@@ -61,9 +61,9 @@ None. No dependencies, scaffolding or migrations.
 
 ## Phase 5: Polish & Verification
 
-- [ ] T007 Run quickstart.md steps 1–3 (defaults match, comments present, no secrets) and record the output for the PR body
-- [ ] T008 Run quickstart.md step 4 (fresh `.env` copy, API + web app, no CORS errors) and record the result for the PR body
-- [ ] T009 Run `uv run ruff check .` from the repo root to confirm nothing else changed
+- [X] T007 Run quickstart.md steps 1–3 (defaults match, comments present, no secrets) and record the output for the PR body
+- [ ] T008 Run quickstart.md step 4 (fresh `.env` copy, API + web app, no CORS errors) and record the result for the PR body — *not run end to end: no Docker, Postgres or pnpm on the implementing machine. An in-process substitute was run instead (see the PR body). Left open for the reviewer.*
+- [X] T009 Run `uv run ruff check .` from the repo root to confirm nothing else changed
 
 ---
 
