@@ -1,7 +1,8 @@
-import type { Components002, components } from "@step-job/api-client";
+import type { Components002, Components003, components } from "@step-job/api-client";
 
 type Schemas = components["schemas"];
 type ImportSchemas = Components002["schemas"];
+type DocumentSchemas = Components003["schemas"];
 
 export type Profile = Schemas["Profile"];
 export type Identity = Schemas["Identity"];
@@ -15,6 +16,18 @@ export type CareerPreference = Schemas["CareerPreference"];
 export type CareerStory = Schemas["CareerStory"];
 export type ProposedEntry = Schemas["ProposedEntry"];
 export type CareerImport = ImportSchemas["ImportDetail"];
+export type DateConvention = DocumentSchemas["DateConvention"];
+export type PaperSize = DocumentSchemas["PaperSize"];
+
+/** A generated document, with what the interface needs to say about it. */
+export type GeneratedDocument = {
+  blob: Blob;
+  filename: string;
+  /** How long it runs. More than two pages is worth telling the user (FR-018a). */
+  pages: number;
+  /** What it was based on, so its claims stay traceable (FR-016). */
+  snapshotId: string;
+};
 export type Locale = Schemas["Locale"];
 
 /**
@@ -149,6 +162,45 @@ export const api = {
     return payload as CareerImport;
   },
 
+  /**
+   * Generate a 履歴書.
+   *
+   * Not routed through `request`, which parses every response as JSON: this
+   * one is a document. The 422 is still mapped to a ValidationError, because a
+   * profile missing a name must name the missing field rather than fail
+   * generically (FR-015).
+   */
+  generateRirekisho: async (
+    options: { date_convention?: DateConvention; paper_size?: PaperSize } = {},
+  ): Promise<GeneratedDocument> => {
+    const response = await fetch(`${BASE}/profile/documents/rirekisho`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(options),
+      credentials: "include",
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      if (response.status === 422 && body?.failures) {
+        throw new ValidationError(body.failures, body.message);
+      }
+      throw new ApiError(
+        response.status,
+        body?.code ?? "error",
+        body?.message ?? response.statusText,
+      );
+    }
+
+    return {
+      blob: await response.blob(),
+      filename: filenameFrom(response.headers.get("Content-Disposition")),
+      pages: Number(response.headers.get("X-Document-Pages") ?? 1),
+      snapshotId: response.headers.get("X-Snapshot-Id") ?? "",
+    };
+  },
+
   listImports: () => request<CareerImport[]>("/profile/imports"),
   getImport: (id: string) => request<CareerImport>(`/profile/imports/${id}`),
   importText: (text: string) =>
@@ -162,3 +214,14 @@ export const api = {
     }),
   restoreProfile: () => request<Profile>("/profile/restore", { method: "POST" }),
 };
+
+/**
+ * The name the server gave the document, falling back to a sensible one.
+ *
+ * The header is only readable because the API exposes it to this origin; if
+ * that ever stops being true the download still works, under the default name.
+ */
+function filenameFrom(disposition: string | null): string {
+  const match = disposition?.match(/filename="([^"]+)"/);
+  return match?.[1] ?? "rirekisho.pdf";
+}

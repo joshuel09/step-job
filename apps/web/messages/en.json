@@ -226,6 +226,34 @@
       "stillRunning": "This is taking a while. It is still running — come back and reload to see the result.",
       "cancel": "Stop this import"
     },
-    "importNav": "Import"
+    "importNav": "Import",
+    "rirekisho": {
+      "pageTitle": "Japanese résumé (履歴書)",
+      "pageSubtitle": "Built from your profile, in the form Japanese employers expect.",
+      "back": "Back to profile",
+      "title": "Generate your 履歴書",
+      "explanation": "Every line comes from your profile. Nothing is invented to fill a blank — if something is missing, it stays blank and you can add it to your profile first.",
+      "photoNote": "The photo box is left empty. We do not store your photograph; attach one yourself if the employer asks for it.",
+      "dateConvention": "Dates",
+      "conventions": {
+        "seireki": "Western years (2024)",
+        "wareki": "Japanese eras (令和6年)"
+      },
+      "paperSize": "Paper",
+      "papers": {
+        "a4": "A4",
+        "b5": "B5"
+      },
+      "generate": "Generate",
+      "generating": "Generating…",
+      "download": "Download",
+      "preview": "Open in a new tab",
+      "longDocument": "This runs to {count} pages. A longer history produces more pages rather than dropping entries.",
+      "notStored": "The document is not kept. Download it now, or generate it again whenever you need it.",
+      "snapshot": "We recorded what this was based on (ref {id}), so you can check later what you sent.",
+      "leftToYouTitle": "What you fill in yourself",
+      "leftToYou": "The reason for applying (志望の動機) and personal requests (本人希望記入欄) change with every employer, so they are left blank for you to write by hand or fill in before printing."
+    },
+    "rirekishoNav": "履歴書"
   }
 }

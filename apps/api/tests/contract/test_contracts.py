@@ -33,8 +33,8 @@ DEFERRED: dict[str, set[str]] = {
     # Specified and planned; not yet built. Listed so the gap is deliberate —
     # and so this test keeps covering the two features that are built, rather
     # than failing on a third nobody has started.
+    # Readiness arrives with Phase 6; generation is implemented.
     "003-rirekisho-generator": {
-        "/profile/documents/rirekisho",
         "/profile/documents/rirekisho/readiness",
     },
 }
