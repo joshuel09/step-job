@@ -854,9 +854,12 @@ components:
       properties:
         id: { type: string, format: uuid }
         interface_locale: { $ref: "#/components/schemas/Locale" }
-        identity: { $ref: "#/components/schemas/Identity" }
-        japan: { $ref: "#/components/schemas/JapanProfile" }
-        preferences: { $ref: "#/components/schemas/CareerPreference" }
+        identity:
+          anyOf: [{ $ref: "#/components/schemas/Identity" }, { type: "null" }]
+        japan:
+          anyOf: [{ $ref: "#/components/schemas/JapanProfile" }, { type: "null" }]
+        preferences:
+          anyOf: [{ $ref: "#/components/schemas/CareerPreference" }, { type: "null" }]
         experiences:
           type: array
           items: { $ref: "#/components/schemas/WorkExperience" }
@@ -878,21 +881,19 @@ components:
       required: [full_name_latin]
       properties:
         full_name_latin: { type: string }
-        full_name_japanese: { type: string, nullable: true }
-        furigana: { type: string, nullable: true }
-        email: { type: string, nullable: true }
-        phone: { type: string, nullable: true }
+        full_name_japanese: { type: [string, "null"] }
+        furigana: { type: [string, "null"] }
+        email: { type: [string, "null"] }
+        phone: { type: [string, "null"] }
 
         # Added by feature 003. A 履歴書 conventionally carries both, and a user
         # records them once on their profile rather than per document. Optional,
         # so a profile without them is valid and a document leaves them blank.
         date_of_birth:
-          type: string
+          type: [string, "null"]
           format: date
-          nullable: true
         address:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: The applicant's current address, 現住所
 
     JapanProfile:
@@ -902,12 +903,12 @@ components:
         field may appear in a generated document (FR-006); they do not affect
         export (FR-037).
       properties:
-        residence_status: { type: string, nullable: true }
-        nationality: { type: string, nullable: true }
-        visa_type: { type: string, nullable: true }
-        visa_expires_on: { type: string, format: date, nullable: true }
-        work_authorisation: { type: boolean, nullable: true }
-        japanese_qualification: { type: string, nullable: true }
+        residence_status: { type: [string, "null"] }
+        nationality: { type: [string, "null"] }
+        visa_type: { type: [string, "null"] }
+        visa_expires_on: { type: [string, "null"], format: date }
+        work_authorisation: { type: [boolean, "null"] }
+        japanese_qualification: { type: [string, "null"] }
         disclose_residence_status: { type: boolean, default: false }
         disclose_nationality: { type: boolean, default: false }
         disclose_visa: { type: boolean, default: false }
@@ -921,13 +922,12 @@ components:
         employer_name: { type: string }
         job_title: { type: string }
         employment_type:
-          type: string
-          enum: [permanent, contract, part_time, internship, freelance]
+          type: [string, "null"]
+          enum: [permanent, contract, part_time, internship, freelance, null]
         started_on: { type: string, format: date }
         ended_on:
-          type: string
+          type: [string, "null"]
           format: date
-          nullable: true
           description: Null means ongoing
         description: { type: string }
         source_language: { $ref: "#/components/schemas/Locale" }
@@ -955,10 +955,10 @@ components:
       properties:
         id: { type: string, format: uuid, readOnly: true }
         institution: { type: string }
-        qualification: { type: string, nullable: true }
-        field_of_study: { type: string, nullable: true }
-        started_on: { type: string, format: date, nullable: true }
-        ended_on: { type: string, format: date, nullable: true }
+        qualification: { type: [string, "null"] }
+        field_of_study: { type: [string, "null"] }
+        started_on: { type: [string, "null"], format: date }
+        ended_on: { type: [string, "null"], format: date }
         source_language: { $ref: "#/components/schemas/Locale" }
 
     Certification:
@@ -967,9 +967,9 @@ components:
       properties:
         id: { type: string, format: uuid, readOnly: true }
         name: { type: string }
-        issuer: { type: string, nullable: true }
-        issued_on: { type: string, format: date, nullable: true }
-        expires_on: { type: string, format: date, nullable: true }
+        issuer: { type: [string, "null"] }
+        issued_on: { type: [string, "null"], format: date }
+        expires_on: { type: [string, "null"], format: date }
         source_language: { $ref: "#/components/schemas/Locale" }
 
     Skill:
@@ -979,9 +979,8 @@ components:
         id: { type: string, format: uuid, readOnly: true }
         name: { type: string }
         level:
-          type: string
-          nullable: true
-          enum: [beginner, intermediate, advanced, expert]
+          type: [string, "null"]
+          enum: [beginner, intermediate, advanced, expert, null]
         used_in_experience_ids:
           type: array
           items: { type: string, format: uuid }
@@ -995,7 +994,7 @@ components:
         proficiency:
           type: string
           enum: [native, business, conversational, basic]
-        qualification: { type: string, nullable: true }
+        qualification: { type: [string, "null"] }
 
     CareerPreference:
       type: object
@@ -1007,19 +1006,18 @@ components:
           type: array
           items: { type: string }
         working_arrangement:
-          type: string
-          nullable: true
-          enum: [onsite, hybrid, remote]
-        salary_min: { type: integer, nullable: true }
-        salary_max: { type: integer, nullable: true }
-        currency: { type: string, nullable: true }
+          type: [string, "null"]
+          enum: [onsite, hybrid, remote, null]
+        salary_min: { type: [integer, "null"] }
+        salary_max: { type: [integer, "null"] }
+        currency: { type: [string, "null"] }
         source_language: { $ref: "#/components/schemas/Locale" }
 
     CareerStoryInput:
       type: object
       required: [title, challenge, action, result, source_language]
       properties:
-        work_experience_id: { type: string, format: uuid, nullable: true }
+        work_experience_id: { type: [string, "null"], format: uuid }
         title: { type: string }
         challenge: { type: string }
         action: { type: string }
@@ -1059,24 +1057,21 @@ components:
               type: string
               enum: [pending, accepted, rejected]
             possible_duplicate_of:
-              type: string
+              type: [string, "null"]
               format: uuid
-              nullable: true
               description: >
                 Set when an existing entry shares the employer and an
                 overlapping date range (FR-032). A suggestion only.
-            reviewed_at: { type: string, format: date-time, nullable: true }
+            reviewed_at: { type: [string, "null"], format: date-time }
 
             # Added by feature 002. All nullable: a proposal created by any
             # other means is valid without them.
             import_id:
-              type: string
+              type: [string, "null"]
               format: uuid
-              nullable: true
               description: The import that created this proposal, where one did.
             evidence:
-              type: object
-              nullable: true
+              type: [object, "null"]
               additionalProperties:
                 type: object
                 required: [quote, verified]
@@ -1093,8 +1088,7 @@ components:
                 entirely. Cleared when the proposal is reviewed, because
                 afterwards it is a fragment of a resume with no purpose left.
             conflicts:
-              type: array
-              nullable: true
+              type: [array, "null"]
               items:
                 type: object
                 required: [fields, reason]

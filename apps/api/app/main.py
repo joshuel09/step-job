@@ -1,10 +1,11 @@
 """API entrypoint."""
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.career.router import router as career_router
-from app.core.errors import AppError, app_error_handler
+from app.core.errors import AppError, app_error_handler, request_validation_handler
 from app.core.logging import configure as configure_logging
 from app.core.settings import get_settings
 from app.imports.router import router as imports_router
@@ -36,6 +37,9 @@ app.add_middleware(
 )
 
 app.add_exception_handler(AppError, app_error_handler)
+# Schema-level rejections get the documented shape too, so the interface can
+# name the offending field rather than showing a generic failure (FR-014).
+app.add_exception_handler(RequestValidationError, request_validation_handler)
 
 
 @app.get("/health", tags=["meta"])
