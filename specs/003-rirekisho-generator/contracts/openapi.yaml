@@ -45,6 +45,9 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorised" }
         "404":
           description: No profile exists yet for this user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
 
   /profile/documents/rirekisho:
     post:
@@ -92,6 +95,9 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorised" }
         "404":
           description: No profile exists yet for this user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
         "422":
           description: >
             The profile lacks something a document cannot be meaningful without
