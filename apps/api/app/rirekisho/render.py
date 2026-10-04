@@ -80,7 +80,7 @@ from io import BytesIO  # noqa: E402
 
 from reportlab.pdfgen.canvas import Canvas  # noqa: E402
 
-from app.imports.dates import format_year_month  # noqa: E402
+from app.imports.dates import format_japanese_date, format_year_month  # noqa: E402
 from app.rirekisho.rows import Row, RowEvent  # noqa: E402
 
 MARGIN = 40
@@ -128,7 +128,7 @@ class _Page:
 
 def render_rirekisho(
     *,
-    identity: dict[str, str | None],
+    identity: dict[str, str | date | None],
     rows: list[Row],
     certifications: list[tuple[date | None, str]] | None = None,
     disclosed: dict[str, str] | None = None,
@@ -156,7 +156,10 @@ def render_rirekisho(
     page.line(f"ふりがな　{identity.get('furigana') or ''}")
     display_name = identity.get("full_name_japanese") or identity.get("full_name_latin") or ""
     page.line(f"氏名　　　{display_name}")
-    page.line(f"生年月日　{identity.get('date_of_birth') or ''}")
+    # In the chosen convention like every other date, or the document would mix
+    # the two (FR-019).
+    born = identity.get("date_of_birth")
+    page.line(f"生年月日　{format_japanese_date(born, era=era) if isinstance(born, date) else ''}")
     page.line(f"現住所　　{identity.get('address') or ''}")
     page.line(f"電話　　　{identity.get('phone') or ''}")
     page.line(f"メール　　{identity.get('email') or ''}")
