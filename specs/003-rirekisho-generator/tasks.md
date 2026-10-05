@@ -116,13 +116,13 @@ content identical, presentation different. Covers quickstart Scenario 2.
 ### Tests for User Story 2
 
 - [X] T029 [P] [US2] Integration test for quickstart Scenario 2 in `apps/api/tests/integration/test_rirekisho_conventions.py`, asserting each document matches its own convention and neither matches the other's
-- [ ] T030 [P] [US2] Integration test asserting a preview and a download contain identical text, in `apps/api/tests/integration/test_rirekisho_preview.py` — a user must never preview one document and download another
+- [X] T030 [P] [US2] Integration test asserting a preview and a download contain identical text, in `apps/api/tests/integration/test_rirekisho_preview.py` — a user must never preview one document and download another — compares what is drawn, not only the text, and at every date convention and paper size
 
 ### Implementation for User Story 2
 
 - [X] T031 [US2] Apply the chosen date convention throughout a document in `apps/api/app/rirekisho/render.py`, using the era rendering from T009 and never mixing the two within one document per FR-019 — the table already followed it; the date of birth did not, and T029 found it
-- [ ] T032 [US2] Support B5 alongside A4 in `apps/api/app/rirekisho/render.py`, with the same content at either size
-- [ ] T033 [US2] Support preview in `apps/api/app/rirekisho/router.py`, returning the identical document with a different disposition
+- [X] T032 [US2] Support B5 alongside A4 in `apps/api/app/rirekisho/render.py`, with the same content at either size — already in place; proven by T030's paper-size tests
+- [X] T033 [US2] Support preview in `apps/api/app/rirekisho/router.py`, returning the identical document with a different disposition — already in place; proven by T030's parity tests
 - [ ] T034 [US2] Regenerate all three typed clients into `packages/api-client/src/`
 - [ ] T035 [P] [US2] Add convention and paper-size controls, and a preview, to `apps/web/components/profile/rirekisho-form.tsx`
 - [ ] T036 [P] [US2] Add the English and Japanese strings for User Story 2 to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
