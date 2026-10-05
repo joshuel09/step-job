@@ -97,7 +97,7 @@ def generate(
             "full_name_latin": identity.full_name_latin,
             "full_name_japanese": identity.full_name_japanese,
             "furigana": identity.furigana,
-            "date_of_birth": identity.date_of_birth.isoformat() if identity.date_of_birth else None,
+            "date_of_birth": identity.date_of_birth,
             "address": identity.address,
             "phone": identity.phone,
             "email": identity.email,

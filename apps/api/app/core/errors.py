@@ -1,6 +1,7 @@
 """Error shapes matching the Error and ValidationError schemas in the contract."""
 
 from fastapi import Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 
@@ -52,3 +53,30 @@ async def app_error_handler(_: Request, exc: AppError) -> JSONResponse:
     if isinstance(exc, ValidationFailed):
         body["failures"] = exc.failures
     return JSONResponse(status_code=exc.status_code, content=body)
+
+
+# Where a rejection came from. Stripped from the field path, because a user
+# reading "proficiency" understands it and "body.proficiency" is noise.
+_LOCATIONS = {"body", "query", "path", "header", "cookie"}
+
+
+def _field(location: tuple) -> str:
+    """A pydantic `loc` as the field name the interface shows."""
+    parts = [str(p) for p in location]
+    if parts and parts[0] in _LOCATIONS:
+        parts = parts[1:]
+    return ".".join(parts) or "body"
+
+
+async def request_validation_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
+    """Give schema-level rejections the same shape as everything else.
+
+    Without this, a request that fails pydantic validation — a wrong enum, a
+    missing required field, a malformed date — returns FastAPI's own
+    `{"detail": [...]}`. That is not the documented ValidationError, so the
+    interface cannot read it field by field and falls back to a generic
+    failure, which FR-014 exists to prevent. These are the most common
+    mistakes a user makes, so they are the ones that most need naming.
+    """
+    failures = [(_field(error["loc"]), error["msg"]) for error in exc.errors()]
+    return await app_error_handler(_, ValidationFailed(failures))

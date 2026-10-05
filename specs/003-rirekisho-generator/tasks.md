@@ -115,12 +115,12 @@ content identical, presentation different. Covers quickstart Scenario 2.
 
 ### Tests for User Story 2
 
-- [ ] T029 [P] [US2] Integration test for quickstart Scenario 2 in `apps/api/tests/integration/test_rirekisho_conventions.py`, asserting each document matches its own convention and neither matches the other's
+- [X] T029 [P] [US2] Integration test for quickstart Scenario 2 in `apps/api/tests/integration/test_rirekisho_conventions.py`, asserting each document matches its own convention and neither matches the other's
 - [ ] T030 [P] [US2] Integration test asserting a preview and a download contain identical text, in `apps/api/tests/integration/test_rirekisho_preview.py` — a user must never preview one document and download another
 
 ### Implementation for User Story 2
 
-- [ ] T031 [US2] Apply the chosen date convention throughout a document in `apps/api/app/rirekisho/render.py`, using the era rendering from T009 and never mixing the two within one document per FR-019
+- [X] T031 [US2] Apply the chosen date convention throughout a document in `apps/api/app/rirekisho/render.py`, using the era rendering from T009 and never mixing the two within one document per FR-019 — the table already followed it; the date of birth did not, and T029 found it
 - [ ] T032 [US2] Support B5 alongside A4 in `apps/api/app/rirekisho/render.py`, with the same content at either size
 - [ ] T033 [US2] Support preview in `apps/api/app/rirekisho/router.py`, returning the identical document with a different disposition
 - [ ] T034 [US2] Regenerate all three typed clients into `packages/api-client/src/`

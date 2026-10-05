@@ -1563,9 +1563,9 @@ export interface components {
             /** Format: uuid */
             id?: string;
             interface_locale?: components["schemas"]["Locale"];
-            identity?: components["schemas"]["Identity"];
-            japan?: components["schemas"]["JapanProfile"];
-            preferences?: components["schemas"]["CareerPreference"];
+            identity?: components["schemas"]["Identity"] | null;
+            japan?: components["schemas"]["JapanProfile"] | null;
+            preferences?: components["schemas"]["CareerPreference"] | null;
             experiences?: components["schemas"]["WorkExperience"][];
             education?: components["schemas"]["Education"][];
             certifications?: components["schemas"]["Certification"][];
@@ -1606,8 +1606,8 @@ export interface components {
         WorkExperienceInput: {
             employer_name: string;
             job_title: string;
-            /** @enum {string} */
-            employment_type?: "permanent" | "contract" | "part_time" | "internship" | "freelance";
+            /** @enum {string|null} */
+            employment_type?: "permanent" | "contract" | "part_time" | "internship" | "freelance" | null;
             /** Format: date */
             started_on: string;
             /**
