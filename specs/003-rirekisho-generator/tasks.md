@@ -146,11 +146,11 @@ quickstart Scenarios 3, 4, 5 and 7.
 - [ ] T038 [P] [US3] Integration test for quickstart Scenario 4 in `apps/api/tests/integration/test_rirekisho_disclosure.py`, with one case per disclosure flag: undisclosed means absent from the extracted text, disclosed means present
 - [ ] T039 [P] [US3] Integration test for quickstart Scenario 5 in `apps/api/tests/integration/test_rirekisho_english.py`, asserting English entries appear as written and that nothing in the document is Japanese the user did not write
 - [ ] T040 [P] [US3] Integration test for quickstart Scenario 7 asserting no 性別 field appears anywhere, in `apps/api/tests/integration/test_rirekisho_blanks.py`
-- [ ] T041 [P] [US3] Unit tests for disclosure filtering in `apps/api/tests/unit/test_rirekisho_disclosure.py`, one case per flag
+- [X] T041 [P] [US3] Unit tests for disclosure filtering in `apps/api/tests/unit/test_rirekisho_disclosure.py`, one case per flag
 
 ### Implementation for User Story 3
 
-- [ ] T042 [US3] Implement disclosure filtering in `apps/api/app/rirekisho/disclosure.py`, applied before rendering so an undisclosed value never reaches the renderer at all, per data-model.md and gate G5
+- [X] T042 [US3] Implement disclosure filtering in `apps/api/app/rirekisho/disclosure.py`, applied before rendering so an undisclosed value never reaches the renderer at all, per data-model.md and gate G5 — the module only; wiring it into `service.py` is T043 (#62)
 - [ ] T043 [US3] Render a disclosed Japan-specific field in 本人希望記入欄 in `apps/api/app/rirekisho/render.py`
 - [ ] T044 [US3] Produce empty sections empty in `apps/api/app/rirekisho/render.py` — no placeholder, no sample, no inferred content, per FR-013
 - [ ] T045 [US3] Label every deliberately empty section in `apps/api/app/rirekisho/render.py`, including the photograph frame, 志望の動機 and 本人希望記入欄, per FR-022a to FR-022c
