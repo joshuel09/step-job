@@ -123,9 +123,9 @@ content identical, presentation different. Covers quickstart Scenario 2.
 - [X] T031 [US2] Apply the chosen date convention throughout a document in `apps/api/app/rirekisho/render.py`, using the era rendering from T009 and never mixing the two within one document per FR-019 — the table already followed it; the date of birth did not, and T029 found it
 - [X] T032 [US2] Support B5 alongside A4 in `apps/api/app/rirekisho/render.py`, with the same content at either size — already in place; proven by T030's paper-size tests
 - [X] T033 [US2] Support preview in `apps/api/app/rirekisho/router.py`, returning the identical document with a different disposition — already in place; proven by T030's parity tests
-- [ ] T034 [US2] Regenerate all three typed clients into `packages/api-client/src/`
-- [ ] T035 [P] [US2] Add convention and paper-size controls, and a preview, to `apps/web/components/profile/rirekisho-form.tsx`
-- [ ] T036 [P] [US2] Add the English and Japanese strings for User Story 2 to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
+- [X] T034 [US2] Regenerate all three typed clients into `packages/api-client/src/` — already current; regenerating produces no diff
+- [X] T035 [P] [US2] Add convention and paper-size controls, and a preview, to `apps/web/components/profile/rirekisho-form.tsx` — shipped with User Story 1 in #56
+- [X] T036 [P] [US2] Add the English and Japanese strings for User Story 2 to `apps/web/messages/en.json` and `apps/web/messages/ja.json` — shipped with User Story 1 in #56
 
 **Checkpoint**: conventions are the user's to choose, and the preview is honest
 
