@@ -31,6 +31,14 @@ the embedded Japanese font, the 和暦/西暦 conversion, the paper sizes, and t
 snapshot machinery that keeps a sent document's statements traceable after the
 profile moves on.
 
+## Clarifications
+
+### Session 2026-10-06
+
+- Q: Who writes 職務要約 (career summary) and 自己PR (self-promotion)? → A: Split them. 職務要約 is assembled deterministically from verified profile entries; 自己PR is labelled and left for the user, because self-characterisation is not something the profile can evidence. No model is involved in this feature.
+- Q: What should "grouped by project" mean, given the profile has no project entity? → A: Drop project grouping from this feature. Ship the two chronological arrangements; project grouping returns as its own feature once a project entity exists.
+- Q: Where does a career story attached to no employer belong? → A: A closing achievements section, so nothing the user recorded is lost.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Turn my profile into a 職務経歴書 (Priority: P1) 🎯 MVP
@@ -61,12 +69,15 @@ appears, and nothing appears that the profile does not hold.
 
 ### User Story 2 - Arrange it the way this employer expects (Priority: P2)
 
-Different employers and different careers call for different arrangements. A user
-with a steady progression wants reverse-chronological, newest first, which is what
-most mid-career Japanese applications expect. A new graduate or career-changer may
-want plain chronological. Someone whose work is best understood as a set of
-engagements — a consultant, a contractor — wants it grouped by project rather than
-by employer. The same document content, arranged three ways.
+Different careers call for different arrangements. A user with a steady
+progression wants reverse-chronological, newest first, which is what most
+mid-career Japanese applications expect. A new graduate or career-changer may
+want plain chronological. The same document content, arranged two ways.
+
+Grouping by project is deliberately not offered. The profile records employers
+and achievements, not engagements, so a project section would have no client,
+period or role to show. It returns as its own feature once the profile holds
+projects.
 
 The user also chooses the same conventions the 履歴書 offers: 和暦 or 西暦, and the
 paper size.
@@ -76,7 +87,7 @@ arrangement. But a 職務経歴書 in the wrong arrangement reads as though the
 applicant did not know the convention, which is the same failure mode the 履歴書
 work was careful to avoid.
 
-**Independent Test**: generate the same profile three ways and confirm each
+**Independent Test**: generate the same profile both ways and confirm each
 arrangement contains the identical set of facts in a different order, with no
 entry gained or lost between them.
 
@@ -122,8 +133,10 @@ generate, and confirm the document says exactly that much about it.
 
 - An employer the user held for one month, and one held for fifteen years — both appear, neither is summarised away.
 - Overlapping employment, such as a contract held alongside a permanent role: both appear, unreconciled, as in the 履歴書.
-- A career story attached to no employer: it belongs to the user's history and must not be dropped, so it needs somewhere to go.
-- A profile with employers but no career stories at all: a legitimate document, thinner than most.
+- A career story attached to no employer: it goes in the closing achievements section rather than being dropped (FR-021).
+- A profile with employers but no career stories at all: a legitimate document, thinner than most, and with no closing achievements section at all rather than an empty one.
+- A profile with too little to summarise — one employer and no dates: 職務要約 says only what can be traced, and says less rather than reaching.
+- Every career story unattached: the employer sections carry no achievements and the closing section carries them all, which is a true picture of what was recorded.
 - A career long enough that the document runs past the conventional pages: entries are never dropped to fit (inherited from the 履歴書's FR-018a).
 - The same profile generating a 履歴書 and a 職務経歴書 on the same day: the two documents must not contradict each other.
 - A user who edits a profile entry after sending the document: what was sent stays inspectable.
@@ -143,7 +156,7 @@ generate, and confirm the document says exactly that much about it.
 
 **Arrangement and conventions**
 
-- **FR-007**: Users MUST be able to choose the arrangement: reverse-chronological, chronological, or grouped by project.
+- **FR-007**: Users MUST be able to choose the arrangement: reverse-chronological or chronological. Grouping by project is out of scope for this feature; the profile holds no project entity, and inventing one from achievements would produce a section with no client, period or role.
 - **FR-008**: Every arrangement MUST contain the same set of entries; changing the arrangement MUST NOT add, drop, merge or shorten any entry.
 - **FR-009**: Users MUST be able to choose 和暦 or 西暦, and one convention MUST be used throughout a document; the two MUST NOT appear together.
 - **FR-010**: Users MUST be able to choose the paper size, with the same content at either size.
@@ -159,17 +172,18 @@ generate, and confirm the document says exactly that much about it.
 - **FR-017**: The system MUST record what each generated document drew on, and that record MUST remain accurate after the underlying entries are edited or deleted.
 - **FR-018**: A 職務経歴書 and a 履歴書 generated from the same profile MUST NOT contradict each other on any fact both documents carry.
 
-**Open questions**
+**Sections the product does and does not write**
 
-- **FR-019**: The 職務要約 (career summary) and 自己PR (self-promotion) sections MUST be produced by [NEEDS CLARIFICATION: these are the two sections a 職務経歴書 conventionally carries as prose about the applicant as a whole, and the profile has no field for either. Options: (a) leave both labelled and empty for the user, as the 履歴書 does with 志望の動機; (b) assemble them deterministically from verified profile entries, so they restate facts rather than characterise the person; (c) draft them with a model under the evidence verification feature 002 established, where an unverifiable sentence is dropped rather than shown. This decides whether the feature calls a model at all.]
-- **FR-020**: Grouping by project MUST treat a "project" as [NEEDS CLARIFICATION: the profile holds employers and career stories but has no project entity. Options: (a) treat each career story as the project unit, grouping stories across employers; (b) extend the profile with a project entity, per Principle I's rule that a feature needing new career data extends the profile rather than collecting it privately; (c) drop project grouping from this feature and offer only the two chronological arrangements.]
-- **FR-021**: A career story attached to no employer MUST [NEEDS CLARIFICATION: such a story is real career history with nowhere obvious to sit in an employer-by-employer document. Options: (a) a separate closing section for unattached achievements; (b) omitted from this document, remaining in the profile and the user is told; (c) generation prompts the user to attach it first.]
+- **FR-019**: The system MUST assemble 職務要約 (career summary) from verified profile entries — the span of the career, the number of employers, the most recent role — restating facts the profile holds rather than characterising the applicant. It MUST NOT state anything 職務要約 cannot trace to an entry.
+- **FR-020**: The system MUST leave 自己PR (self-promotion) labelled and empty for the user. It is a claim about what kind of worker someone is, which no set of dates and titles can evidence, so the product does not write it.
+- **FR-021**: The system MUST present a career story attached to no employer in a closing achievements section, so that nothing the user recorded is dropped from the document.
 
 ### Key Entities
 
 - **職務経歴書 request**: what the user chose for this document — arrangement, date convention, paper size. Affects presentation only, never content.
 - **Career history section**: one employer's portion of the document — period, employer, role, description and achievements, each drawn from a profile entry.
-- **Achievement**: a recorded career story presented under the employer it belongs to, in the user's words.
+- **Achievement**: a recorded career story presented under the employer it belongs to, in the user's words. One belonging to no employer appears in the closing achievements section instead.
+- **Career summary**: the opening 職務要約, assembled from facts the profile holds — career span, employer count, most recent role — and carrying nothing that cannot be traced to an entry.
 - **Document record**: what a generated document drew on, captured at generation and unchanged afterwards, so a sent document stays inspectable. The same machinery the 履歴書 uses.
 
 ## Success Criteria *(mandatory)*
@@ -180,17 +194,22 @@ generate, and confirm the document says exactly that much about it.
 - **SC-002**: Every Japanese character in a generated document is readable as text, verified by extracting the text back out of the document — the check that fails when glyphs are missing.
 - **SC-003**: Every factual statement in a generated document can be traced to the profile entry that produced it, with no unattributable statements.
 - **SC-004**: A profile section the user has not filled in produces no content in the document — measured as zero placeholder, sample or inferred sentences across every empty-section case.
-- **SC-005**: The same profile generated in all three arrangements yields the identical set of entries in each, with none gained, lost, merged or shortened.
+- **SC-005**: The same profile generated in both arrangements yields the identical set of entries in each, with none gained, lost, merged or shortened.
 - **SC-006**: A document generated before a profile edit still shows what it drew on after that edit.
 - **SC-007**: A 履歴書 and a 職務経歴書 generated from the same profile agree on every employer, period and title that both carry.
 - **SC-008**: A career long enough to exceed the conventional length produces every entry, with none dropped or truncated.
+- **SC-009**: Every statement in 職務要約 traces to a profile entry, with no sentence characterising the applicant rather than reporting their record.
+- **SC-010**: 自己PR is present and labelled in every generated document, and empty in every one of them.
+- **SC-011**: A career story attached to no employer appears in the document, measured as zero recorded stories missing from a generated 職務経歴書.
 
 ## Assumptions
 
 - The Master Career Profile already holds what this document needs — employers, roles, periods, descriptions, career stories, skills and certifications. Where it does not, Principle I requires extending the profile rather than collecting the data inside this feature.
 - The embedded Japanese font, the 和暦/西暦 conversion and the paper sizes are reused from the 履歴書 rather than built again.
 - The record of what a document drew on reuses the same snapshot machinery as the 履歴書.
-- Reverse-chronological is the default arrangement, being what most mid-career Japanese applications expect; the user can change it.
+- Reverse-chronological is the default arrangement, being what most mid-career Japanese applications expect; the user can change it to chronological.
+- No model is involved. Every section is assembled deterministically from profile entries, which is what makes FR-019's 職務要約 traceable by construction rather than by verification. This feature does not depend on the AI provider.
+- Project grouping is deferred rather than rejected. It needs a project entity on the profile, which belongs to the profile's own feature under Principle I, not to this one.
 - The conventional length is one to three pages. It is a guide, not a cap — FR-011 governs.
 - Photographs are out of scope, as in the 履歴書: a 職務経歴書 does not carry one.
 - The document is generated and handed over, not stored, edited in place, or treated as a second source of truth.
