@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,22 +31,31 @@
 
 ## Notes
 
-Three [NEEDS CLARIFICATION] markers remain, deliberately, and all three are
-scope-defining rather than detail:
+All items pass. The three markers were resolved by `/speckit-clarify` on
+2026-10-06 and recorded under Clarifications in the spec; 16/16 items now pass,
+up from 15/16.
 
-- **FR-019 — 職務要約 and 自己PR.** The two sections a 職務経歴書 conventionally
-  carries as prose about the applicant as a whole, and the profile has no field
-  for either. This decides whether the feature calls a model at all, which is
-  the largest single question in the feature.
-- **FR-020 — what "grouped by project" means.** The profile holds employers and
-  career stories but no project entity. Principle I says a feature needing a new
-  kind of career data extends the profile rather than collecting it privately,
-  so one of the options here is a profile change rather than a document change.
-- **FR-021 — a career story attached to no employer.** Real career history with
-  nowhere obvious to sit in an employer-by-employer document.
+**What was decided, and what it changed beyond the requirement itself:**
 
-None has a reasonable default: each leads to materially different work, and
-guessing wrong means building the wrong feature. They are the right input to
-`/speckit-clarify`.
+- **職務要約 and 自己PR were split rather than treated alike.** 職務要約 is
+  assembled from verified entries — career span, employer count, most recent
+  role — so it is traceable by construction. 自己PR is labelled and left empty,
+  because it is a claim about what kind of worker someone is, and no set of
+  dates and titles evidences that. The consequence worth noting: **this feature
+  calls no model at all.** Every section is deterministic, so Principle IV is
+  satisfied by construction rather than by verification, and the feature does
+  not depend on the AI provider.
+- **Project grouping was dropped, not deferred silently.** FR-007 now offers two
+  arrangements, User Story 2 says why, and an assumption records that it returns
+  once the profile holds a project entity. Dropping it also changed SC-005 from
+  three arrangements to two — the kind of consequence that is easy to leave
+  stale.
+- **An unattached career story goes in a closing achievements section**, so
+  nothing recorded is lost. This added two edge cases and SC-011.
 
-Everything else was resolved by informed default and recorded under Assumptions.
+**Carried forward:** feature 005's FR-017 asks the same underlying question —
+whether a document is written by a model. This answer sets the precedent: no, if
+a deterministic assembly from verified entries will do. 005 is harder, because
+its question is translation rather than composition, and no deterministic
+assembly produces English from Japanese. The precedent informs it; it does not
+settle it.
