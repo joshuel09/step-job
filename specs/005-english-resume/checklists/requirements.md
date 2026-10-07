@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,30 +31,42 @@
 
 ## Notes
 
-Three [NEEDS CLARIFICATION] markers remain, deliberately. All three concern
-language, which is this feature's substance rather than a detail of it:
+All items pass. The three markers were resolved by `/speckit-clarify` on
+2026-10-07 and recorded under Clarifications; 16/16 items now pass, up from
+15/16.
 
-- **FR-017 — an entry recorded in Japanese.** The central question. Feature 003
-  established that the product does not translate on the user's behalf; carried
-  over literally, that hands a Japanese-reading user an English resume they
-  cannot use. Principle IV permits translating verified facts but forbids
-  introducing seniority the profile does not support, and the choice of English
-  word is itself a claim about seniority. This decides whether the feature calls
-  a model, and option (a) implies extending the profile to hold both languages
-  per entry.
-- **FR-018 — proper nouns.** Separate from FR-017 because a company name is not
-  prose. An official registered English name is a fact; an invented one misnames
-  a real organisation on a document an employer may verify.
-- **FR-019 — which English convention.** A US resume, a UK/European CV and an
-  academic CV differ in length, in what personal detail is admissible, and in
-  ordering. "English resume" names three documents, not one.
+**What was decided:**
 
-None has a defensible default, and guessing on FR-017 in particular would risk
-building a translation feature the project may not want, or a document most of
-its users cannot use.
+- **Translation became a profile-filling step, not a document step.** A model
+  drafts, the user corrects and approves, and the approved wording is saved to
+  the profile as that entry's English version. This is what Principle IV
+  prescribes for a claim that cannot be grounded — surface it for explicit
+  confirmation rather than emit it silently — and it keeps the generator
+  deterministic, matching feature 004. Capturing the approved words on the
+  profile means the work is asked for once (Principle I).
+- **Proper nouns are supplied, never guessed.** A transliteration is not an
+  official name: 日本電信電話 is NTT, which no transliteration produces. A
+  guessed name misnames a real organisation on a document an employer can check.
+- **One US-style resume.** The other conventions are different documents and
+  can be their own work.
 
-Everything else was resolved by informed default and recorded under Assumptions.
-One of those defaults is worth noting as a judgement rather than a convention:
-FR-009 excludes a full street address. It is not a protected characteristic, but
-it is not conventional on an English resume and carries the same screening risk,
-so it is grouped with the fields the document leaves out.
+**Why this needed a new user story.** The translation flow is a distinct user
+journey — told what is missing, offered a draft, correcting it, approving it,
+and never seeing it again — with its own acceptance criteria and independently
+testable. Folding it into a requirement would have hidden a whole screen's worth
+of behaviour inside FR-018. It is now User Story 2 at P2, and the two stories
+below it were renumbered to 3 and 4. User Story 4's "third only because" line
+was reworded to match, since it is no longer third.
+
+**Flagged for planning, not decided here.** Storing an English version per entry
+is a change to the Master Career Profile. Principle I puts new career data on
+the profile, so that schema change belongs to the profile's own feature and this
+one depends on it. Recorded in Assumptions; planning should sequence it first
+rather than discovering it mid-build.
+
+**A note on what was rejected and why it matters.** Translating under feature
+002's evidence verification looked attractive and is not possible: that
+machinery checks that a quoted passage appears in the source text, which
+validates extraction. A translation by definition does not appear in its source,
+so it would need a different and unproven verification method. Worth recording
+so it is not proposed again.

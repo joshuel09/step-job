@@ -39,6 +39,14 @@ choice of English word is itself a claim.
 How this feature resolves that is its central open question, and it is left open
 rather than guessed.
 
+## Clarifications
+
+### Session 2026-10-07
+
+- Q: How is an entry recorded in Japanese handled? → A: A model drafts the English, the user confirms or edits each line, and the approved text is saved to their profile as that entry's English version. Document generation itself stays deterministic, assembled from confirmed profile data. The model assists the user in filling their profile; it never writes the document.
+- Q: How are employer, institution and certification names handled? → A: The profile holds an optional English name per organisation. Where the user supplied one it is used; where they did not, the Japanese appears as recorded. Never transliterated or guessed.
+- Q: Which English convention? → A: A US-style resume only. Other conventions may be added later as their own work.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Turn my profile into an English resume (Priority: P1) 🎯 MVP
@@ -65,7 +73,38 @@ does not hold.
 
 ---
 
-### User Story 2 - Leave out what does not belong (Priority: P2)
+### User Story 2 - Get my Japanese career into English (Priority: P2)
+
+A user whose profile is written in Japanese asks for an English resume and is
+told, before anything is generated, which entries have no English version. For
+each one the product offers a draft translation. The user reads it, corrects
+what is wrong, and approves it — and the approved words are saved to their
+profile, not just used once. The next document needs no translation at all.
+
+The product never puts an unapproved translation in a document. A model drafts;
+the user decides; the document is assembled from what the user approved.
+
+**Why this priority**: without it, a user whose profile is in Japanese receives
+a document a non-Japanese reader cannot use, which is no document at all — and
+that is most of this product's users. It ranks below producing the resume only
+because a user whose profile is already in English needs none of it.
+
+**Independent Test**: record an entry in Japanese, run the translation step,
+approve a corrected draft, and confirm the approved English is in the profile
+and appears in the next document without being translated again.
+
+**Acceptance Scenarios**:
+
+1. **Given** entries with no English version, **When** the user asks to generate, **Then** they are told which entries those are before a document is produced.
+2. **Given** a Japanese entry, **When** the user requests a draft, **Then** a translation is offered for review rather than placed in a document.
+3. **Given** a draft the user edits and approves, **When** it is saved, **Then** the approved text is stored on that profile entry as its English version.
+4. **Given** an entry with an approved English version, **When** the user generates again, **Then** the stored text is used and no new translation is produced.
+5. **Given** a draft the user has not approved, **When** a document is generated, **Then** the draft does not appear in it.
+6. **Given** an approved translation, **When** the document is compared with it, **Then** the document contains the user's approved words exactly.
+
+---
+
+### User Story 3 - Leave out what does not belong (Priority: P3)
 
 The profile holds a date of birth and an address because the 履歴書 needs them.
 It may hold nationality, visa status and other Japan-specific details behind
@@ -91,7 +130,7 @@ generate, and confirm none of them appears anywhere in the document.
 
 ---
 
-### User Story 3 - Say only what I have said (Priority: P3)
+### User Story 4 - Say only what I have said (Priority: P4)
 
 A user whose profile is thin gets a short resume. An employer with no recorded
 description gets its title and dates. Nothing asserts scope, seniority,
@@ -99,9 +138,10 @@ duration, team size or outcome the profile does not support — and where the
 document is rendered in English from an entry written in another language, the
 English must not claim more than the original did.
 
-**Why this priority**: the constitutional constraint, made testable. Third only
+**Why this priority**: the constitutional constraint, made testable. Last only
 because it is most readily checked once a document exists; in importance it
-outranks the other two and is not tradeable against how well the resume reads.
+outranks every story above it and is not tradeable against how well the resume
+reads.
 
 **Independent Test**: record an employer with a title and dates and nothing
 else, generate, and confirm the document says exactly that much.
@@ -117,10 +157,12 @@ else, generate, and confirm the document says exactly that much.
 
 ### Edge Cases
 
-- A profile written entirely in Japanese: the outcome depends on the translation question below, and the user must not receive a document they cannot read without being told.
+- A profile written entirely in Japanese: the user is told before generating, offered a draft for each entry, and the document is assembled from what they approve.
 - A profile written entirely in English: no language handling is needed at all, and the document should be straightforward.
 - A profile mixing both: the resulting document must not switch language mid-sentence or mid-section.
-- An employer whose only recorded name is Japanese, applying to a reader who cannot read it.
+- An employer whose only recorded name is Japanese: it appears as recorded, never guessed at, and the readiness report names it so the user can supply the official English name.
+- A user who approves a draft and later edits the underlying Japanese entry: the stored English no longer matches its source, and the user must be able to find out.
+- A user who approves an empty or whitespace translation: an approved blank is not an English version.
 - A career long enough to exceed the conventional length: a resume is conventionally short, and shortening is done by the user choosing what to include, never by the system silently dropping entries.
 - The same profile generating a 履歴書 and an English resume: the two must not disagree on any fact both carry, even though they present it differently.
 - A user who edits a profile entry after sending the resume: what was sent stays inspectable.
@@ -149,20 +191,28 @@ else, generate, and confirm the document says exactly that much.
 **Truthfulness**
 
 - **FR-012**: The system MUST NOT state scope, seniority, duration, team size or outcome that the profile does not support.
-- **FR-013**: Where an entry is rendered into English from another language, the English MUST NOT claim more seniority, scope or responsibility than the original.
+- **FR-013**: Where an entry's English version came from a drafted translation, the approved English MUST NOT claim more seniority, scope or responsibility than the original. The user approving the wording is what makes it theirs; the draft is a suggestion, never a claim the product makes on their behalf.
 - **FR-014**: Every statement in the document MUST be traceable to the profile entry that produced it.
 - **FR-015**: The system MUST record what each generated document drew on, and that record MUST remain accurate after the underlying entries are edited or deleted.
 - **FR-016**: An English resume and a 履歴書 generated from the same profile MUST NOT disagree on any fact both carry.
 
-**Open questions**
+**Language**
 
-- **FR-017**: An entry recorded in Japanese MUST be handled by [NEEDS CLARIFICATION: this is the central question of the feature. Feature 003 set the precedent that the product does not translate — its readiness report names entries lacking a Japanese version and leaves writing one to the user. Applied here that yields an English resume containing Japanese, which a non-Japanese reader cannot use. Options: (a) carry the precedent over — show the entry as written, name it in a readiness report, and let the user add an English version to their profile, which per Principle I means extending the profile to hold both languages per entry; (b) translate with a model under the evidence verification feature 002 established, dropping any rendering that cannot be grounded; (c) translate and present every translated line to the user for explicit confirmation before it enters the document, per Principle IV's requirement that ungrounded claims be surfaced rather than emitted silently.]
-- **FR-018**: Employer, institution and certification names recorded in Japanese MUST be handled by [NEEDS CLARIFICATION: distinct from FR-017 because a proper noun is not prose. Many Japanese companies have an official registered English name, which is a fact rather than a translation; many do not, and inventing one misnames a real organisation on a document an employer may verify. Options: (a) leave proper nouns as recorded and let the user add an English name to the profile; (b) transliterate predictably, accepting that a transliteration is not the official name; (c) treat an English name as profile data the user supplies per organisation.]
-- **FR-019**: The target convention MUST be [NEEDS CLARIFICATION: "English resume" is not one format. A US resume is short, omits personal details entirely and carries no references; a UK or European CV runs longer and admits more; an academic CV is longer still and differently ordered. Options: (a) one US-style resume, the most common target for foreign-affiliated employers in Japan; (b) a user-selectable convention, as the 履歴書 offers for dates and paper; (c) one format now, with the choice deferred to a later feature.]
+- **FR-017**: The system MUST store an English version per profile entry, and MUST assemble the document from stored English rather than translating while generating. Document generation itself MUST remain deterministic and MUST NOT call a model.
+- **FR-018**: The system MUST offer a drafted translation for any entry with no stored English version, and MUST NOT place a draft in a document until the user has approved it. An approved draft MUST be saved to the profile as that entry's English version, so the same work is never asked for twice (Principle I).
+- **FR-019**: The system MUST let the user edit a draft before approving it, and MUST use the user's approved wording exactly.
+- **FR-020**: The system MUST tell the user which entries have no stored English version before producing a document, rather than after.
+- **FR-021**: The system MUST use a stored English name for an employer, institution or certification where the user supplied one, and MUST otherwise show the name as recorded. It MUST NOT transliterate or otherwise guess a proper noun, because a guessed name misnames a real organisation on a document an employer may verify.
+
+**Convention**
+
+- **FR-022**: The document MUST follow a US-style resume convention: reverse-chronological, concise, carrying no personal details and no references. Other English conventions are out of scope for this feature.
 
 ### Key Entities
 
 - **Resume request**: what the user chose for this document. Affects presentation only, never content.
+- **English version of an entry**: the user-approved English wording stored against a profile entry. Written once, reused by every later document.
+- **Translation draft**: a model's suggestion for an entry with no English version. It exists only until the user approves, edits or discards it, and never reaches a document unapproved.
 - **Resume section**: one part of the document — experience, education, skills, certifications — present only when the profile holds something for it.
 - **Experience entry**: one employer's portion — employer, title, period and what the role involved, each drawn from a profile entry.
 - **Document record**: what a generated document drew on, captured at generation and unchanged afterwards. The same machinery the 履歴書 uses.
@@ -180,6 +230,10 @@ else, generate, and confirm the document says exactly that much.
 - **SC-007**: An English resume and a 履歴書 generated from the same profile agree on every employer, title and period that both carry.
 - **SC-008**: A document generated before a profile edit still shows what it drew on after that edit.
 - **SC-009**: A user whose profile is written in Japanese is never handed a document they cannot read without being told so first.
+- **SC-010**: No unapproved translation appears in any generated document, measured as zero drafts reaching a document without an approval recorded.
+- **SC-011**: An approved translation appears in the document in the user's approved wording, character for character.
+- **SC-012**: Approving a translation once is enough: generating the same document again produces no new draft for that entry.
+- **SC-013**: No proper noun appears in a form the user did not supply and the profile does not hold.
 
 ## Assumptions
 
@@ -187,8 +241,10 @@ else, generate, and confirm the document says exactly that much.
 - The record of what a document drew on reuses the same snapshot machinery as the 履歴書 rather than a new mechanism.
 - Reverse-chronological is the only ordering. Unlike the 職務経歴書, an English resume has one conventional arrangement, so no choice is offered.
 - No Japanese era conversion is involved; this document is Western-dated throughout.
-- The embedded Japanese font is still required, because a profile entry or a proper noun may remain in Japanese depending on how FR-017 and FR-018 resolve.
+- The embedded Japanese font is still required, because a proper noun with no supplied English name appears as recorded.
 - Contact details mean the name, email address and telephone number the profile holds. A full street address is not conventional on an English resume and is excluded by FR-009's intent even though it is not a protected characteristic.
+- Storing an English version per entry is a change to the Master Career Profile, not to this feature's own storage. Principle I puts new career data on the profile, so the schema change belongs to the profile's feature and this one depends on it. Planning should sequence that first.
+- A model is involved in this feature, but only in drafting a translation for the user to approve. No model is called while a document is generated, which keeps the generator deterministic as feature 004 settled.
 - References are out of scope. "References available on request" is a convention the product does not need to assert on the user's behalf.
 - A cover letter is a separate document and is not part of this feature.
 - The document is generated and handed over, never stored or edited in place.
