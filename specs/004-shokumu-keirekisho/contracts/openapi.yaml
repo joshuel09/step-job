@@ -1,0 +1,220 @@
+openapi: 3.1.0
+
+# The HTTP surface for generating a 職務経歴書.
+#
+# As elsewhere, no route takes a profile or user identifier — the owner comes
+# from the verified session. Generated documents are not retained, so there is
+# no route to fetch one by identifier: a document is produced and streamed, and
+# what persists is the snapshot recording what it was based on.
+#
+# Nullability is written as a 3.1 union (`type: [string, "null"]`). The 3.0
+# `nullable: true` keyword does not exist in 3.1 and is silently ignored by
+# strict validators — feature 002's contract had to be corrected for this.
+
+info:
+  title: Step Job — 職務経歴書 Generator
+  version: 1.0.0
+  description: >
+    Produces a Japanese career history document from the Master Career Profile.
+    Every statement comes from a profile entry; nothing is invented to fill a
+    gap, and the sections the product does not write on the user's behalf are
+    labelled and left empty.
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: documents
+    description: Producing documents from the profile
+
+security:
+  - sessionIdentity: []
+
+paths:
+  /profile/documents/shokumu-keirekisho/readiness:
+    get:
+      tags: [documents]
+      summary: What is missing before generating
+      description: >
+        Reports what a document would lack, so the user can fix it first rather
+        than discover it after printing. Also names the achievements recorded
+        against no employer, which will appear in the closing section.
+      responses:
+        "200":
+          description: The report
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReadinessReport" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404":
+          description: No profile exists yet for this user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /profile/documents/shokumu-keirekisho:
+    post:
+      tags: [documents]
+      summary: Generate a 職務経歴書
+      description: >
+        Produces the document and streams it. Nothing is retained: the profile
+        and the snapshot of what was used are what persist.
+
+        With `preview=true` the same document is returned for display rather
+        than download. The content is identical — only the disposition differs,
+        so a user never previews one thing and downloads another.
+      parameters:
+        - name: preview
+          in: query
+          description: Return the document for display rather than as a download.
+          schema: { type: boolean, default: false }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ShokumuKeirekishoRequest" }
+      responses:
+        "200":
+          description: The document
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+          headers:
+            Content-Disposition:
+              description: "`attachment` by default, `inline` when previewing."
+              schema: { type: string }
+            X-Document-Pages:
+              description: >
+                How many pages the document runs to. A long career produces more
+                pages rather than losing entries, and the interface uses this to
+                say so.
+              schema: { type: integer }
+            X-Snapshot-Id:
+              description: >
+                The snapshot recording what this document was based on, so its
+                statements stay traceable after the entries change.
+              schema: { type: string, format: uuid }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404":
+          description: No profile exists yet for this user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: >
+            The profile lacks something a document cannot be meaningful without
+            — a name, or any work history at all. The response names what is
+            missing rather than producing a document with it blank.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+components:
+  securitySchemes:
+    sessionIdentity:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: >
+        A verified session established at the web layer. The API derives the
+        profile owner from it and never accepts a user identifier from the
+        request.
+
+  responses:
+    Unauthorised:
+      description: No verified identity
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+
+    ValidationError:
+      type: object
+      required: [code, message, failures]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        failures:
+          type: array
+          items:
+            type: object
+            required: [field, reason]
+            properties:
+              field: { type: string }
+              reason: { type: string }
+
+    DateConvention:
+      type: string
+      description: >
+        Which calendar the dates are written in. One convention is used
+        throughout a document; the two never appear together.
+      enum: [seireki, wareki]
+      default: seireki
+
+    PaperSize:
+      type: string
+      enum: [a4, b5]
+      default: a4
+
+    Arrangement:
+      type: string
+      description: >
+        The order the employer sections run in. Both carry the identical set of
+        entries; only the order differs. Grouping by project is not offered —
+        the profile holds no project entity, and a career story has no client,
+        period or role to build one from.
+      enum: [reverse_chronological, chronological]
+      default: reverse_chronological
+
+    ShokumuKeirekishoRequest:
+      type: object
+      description: >
+        The conventions chosen for this document. None affects what the document
+        says, only how it reads.
+      properties:
+        arrangement: { $ref: "#/components/schemas/Arrangement" }
+        date_convention: { $ref: "#/components/schemas/DateConvention" }
+        paper_size: { $ref: "#/components/schemas/PaperSize" }
+
+    ReadinessReport:
+      type: object
+      description: >
+        What a document would lack. Separates what cannot be left out from what
+        will simply be blank, because the two need different responses.
+      required:
+        [can_generate, missing_required, missing_optional, unattached_achievements]
+      properties:
+        can_generate:
+          type: boolean
+          description: False only when something essential is absent.
+        missing_required:
+          type: array
+          items: { type: string }
+          description: Fields without which a document is not meaningful.
+        missing_optional:
+          type: array
+          items: { type: string }
+          description: >
+            Sections that will be blank. Listed rather than silently omitted, so
+            nothing is a surprise after printing.
+        unattached_achievements:
+          type: array
+          items: { $ref: "#/components/schemas/UnattachedAchievement" }
+          description: >
+            Achievements recorded against no employer. They appear in the
+            closing section rather than under an employer; the user may attach
+            them to one, and this feature does not guess.
+
+    UnattachedAchievement:
+      type: object
+      required: [entry_id, title]
+      properties:
+        entry_id: { type: string, format: uuid }
+        title: { type: string }
