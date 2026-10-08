@@ -10,5 +10,8 @@ export type { paths as Paths002, components as Components002 } from "./schema-00
 // 003-rirekisho-generator
 export type { paths as Paths003, components as Components003 } from "./schema-003";
 
+// 004-shokumu-keirekisho
+export type { paths as Paths004, components as Components004 } from "./schema-004";
+
 // Feature 001's names, unprefixed, for existing callers.
 export type { paths, components } from "./schema-001";

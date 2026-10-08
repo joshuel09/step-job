@@ -24,6 +24,7 @@ from .schemas import contract, response_schema
 CAREER = "001-master-career-profile"
 IMPORTS = "002-ai-resume-import"
 DOCUMENTS = "003-rirekisho-generator"
+SHOKUMU = "004-shokumu-keirekisho"
 
 # Every (feature, path, method, status) this file has validated. Recorded as the
 # tests run so the coverage check below reflects what actually happened rather
@@ -355,13 +356,16 @@ UNVALIDATED: set[tuple[str, str, str, str]] = {
     # Not built yet — it is also in DEFERRED in `test_contracts.py`, and arrives
     # with Phase 6. Remove from both lists together.
     (DOCUMENTS, "/profile/documents/rirekisho/readiness", "get", "200"),
+    # Feature 004 is planned, not built. Its contract exists so the client and
+    # the contract tests see it; these come off this list as the routes land.
+    (SHOKUMU, "/profile/documents/shokumu-keirekisho/readiness", "get", "200"),
 }
 
 
 def _documented_success_responses() -> set[tuple[str, str, str, str]]:
     """Every 2xx JSON response across every feature contract."""
     out: set[tuple[str, str, str, str]] = set()
-    for feature in (CAREER, IMPORTS, DOCUMENTS):
+    for feature in (CAREER, IMPORTS, DOCUMENTS, SHOKUMU):
         for path, spec in contract(feature)["paths"].items():
             for method, operation in spec.items():
                 if method == "parameters":

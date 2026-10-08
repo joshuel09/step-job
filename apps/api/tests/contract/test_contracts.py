@@ -37,6 +37,12 @@ DEFERRED: dict[str, set[str]] = {
     "003-rirekisho-generator": {
         "/profile/documents/rirekisho/readiness",
     },
+    # Planned, not yet built. Both paths land with the implementation; this list
+    # shrinks as they do, rather than all at the end.
+    "004-shokumu-keirekisho": {
+        "/profile/documents/shokumu-keirekisho",
+        "/profile/documents/shokumu-keirekisho/readiness",
+    },
 }
 
 
