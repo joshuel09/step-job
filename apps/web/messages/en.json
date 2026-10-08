@@ -252,7 +252,10 @@
       "notStored": "The document is not kept. Download it now, or generate it again whenever you need it.",
       "snapshot": "We recorded what this was based on (ref {id}), so you can check later what you sent.",
       "leftToYouTitle": "What you fill in yourself",
-      "leftToYou": "The reason for applying (志望の動機) and personal requests (本人希望記入欄) change with every employer, so they are left blank for you to write by hand or fill in before printing."
+      "leftToYou": "The reason for applying (志望の動機) and personal requests (本人希望記入欄) change with every employer, so they are left blank for you to write by hand or fill in before printing.",
+      "englishNote": "Entries you wrote in English appear in English. They are never translated, because a translated job title or school name would say something you did not write. If you want Japanese, add a Japanese version in your profile.",
+      "privateNote": "Nationality, residence status, visa and work authorisation appear only if you chose to include them in your profile. Anything you have kept private stays out.",
+      "nameRequired": "Add your name to your profile before generating a 履歴書."
     },
     "rirekishoNav": "履歴書"
   }
