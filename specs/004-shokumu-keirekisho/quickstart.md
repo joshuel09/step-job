@@ -138,6 +138,21 @@ uv run pytest tests/integration/test_shokumu_generate.py -q -k refused
 **Expect**: a profile with no name is refused with `identity` named; a profile
 with no work history at all is refused saying so. Neither returns a document.
 
+## Scenario 11 — English entries stay English (FR-015)
+
+```bash
+uv run pytest tests/integration/test_shokumu_english.py -q
+```
+
+**Expect**: an entry the user wrote in English appears in the document exactly
+as written, and nothing in the document is Japanese the user did not write. The
+document's own fixed vocabulary — headings and labels — is the product's, not a
+claim about the user, so the test subtracts it along with the user's values and
+the dates, then asserts no Japanese remains.
+
+Translating a job title would be putting words in someone's mouth about their
+own career, which is what Principle IV forbids. This is the test for it.
+
 ## Full run
 
 ```bash
