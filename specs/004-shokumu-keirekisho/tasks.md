@@ -74,7 +74,7 @@ nothing appears the profile does not hold.
 - [ ] T009 [P] [US1] Unit tests for the section projection in `apps/api/tests/unit/test_shokumu_sections.py` — one section per employer, achievements under the employer they belong to, undated entries last rather than dropped, overlapping employment unreconciled
 - [ ] T010 [P] [US1] Unit tests for 職務要約 in `apps/api/tests/unit/test_shokumu_summary.py` — span, employer count and latest role are computed from entries; a thin profile yields a shorter summary; **no adjective characterising the applicant appears in any case**
 - [ ] T011 [P] [US1] Integration test for quickstart Scenario 0 in `apps/api/tests/integration/test_shokumu_font.py`, extracting 職務経歴書 as text and asserting `/FontFile2` is present
-- [ ] T012 [P] [US1] Integration test for quickstart Scenario 1 in `apps/api/tests/integration/test_shokumu_generate.py`, asserting employers, periods, titles, descriptions and achievements appear and a snapshot id is returned
+- [ ] T012 [P] [US1] Integration test for quickstart Scenario 1 in `apps/api/tests/integration/test_shokumu_generate.py`, asserting employers, periods, titles, descriptions and achievements appear and a snapshot id is returned. Also assert the document is not retained (FR-005) — feature 003's `test_nothing_in_the_schema_can_hold_a_generated_document` iterates every table in `Base.metadata` and so already covers this feature, but reference it here so the guarantee is stated rather than accidental
 - [ ] T013 [P] [US1] Integration test for quickstart Scenario 10 in `apps/api/tests/integration/test_shokumu_generate.py`, asserting a profile with no name and a profile with no work history are each refused with the missing thing named
 - [ ] T014 [P] [US1] Contract tests for the document route in `apps/api/tests/contract/test_shokumu.py`, including that the documented response headers are exposed to a cross-origin caller
 
@@ -142,6 +142,7 @@ generate, and confirm the document says exactly that much about it.
 - [ ] T038 [US3] Render 自己PR as a labelled, empty section in `apps/api/app/shokumu/render.py`, per research.md R-007
 - [ ] T039 [US3] Render the closing achievements section for stories attached to no employer in `apps/api/app/shokumu/render.py`, per research.md R-005
 - [ ] T040 [P] [US3] Add the English and Japanese strings for this feature to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
+- [ ] T054 [P] [US3] Integration test for quickstart Scenario 11 in `apps/api/tests/integration/test_shokumu_english.py`, asserting entries recorded in English appear in English exactly as written and that nothing in the document is Japanese the user did not write (FR-015). Subtract the user's own values, the document's fixed vocabulary and the dates, then assert no Japanese remains — a blocklist of known translations only catches the ones someone thought of. Include a guard case confirming the subtraction does see a planted translation
 
 **Checkpoint**: the document says what the profile says, and no more.
 
@@ -224,6 +225,11 @@ like this breaks something that already ships. It is sequenced first, kept to
 import changes on the 履歴書 side, and gated on that suite passing unchanged
 (T007). If a 履歴書 test needs editing beyond an import path, the refactor is
 wrong and should be reconsidered rather than the test adjusted.
+
+**T054 is appended rather than inserted.** `/speckit-analyze` found FR-015 had
+no task after the list was written. Appending keeps every existing task id
+stable, which matters once work is in flight; the phase heading places it, not
+its number.
 
 **The deferral lists shrink as routes land** (T023, T043), not at the end. T043
 names both lists deliberately: feature 004's own planning found that

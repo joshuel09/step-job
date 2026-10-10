@@ -73,7 +73,9 @@ export function RirekishoForm() {
     <Section title={t("title")}>
       <p className="mb-3 text-sm opacity-80">{t("explanation")}</p>
       {/* Said before generating, not discovered after printing. */}
-      <p className="mb-4 text-xs opacity-70">{t("photoNote")}</p>
+      <p className="mb-2 text-xs opacity-70">{t("photoNote")}</p>
+      <p className="mb-2 text-xs opacity-70">{t("englishNote")}</p>
+      <p className="mb-4 text-xs opacity-70">{t("privateNote")}</p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -99,7 +101,9 @@ export function RirekishoForm() {
           .filter(([field]) => !CHOICES.includes(field))
           .map(([field, reason]) => (
             <p key={field} role="alert" className="text-xs text-red-600 dark:text-red-400">
-              {reason}
+              {/* The server's reason is English. A missing name is the refusal a
+                  user will actually meet, so it is said in their language. */}
+              {field === "identity" || field.startsWith("identity.") ? t("nameRequired") : reason}
             </p>
           ))}
 
