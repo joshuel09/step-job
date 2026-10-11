@@ -203,14 +203,21 @@ FR-015, SC-008.
 
 ## Scenario 17 — A proper noun is never guessed
 
-**Given** an employer recorded only in Japanese, and a second with
-`employer_name_english` supplied
+**Given** an employer recorded only in Japanese, a second with
+`employer_name_english` supplied, and a certification whose issuer is recorded
+only in Japanese
 **When** the user generates
-**Then** the first appears in Japanese exactly as recorded and the second in
-the supplied English, and the readiness report names the first under
-`untranslated_names`
+**Then** the first employer and the issuer appear in Japanese exactly as
+recorded, the second employer in the supplied English, and the readiness report
+names both untranslated names under `untranslated_names`
 
-FR-021, SC-013. No transliteration anywhere, and no draft offered for it.
+**And when** a draft is requested for any of them
+**Then** it is refused — `certification` is not a translatable entry type, and
+an organisation name is never drafted
+
+FR-021, SC-013, R-002. An invented issuer is the FR-021 failure in its most
+checkable form: an employer verifying a certification looks the issuer up by
+name.
 
 ## Scenario 18 — Generation calls no model
 
@@ -224,11 +231,12 @@ and watch generation succeed anyway.
 
 ## Scenario 19 — Deleting an entry takes its English with it
 
-**Given** approved English on an entry of each translatable type
+**Given** approved English on an entry of each translatable type — work
+experience, education, career story, skill
 **When** each entry is deleted
 **Then** no `entry_translation` row survives for it
 
-data-model.md. `entry_id` cannot be a foreign key across five tables, so this
+data-model.md. `entry_id` cannot be a foreign key across four tables, so this
 test is the foreign key.
 
 ## Scenario 20 — The document is not retained

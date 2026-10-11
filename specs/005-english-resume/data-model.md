@@ -19,7 +19,7 @@ One approved English rendering of one field of one profile entry.
 |---|---|---|---|
 | `id` | UUID | no | `Entity` primary key |
 | `profile_id` | UUID FK → `career_profile.id` | no | `ProfileOwned`, `ON DELETE CASCADE`, indexed |
-| `entry_type` | enum `TranslatableEntry` | no | `work_experience`, `education`, `certification`, `career_story`, `skill` |
+| `entry_type` | enum `TranslatableEntry` | no | `work_experience`, `education`, `career_story`, `skill`. Not `certification` — see below |
 | `entry_id` | UUID | no | the entry this renders. Not a foreign key — see below |
 | `field` | varchar(64) | no | the attribute translated, e.g. `job_title` |
 | `language` | enum `Locale` | no | `en` today. The column exists so a third language is a row, not a migration |
@@ -35,18 +35,18 @@ English version per field, replaced rather than accumulated.
 
 ### Why `entry_id` is not a foreign key
 
-It cannot be. The column points at one of five tables depending on
+It cannot be. The column points at one of four tables depending on
 `entry_type`, and PostgreSQL has no referential integrity across a
 discriminated reference. Two consequences, both handled rather than tolerated:
 
 - **Deletion.** Removing an entry must remove its translations. A database-level
   cascade is unavailable, so the service does it, and an integration test
-  asserts no orphan survives the deletion of each of the five entry types. That
+  asserts no orphan survives the deletion of each of the four entry types. That
   test is the foreign key.
 - **Profile deletion.** Covered by the real foreign key on `profile_id`, which
   cascades.
 
-The alternative — five nullable foreign key columns with a check constraint
+The alternative — four nullable foreign key columns with a check constraint
 that exactly one is set — buys integrity for one of the two cases and costs a
 column per entity added later. Rejected in research.md R-001.
 
@@ -60,7 +60,7 @@ with history rather than a column beside the text it renders.
 
 ---
 
-## Changed: three columns for proper nouns
+## Changed: four columns for proper nouns
 
 Research R-002 keeps organisation names out of `entry_translation` entirely.
 They are facts the user states, not renderings of anything, and nothing drafts
@@ -71,15 +71,29 @@ them.
 | `work_experience` | `employer_name_english` | varchar(255) | yes |
 | `education` | `institution_english` | varchar(255) | yes |
 | `certification` | `name_english` | varchar(255) | yes |
+| `certification` | `issuer_english` | varchar(255) | yes |
 
-All three default to `NULL`, which means "the user has not supplied one" and
+All four default to `NULL`, which means "the user has not supplied one" and
 renders as the name recorded (FR-021). No backfill: a migration that guessed
 these would be the exact transliteration FR-021 forbids, performed once and
 invisibly.
 
+### Why a certification is in no translation at all
+
+It holds a name, an issuer and two dates. The first two are proper nouns and
+the last two are not words, so there is nothing on a certification a model
+could draft — which is why `certification` appears in `NamedEntry` and not in
+`TranslatableEntry`.
+
+The issuer needed the same treatment as the other three and nearly did not get
+it. "Japan Information-Technology Engineers Examination" is the body's own
+English name or it is a guess, and an invented issuer on a resume is the
+FR-021 failure in its most checkable form — an employer verifying a
+certification looks the issuer up by name.
+
 **Consequence for feature 001**: these are profile fields, so they belong on
 001's contract and on `WorkExperienceIn/Out`, `EducationIn/Out` and
-`CertificationIn/Out`. The existing `PATCH /profile/experiences/{id}` and the
+`CertificationIn/Out` (which gains two). The existing `PATCH /profile/experiences/{id}` and the
 section routes carry them. No new route is needed to set an English name — one
 would be a second way to edit an entry, which Principle I rules out.
 
@@ -92,7 +106,7 @@ would be a second way to edit an entry, which Principle I rules out.
 | `Identity` | `full_name_latin`, `email`, `phone` | `date_of_birth`, `address`, `full_name_japanese`, `furigana` |
 | `WorkExperience` | `employer_name`, `employer_name_english`, `job_title`, `started_on`, `ended_on`, `description` | — |
 | `Education` | `institution`, `institution_english`, `qualification`, `field_of_study`, `started_on`, `ended_on` | — |
-| `Certification` | `name`, `name_english`, `issuer`, `issued_on` | — |
+| `Certification` | `name`, `name_english`, `issuer`, `issuer_english`, `issued_on` | — |
 | `Skill` | `name`, `level` | — |
 | `JapanProfile` | **nothing** | every field, disclosed or not (FR-010) |
 

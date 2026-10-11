@@ -381,10 +381,16 @@ export interface components {
          */
         PaperSize: "letter" | "a4";
         /**
-         * @description Which kind of profile entry an English version belongs to. Employer, institution and certification *names* are absent on purpose: a proper noun is not translated, it is either supplied by the user or shown as recorded (FR-021).
+         * @description Which kind of profile entry an approved English *rendering* belongs to.
+         *     `certification` is absent, and its absence is the rule working rather than an oversight: a certification holds a name and an issuer, and both are proper nouns. A proper noun is not translated — it is either supplied by the user or shown as recorded (FR-021, research.md R-002) — so a certification has no field this enum could name.
          * @enum {string}
          */
-        TranslatableEntry: "work_experience" | "education" | "certification" | "career_story" | "skill";
+        TranslatableEntry: "work_experience" | "education" | "career_story" | "skill";
+        /**
+         * @description Which kind of profile entry carries an English *name* the user may supply. Separate from `TranslatableEntry` because the two are different kinds of fact with different lifecycles: a rendering has a source and can go stale when it changes, and an organisation's English name has neither (research.md R-002).
+         * @enum {string}
+         */
+        NamedEntry: "work_experience" | "education" | "certification";
         /**
          * @description The conventions chosen for this document. Neither affects what the document says.
          *     No ordering option: an English resume is reverse-chronological, and offering a choice would imply the other is conventional. No date convention either — this document is Western-dated throughout (FR-004).
@@ -392,7 +398,7 @@ export interface components {
         ResumeRequest: {
             paper_size?: components["schemas"]["PaperSize"];
             /**
-             * @description Omit the skills section. Shortening a resume is the user choosing what to leave out, never the system dropping entries to fit (FR-007).
+             * @description Set false to omit the skills section. Shortening a resume is the user choosing what to leave out, never the system dropping entries to fit (FR-007).
              * @default true
              */
             include_skills: boolean;
@@ -420,7 +426,9 @@ export interface components {
             source_text: string;
         };
         UntranslatedName: {
-            entry_type: components["schemas"]["TranslatableEntry"];
+            entry_type: components["schemas"]["NamedEntry"];
+            /** @description Which name, since a certification has two — `name` and `issuer`. */
+            field: string;
             /** Format: uuid */
             entry_id: string;
             /** @description The name as the profile holds it, shown as-is. */

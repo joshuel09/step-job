@@ -19,6 +19,16 @@ puts new career data on the profile rather than inside the feature that first
 needs it. A single table does that for every entity at once — including the
 ones features 006 and 007 will add — at the cost of one migration.
 
+**Why the migration ships with this feature rather than with 001.** The spec's
+assumptions say the storage "belongs to the profile's feature and this one
+depends on it. Planning should sequence that first." The columns and the table
+do belong to the profile, and they land on 001's models and 001's contract. The
+migration ships here because feature 001 is complete and merged: reopening it
+to add storage with no consumer is a change nobody can test, and the
+requirement that motivates every column is FR-017 of this feature. Sequencing
+is honoured in substance — the schema lands before anything renders — without
+pretending the work belongs to a feature that is done.
+
 It also answers an edge case the spec raises and no column arrangement answers
 cheaply: *a user who approves a draft and later edits the underlying Japanese
 entry*. `source_fingerprint` holds a digest of the source text as it read at
@@ -43,10 +53,17 @@ English is stale, and the readiness report can say so (R-009). A
 
 ## R-002: Proper nouns are not translations
 
-**Decision**: the English name of an employer, institution or certification is
-a plain nullable column on that entity — `employer_name_english`,
-`institution_english`, `name_english` — never a row in `entry_translation`,
-and never drafted by a model.
+**Decision**: the English name of an employer, institution, certification or
+certifying body is a plain nullable column on that entity —
+`employer_name_english`, `institution_english`, `name_english`,
+`issuer_english` — never a row in `entry_translation`, and never drafted by a
+model.
+
+A consequence worth stating because it reads as an omission otherwise: a
+certification then has *no* translatable field at all. Its name and its issuer
+are both proper nouns and its two dates are not words. So `certification`
+belongs to `NamedEntry` and not to `TranslatableEntry`, and the two enums exist
+because the two kinds of fact do.
 
 **Rationale**: the two look alike and behave nothing alike. A translation has a
 source text it is a translation *of*, which means it can go stale when that

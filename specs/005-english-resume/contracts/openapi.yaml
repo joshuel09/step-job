@@ -330,11 +330,24 @@ components:
     TranslatableEntry:
       type: string
       description: >
-        Which kind of profile entry an English version belongs to. Employer,
-        institution and certification *names* are absent on purpose: a proper
-        noun is not translated, it is either supplied by the user or shown as
-        recorded (FR-021).
-      enum: [work_experience, education, certification, career_story, skill]
+        Which kind of profile entry an approved English *rendering* belongs to.
+
+        `certification` is absent, and its absence is the rule working rather
+        than an oversight: a certification holds a name and an issuer, and both
+        are proper nouns. A proper noun is not translated — it is either
+        supplied by the user or shown as recorded (FR-021, research.md R-002) —
+        so a certification has no field this enum could name.
+      enum: [work_experience, education, career_story, skill]
+
+    NamedEntry:
+      type: string
+      description: >
+        Which kind of profile entry carries an English *name* the user may
+        supply. Separate from `TranslatableEntry` because the two are different
+        kinds of fact with different lifecycles: a rendering has a source and
+        can go stale when it changes, and an organisation's English name has
+        neither (research.md R-002).
+      enum: [work_experience, education, certification]
 
     ResumeRequest:
       type: object
@@ -351,9 +364,9 @@ components:
           type: boolean
           default: true
           description: >
-            Omit the skills section. Shortening a resume is the user choosing
-            what to leave out, never the system dropping entries to fit
-            (FR-007).
+            Set false to omit the skills section. Shortening a resume is the
+            user choosing what to leave out, never the system dropping entries
+            to fit (FR-007).
 
     ResumeReadinessReport:
       type: object
@@ -403,9 +416,13 @@ components:
 
     UntranslatedName:
       type: object
-      required: [entry_type, entry_id, recorded_name]
+      required: [entry_type, entry_id, field, recorded_name]
       properties:
-        entry_type: { $ref: "#/components/schemas/TranslatableEntry" }
+        entry_type: { $ref: "#/components/schemas/NamedEntry" }
+        field:
+          type: string
+          description: >
+            Which name, since a certification has two — `name` and `issuer`.
         entry_id: { type: string, format: uuid }
         recorded_name:
           type: string

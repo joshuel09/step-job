@@ -7,7 +7,7 @@ while the generated client compiled against a shape the API never produces.
 
 So these tests send real requests and validate the real responses. The error
 shapes are covered alongside the success ones, because `Error` and
-`ValidationError` are shared by all three features and drift quietly.
+`ValidationError` are shared by every feature and drift quietly.
 
 UNVALIDATED below is the honest edge of this file, in the same spirit as
 DEFERRED in `test_contracts.py`: an operation is either checked here or named

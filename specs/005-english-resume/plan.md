@@ -14,7 +14,7 @@ Two things make this feature unlike the two document features before it.
 
 **It changes the schema.** FR-017 requires an English version stored per entry,
 and Principle I puts that on the profile rather than inside the generator. One
-new table and three new columns, in one migration.
+new table and four new columns, in one migration.
 
 **It calls a model.** Not while generating — generation stays deterministic and
 reads only English the user approved — but to draft a translation the user then
@@ -30,7 +30,7 @@ rather than resolve it.
 **Primary Dependencies**: FastAPI (pinned `>=0.115,<0.116`), SQLAlchemy 2.0,
 Alembic, reportlab, pypdf (tests)
 
-**Storage**: PostgreSQL. One new table (`entry_translation`), three new nullable
+**Storage**: PostgreSQL. One new table (`entry_translation`), four new nullable
 columns on existing entities, one row written to `entry_snapshot` per document.
 
 **Testing**: pytest. Document assertions extract text with pypdf rather than
@@ -67,9 +67,9 @@ Larger than feature 004 by the translation surface, which is most of it.
 | G6 | **V / FR-018 of 001.** Proposals invisible until accepted | **Applicable** — a draft is a proposal | **PASS.** A draft is returned in one response and stored nowhere. There is no `translation_draft` table, so "unapproved text in a document" is not a state the schema can represent (SC-010) |
 | G7 | **§2.** Business logic in the API, not the web app | PASS | PASS — projection, ordering, readiness and staleness are API-side |
 | G8 | **§2.** API types generated from OpenAPI | PASS | PASS — a fifth contract joins the existing generation |
-| G9 | **§2.** Typed enumerations rather than free-text state | PASS | PASS — `TranslatableEntry`, `Locale` and `PaperSize` are enums |
+| G9 | **§2.** Typed enumerations rather than free-text state | PASS | PASS — `TranslatableEntry`, `NamedEntry`, `Locale` and `PaperSize` are enums. The first two are separate on purpose: a rendering and a supplied name are different kinds of fact (R-002) |
 | G10 | **§2.** Modular monolith; no new service | PASS | PASS |
-| G11 | **§2 / workflow.** Schema changes ship with a migration | **Applicable** — first document feature to change the schema | **PASS** — one Alembic migration: one table, three columns, one unique constraint, two indexes (data-model.md) |
+| G11 | **§2 / workflow.** Schema changes ship with a migration | **Applicable** — first document feature to change the schema | **PASS** — one Alembic migration: one table, four columns, one unique constraint, two indexes (data-model.md) |
 | G12 | **§2.** All model access behind the abstraction; no provider SDK in feature code | **Applicable** — first feature since 002 to call a model | **PASS.** The new operation is added to the `AIProvider` protocol, not beside it. `app/translations/` imports `app.ai` and nothing else; the AST walker from feature 002 fails the build on any import of `openai_provider` outside `app/ai/` |
 | G13 | **§2 quality gate.** Prompt or schema changes must state how Principle IV holds | **Applicable** | **PASS — argued below, not asserted** |
 | G14 | **§3.** Secrets not committed | PASS | PASS — no new configuration; the existing `ai_provider` setting selects the provider |
@@ -164,7 +164,7 @@ apps/api/app/
 │   ├── schemas.py
 │   └── router.py
 ├── career/
-│   └── models.py               # + three English-name columns
+│   └── models.py               # + four English-name columns
 └── resume/                     # NEW
     ├── sections.py             # the projection: entries -> frozen dataclasses
     ├── render.py               # layout
@@ -241,8 +241,8 @@ built first.
 | Artefact | Status |
 |---|---|
 | [research.md](./research.md) | 10 decisions, no unknowns remaining |
-| [data-model.md](./data-model.md) | 1 new table, 3 new columns, 1 migration; reads 5 entities, never `JapanProfile` |
-| [contracts/openapi.yaml](./contracts/openapi.yaml) | 5 routes, 13 schemas |
+| [data-model.md](./data-model.md) | 1 new table, 4 new columns, 1 migration; reads 5 entities, never `JapanProfile` |
+| [contracts/openapi.yaml](./contracts/openapi.yaml) | 5 routes, 14 schemas |
 | [quickstart.md](./quickstart.md) | 21 scenarios |
 
 ## Consequences for existing code
@@ -265,9 +265,9 @@ did. All of it belongs in the first tasks rather than being found later:
    `schema-005.ts`. CI fails if the committed client is stale, so it is
    regenerated and committed with the plan.
 
-4. **Feature 001's contract gains three properties.** `employer_name_english`,
-   `institution_english` and `name_english` are profile fields set through the
-   existing section routes (data-model.md). They belong on 001's
+4. **Feature 001's contract gains four properties.** `employer_name_english`,
+   `institution_english`, `name_english` and `issuer_english` are profile fields
+   set through the existing section routes (data-model.md). They belong on 001's
    `WorkExperienceIn/Out`, `EducationIn/Out` and `CertificationIn/Out`, not on
    a route of this feature's own — a second way to edit an entry is what
    Principle I rules out. That edit lands with the implementation, not with
