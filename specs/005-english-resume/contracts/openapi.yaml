@@ -1,0 +1,498 @@
+openapi: 3.1.0
+
+# The HTTP surface for the English resume, and for the English versions of
+# profile entries that it reads.
+#
+# Two groups of routes, and the split is deliberate. `/profile/documents/resume`
+# produces the document and calls no model. `/profile/translations` maintains
+# the English versions stored on the profile, and is where the one model call
+# in this feature lives. A reader of this file should be able to see that the
+# generator cannot reach a provider, because the two never touch.
+#
+# As elsewhere, no route takes a profile or user identifier — the owner comes
+# from the verified session. Generated documents are not retained, so there is
+# no route to fetch one by identifier.
+#
+# Nullability is written as a 3.1 union (`type: [string, "null"]`). The 3.0
+# `nullable: true` keyword does not exist in 3.1 and is silently ignored by
+# strict validators — feature 002's contract had to be corrected for this.
+
+info:
+  title: Step Job — English Resume Generator
+  version: 1.0.0
+  description: >
+    Produces a US-style English resume from the Master Career Profile, and
+    maintains the English versions of profile entries it is assembled from.
+    Generation is deterministic: it reads English the user has approved and
+    renders it. A model drafts translations for the user to approve; it never
+    writes a document.
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: documents
+    description: Producing documents from the profile
+  - name: translations
+    description: The English versions stored on profile entries
+
+security:
+  - sessionIdentity: []
+
+paths:
+  /profile/documents/resume/readiness:
+    get:
+      tags: [documents]
+      summary: What is missing before generating
+      description: >
+        Reports what a resume would lack, before one is produced rather than
+        after (FR-020). Names the entries with no stored English version, the
+        organisations with no supplied English name, and the approvals whose
+        source text has since changed.
+      responses:
+        "200":
+          description: The report
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResumeReadinessReport" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404":
+          description: No profile exists yet for this user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /profile/documents/resume:
+    post:
+      tags: [documents]
+      summary: Generate an English resume
+      description: >
+        Produces the document and streams it. Nothing is retained: the profile
+        and the snapshot of what was used are what persist.
+
+        This operation calls no model. Every word in the document is either a
+        value recorded in the profile or an English version the user approved.
+        An entry with no stored English version is reported by the readiness
+        route; it is never translated here.
+
+        With `preview=true` the same document is returned for display rather
+        than download. The content is identical — only the disposition differs,
+        so a user never previews one thing and downloads another.
+      parameters:
+        - name: preview
+          in: query
+          description: Return the document for display rather than as a download.
+          schema: { type: boolean, default: false }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResumeRequest" }
+      responses:
+        "200":
+          description: The document
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+          headers:
+            Content-Disposition:
+              description: "`attachment` by default, `inline` when previewing."
+              schema: { type: string }
+            X-Document-Pages:
+              description: >
+                How many pages the document runs to. A long career produces more
+                pages rather than losing entries (FR-007), and the interface
+                uses this to tell the user their resume runs longer than the
+                convention expects.
+              schema: { type: integer }
+            X-Snapshot-Id:
+              description: >
+                The snapshot recording what this document was based on, so its
+                statements stay traceable after the entries change.
+              schema: { type: string, format: uuid }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404":
+          description: No profile exists yet for this user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: >
+            The profile lacks something a resume cannot be meaningful without —
+            a name, or any career history at all (FR-006). The response names
+            what is missing rather than producing a document with it blank.
+
+            A missing English version is **not** a 422. The document renders
+            what the profile holds; the readiness route is where that gap is
+            reported, because telling the user after they asked for a document
+            is what FR-020 exists to prevent.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+  /profile/translations:
+    get:
+      tags: [translations]
+      summary: The English versions stored on this profile
+      description: >
+        Every approved English version, with whether its source has changed
+        since it was approved.
+      parameters:
+        - name: stale
+          in: query
+          description: >
+            Return only the approvals whose source text has changed since
+            (`true`), or only those still matching their source (`false`).
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: The stored English versions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StoredTranslation" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404":
+          description: No profile exists yet for this user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+    put:
+      tags: [translations]
+      summary: Approve an English version
+      description: >
+        Stores the user's approved English for one field of one entry, replacing
+        any previous approval for it. The text is stored exactly as given
+        (FR-019): it is the user's wording, not a model's, whatever it started
+        as.
+
+        Addressed by the entry it belongs to rather than by an identifier of its
+        own, because that is how the caller knows it — it is approving the
+        English for *this field of this entry*, and whether an approval already
+        exists is not something the interface should have to find out first.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TranslationApproval" }
+      responses:
+        "200":
+          description: The stored English version
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StoredTranslation" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404":
+          description: No such entry on this profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: >
+            The approval is not usable. Blank or whitespace-only text is
+            refused: an approved blank is not an English version, it is an
+            entry that will silently vanish from a document.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+  /profile/translations/{translation_id}:
+    delete:
+      tags: [translations]
+      summary: Remove a stored English version
+      description: >
+        The entry reverts to having no English version and is reported by the
+        readiness route again.
+      parameters:
+        - name: translation_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Removed
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404":
+          description: No such stored version on this profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /profile/translations/drafts:
+    post:
+      tags: [translations]
+      summary: Draft an English version for review
+      description: >
+        Asks a model for a suggested English rendering of one field of one
+        entry. **The draft is returned and nothing is stored.** It becomes an
+        English version only when the user approves it through
+        `PUT /profile/translations`, which is what keeps an unapproved
+        translation out of every document (FR-018).
+
+        Where a phrase could reasonably render several ways — 課長 is "Manager",
+        "Section Chief" or "Department Head", and those are three different
+        claims about seniority — the alternatives are returned alongside the
+        draft rather than resolved silently. The choice of English word is
+        itself a claim about the user's career, and it belongs to the user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TranslationDraftRequest" }
+      responses:
+        "200":
+          description: The suggested rendering, stored nowhere
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TranslationDraft" }
+        "401": { $ref: "#/components/responses/Unauthorised" }
+        "404":
+          description: No such entry on this profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: >
+            The field holds nothing to translate, or already reads as English.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+        "502":
+          description: >
+            The model answered with something that could not be understood,
+            after a bounded number of attempts. Distinct from `503`: the
+            service is up and answering, so waiting will not help and the user
+            should be told that rather than invited to try again.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "503":
+          description: >
+            The model could not be reached. Worth retrying, and the user is
+            told so — the two failures look alike to a person and are not alike
+            at all.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+components:
+  securitySchemes:
+    sessionIdentity:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: >
+        A verified session established at the web layer. The API derives the
+        profile owner from it and never accepts a user identifier from the
+        request.
+
+  responses:
+    Unauthorised:
+      description: No verified identity
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+
+    ValidationError:
+      type: object
+      required: [code, message, failures]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        failures:
+          type: array
+          items:
+            type: object
+            required: [field, reason]
+            properties:
+              field: { type: string }
+              reason: { type: string }
+
+    PaperSize:
+      type: string
+      description: >
+        US Letter by default. The document follows a US convention (FR-022) and
+        is most often printed or screened on Letter; A4 is offered because a
+        user in Japan applying to a foreign-affiliated employer may need it.
+      enum: [letter, a4]
+      default: letter
+
+    TranslatableEntry:
+      type: string
+      description: >
+        Which kind of profile entry an English version belongs to. Employer,
+        institution and certification *names* are absent on purpose: a proper
+        noun is not translated, it is either supplied by the user or shown as
+        recorded (FR-021).
+      enum: [work_experience, education, certification, career_story, skill]
+
+    ResumeRequest:
+      type: object
+      description: >
+        The conventions chosen for this document. Neither affects what the
+        document says.
+
+        No ordering option: an English resume is reverse-chronological, and
+        offering a choice would imply the other is conventional. No date
+        convention either — this document is Western-dated throughout (FR-004).
+      properties:
+        paper_size: { $ref: "#/components/schemas/PaperSize" }
+        include_skills:
+          type: boolean
+          default: true
+          description: >
+            Omit the skills section. Shortening a resume is the user choosing
+            what to leave out, never the system dropping entries to fit
+            (FR-007).
+
+    ResumeReadinessReport:
+      type: object
+      description: >
+        What a resume would lack. The three lists need different responses from
+        the user, so they are not merged into one.
+      required:
+        [can_generate, missing_required, needs_english, untranslated_names, stale_translations]
+      properties:
+        can_generate:
+          type: boolean
+          description: False only when something essential is absent (FR-006).
+        missing_required:
+          type: array
+          items: { type: string }
+          description: Fields without which a resume is not meaningful.
+        needs_english:
+          type: array
+          items: { $ref: "#/components/schemas/UntranslatedField" }
+          description: >
+            Entries with no stored English version. Each can be drafted.
+        untranslated_names:
+          type: array
+          items: { $ref: "#/components/schemas/UntranslatedName" }
+          description: >
+            Organisations with no supplied English name. These appear as
+            recorded and are never drafted — the user supplies the official
+            name or the Japanese stands (FR-021).
+        stale_translations:
+          type: array
+          items: { $ref: "#/components/schemas/StoredTranslation" }
+          description: >
+            Approvals whose source text has changed since. Reported, never
+            re-drafted and never discarded: the user approved those words.
+
+    UntranslatedField:
+      type: object
+      required: [entry_type, entry_id, field, label, source_text]
+      properties:
+        entry_type: { $ref: "#/components/schemas/TranslatableEntry" }
+        entry_id: { type: string, format: uuid }
+        field: { type: string }
+        label:
+          type: string
+          description: How to name this entry to the user, e.g. the employer.
+        source_text: { type: string }
+
+    UntranslatedName:
+      type: object
+      required: [entry_type, entry_id, recorded_name]
+      properties:
+        entry_type: { $ref: "#/components/schemas/TranslatableEntry" }
+        entry_id: { type: string, format: uuid }
+        recorded_name:
+          type: string
+          description: The name as the profile holds it, shown as-is.
+
+    TranslationApproval:
+      type: object
+      required: [entry_type, entry_id, field, text]
+      properties:
+        entry_type: { $ref: "#/components/schemas/TranslatableEntry" }
+        entry_id: { type: string, format: uuid }
+        field: { type: string }
+        text:
+          type: string
+          minLength: 1
+          description: >
+            The user's approved English, stored exactly as given. Whether they
+            wrote it themselves or edited a draft is not recorded, because it
+            makes no difference: once approved, the words are theirs.
+
+    StoredTranslation:
+      type: object
+      required: [id, entry_type, entry_id, field, text, approved_at, is_stale]
+      properties:
+        id: { type: string, format: uuid }
+        entry_type: { $ref: "#/components/schemas/TranslatableEntry" }
+        entry_id: { type: string, format: uuid }
+        field: { type: string }
+        text: { type: string }
+        approved_at: { type: string, format: date-time }
+        is_stale:
+          type: boolean
+          description: >
+            True when the source text has changed since this was approved. The
+            stored English is still used; the user is told it may no longer
+            match.
+        source_text:
+          type: [string, "null"]
+          description: >
+            The source as it reads now, present when stale so the user can see
+            what changed without fetching the entry.
+
+    TranslationDraftRequest:
+      type: object
+      required: [entry_type, entry_id, field]
+      properties:
+        entry_type: { $ref: "#/components/schemas/TranslatableEntry" }
+        entry_id: { type: string, format: uuid }
+        field: { type: string }
+
+    TranslationDraft:
+      type: object
+      description: >
+        A suggestion, not a claim. Stored nowhere; it reaches a document only
+        through an approval.
+      required: [entry_type, entry_id, field, source_text, text, alternatives]
+      properties:
+        entry_type: { $ref: "#/components/schemas/TranslatableEntry" }
+        entry_id: { type: string, format: uuid }
+        field: { type: string }
+        source_text:
+          type: string
+          description: >
+            The text this renders, returned alongside so the user compares the
+            two rather than approving English against nothing.
+        text: { type: string }
+        alternatives:
+          type: array
+          items: { $ref: "#/components/schemas/RenderingAlternative" }
+          description: >
+            Phrases that could reasonably render more than one way. Empty when
+            the rendering is unambiguous.
+
+    RenderingAlternative:
+      type: object
+      required: [phrase, options]
+      properties:
+        phrase:
+          type: string
+          description: The phrase in the source text, exactly as it appears.
+        options:
+          type: array
+          minItems: 2
+          items: { type: string }
+          description: >
+            The readings it could take. Returned so the user chooses between
+            them; the product does not pick one on their behalf.
+        note:
+          type: [string, "null"]
+          description: What distinguishes the options, in one line.

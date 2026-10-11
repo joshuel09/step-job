@@ -43,6 +43,16 @@ DEFERRED: dict[str, set[str]] = {
         "/profile/documents/shokumu-keirekisho",
         "/profile/documents/shokumu-keirekisho/readiness",
     },
+    # Planned, not yet built. The generator waits on the shared typography
+    # module feature 004's Phase 2 extracts; the translation routes do not, and
+    # come off this list first.
+    "005-english-resume": {
+        "/profile/documents/resume",
+        "/profile/documents/resume/readiness",
+        "/profile/translations",
+        "/profile/translations/{translation_id}",
+        "/profile/translations/drafts",
+    },
 }
 
 

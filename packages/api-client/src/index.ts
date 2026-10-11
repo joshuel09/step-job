@@ -13,5 +13,8 @@ export type { paths as Paths003, components as Components003 } from "./schema-00
 // 004-shokumu-keirekisho
 export type { paths as Paths004, components as Components004 } from "./schema-004";
 
+// 005-english-resume
+export type { paths as Paths005, components as Components005 } from "./schema-005";
+
 // Feature 001's names, unprefixed, for existing callers.
 export type { paths, components } from "./schema-001";

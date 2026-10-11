@@ -19,12 +19,13 @@ import uuid
 import pytest
 from jsonschema import Draft202012Validator
 
-from .schemas import contract, response_schema
+from .schemas import contract, features, response_schema
 
 CAREER = "001-master-career-profile"
 IMPORTS = "002-ai-resume-import"
 DOCUMENTS = "003-rirekisho-generator"
 SHOKUMU = "004-shokumu-keirekisho"
+ENGLISH = "005-english-resume"
 
 # Every (feature, path, method, status) this file has validated. Recorded as the
 # tests run so the coverage check below reflects what actually happened rather
@@ -359,13 +360,18 @@ UNVALIDATED: set[tuple[str, str, str, str]] = {
     # Feature 004 is planned, not built. Its contract exists so the client and
     # the contract tests see it; these come off this list as the routes land.
     (SHOKUMU, "/profile/documents/shokumu-keirekisho/readiness", "get", "200"),
+    # Feature 005, likewise planned and not built.
+    (ENGLISH, "/profile/documents/resume/readiness", "get", "200"),
+    (ENGLISH, "/profile/translations", "get", "200"),
+    (ENGLISH, "/profile/translations", "put", "200"),
+    (ENGLISH, "/profile/translations/drafts", "post", "200"),
 }
 
 
 def _documented_success_responses() -> set[tuple[str, str, str, str]]:
     """Every 2xx JSON response across every feature contract."""
     out: set[tuple[str, str, str, str]] = set()
-    for feature in (CAREER, IMPORTS, DOCUMENTS, SHOKUMU):
+    for feature in features():
         for path, spec in contract(feature)["paths"].items():
             for method, operation in spec.items():
                 if method == "parameters":

@@ -22,6 +22,20 @@ SPECS = Path(__file__).resolve().parents[4] / "specs"
 
 
 @cache
+def features() -> tuple[str, ...]:
+    """Every feature that publishes a contract, discovered rather than named.
+
+    `test_contracts.py` and `packages/api-client/generate.mjs` both glob for
+    these already. A list written by hand does not fail when a feature adds its
+    contract — it simply stops covering it, and a check that silently stops
+    checking still reports success.
+    """
+    found = tuple(sorted(p.parents[1].name for p in SPECS.glob("*/contracts/openapi.yaml")))
+    assert found, "no contracts discovered under specs/*/contracts/openapi.yaml"
+    return found
+
+
+@cache
 def contract(feature: str) -> dict[str, Any]:
     """One feature's contract, parsed once."""
     path = SPECS / feature / "contracts" / "openapi.yaml"
