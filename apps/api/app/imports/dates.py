@@ -133,29 +133,44 @@ def normalise_dates(values: dict[str, str]) -> dict[str, str]:
 # one era table. Two copies would eventually disagree, and the disagreement
 # would surface as a date that imports one way and prints another.
 
-# Each era's first Gregorian year, newest first. An era applies from its start
-# year onwards until the next one begins.
-ERA_STARTS: list[tuple[str, int]] = [
-    ("令和", 2019),
-    ("平成", 1989),
-    ("昭和", 1926),
-    ("大正", 1912),
-    ("明治", 1868),
+# The day each era began, newest first. An era applies from that day until the
+# next one begins.
+#
+# The day, not the year: eras change mid-year. 令和 began on 1 May 2019, so a
+# graduation in March 2019 or a start on 1 April 2019 is 平成31年, and that is
+# the most common pair of dates a Japanese career history holds. 明治 was
+# proclaimed later in 1868 but applied from the first day of that year in the
+# old calendar, which is 25 January in the Gregorian one.
+ERA_STARTS: list[tuple[str, date]] = [
+    ("令和", date(2019, 5, 1)),
+    ("平成", date(1989, 1, 8)),
+    ("昭和", date(1926, 12, 25)),
+    ("大正", date(1912, 7, 30)),
+    ("明治", date(1868, 1, 25)),
 ]
 
 
-def year_to_era(year: int) -> tuple[str, int]:
-    """The era name and year for a calendar year.
+def date_to_era(value: date) -> tuple[str, int]:
+    """The era name and year for a date.
 
-    Boundary years are ambiguous — 2019 was both 平成31年 and 令和元年, depending
-    on the month — and this returns the later era, which is what a document
-    written now would use. A caller needing the month-accurate answer has the
-    date and can decide; this function does not guess on their behalf.
+    The era year counts from the era's first calendar year, so the year an era
+    begins is its first year (元年) from its first day to 31 December, and
+    the days before that day belong to the previous era's final year.
     """
     for name, start in ERA_STARTS:
-        if year >= start:
-            return name, year - start + 1
-    raise UnknownEraError(f"{year} predates the eras this table covers")
+        if value >= start:
+            return name, value.year - start.year + 1
+    raise UnknownEraError(f"{value.isoformat()} predates the eras this table covers")
+
+
+def year_to_era(year: int) -> tuple[str, int]:
+    """The era name and year for a calendar year alone.
+
+    Boundary years are ambiguous — 2019 was both 平成31年 and 令和元年, depending
+    on the month — and with no month to go on this returns the era the year
+    ended in. Anything that has the date uses `date_to_era`, which is exact.
+    """
+    return date_to_era(date(year, 12, 31))
 
 
 def format_japanese_date(value: date, *, era: bool = True) -> str:
@@ -168,7 +183,7 @@ def format_japanese_date(value: date, *, era: bool = True) -> str:
     if not era:
         return f"{value.year}年{value.month}月{value.day}日"
 
-    name, era_year = year_to_era(value.year)
+    name, era_year = date_to_era(value)
     # An era's first year is written 元年, never 1年.
     written = FIRST_YEAR if era_year == 1 else str(era_year)
     return f"{name}{written}年{value.month}月{value.day}日"
@@ -179,6 +194,6 @@ def format_year_month(value: date, *, era: bool = True) -> str:
     if not era:
         return f"{value.year}年{value.month}月"
 
-    name, era_year = year_to_era(value.year)
+    name, era_year = date_to_era(value)
     written = FIRST_YEAR if era_year == 1 else str(era_year)
     return f"{name}{written}年{value.month}月"

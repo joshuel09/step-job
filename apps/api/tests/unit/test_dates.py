@@ -10,6 +10,7 @@ from datetime import date
 import pytest
 from app.imports.dates import (
     UnknownEraError,
+    date_to_era,
     era_to_year,
     format_japanese_date,
     format_year_month,
@@ -145,6 +146,66 @@ class TestYearToEra:
             year_to_era(1800)
 
 
+class TestDateToEra:
+    """Eras change mid-year, so the era of a date depends on the day (#76).
+
+    Each changeover is tested on both sides. The last day of an era and the
+    first day of the next are a day apart and a whole era apart.
+    """
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            # 平成 → 令和 on 1 May 2019.
+            (date(2019, 4, 30), ("平成", 31)),
+            (date(2019, 5, 1), ("令和", 1)),
+            # 昭和 → 平成 on 8 January 1989.
+            (date(1989, 1, 7), ("昭和", 64)),
+            (date(1989, 1, 8), ("平成", 1)),
+            # 大正 → 昭和 on 25 December 1926.
+            (date(1926, 12, 24), ("大正", 15)),
+            (date(1926, 12, 25), ("昭和", 1)),
+            # 明治 → 大正 on 30 July 1912.
+            (date(1912, 7, 29), ("明治", 45)),
+            (date(1912, 7, 30), ("大正", 1)),
+        ],
+    )
+    def test_each_changeover_on_both_sides(self, value, expected):
+        assert date_to_era(value) == expected
+
+    def test_the_rest_of_the_first_year_stays_gannen(self):
+        assert date_to_era(date(2019, 12, 31)) == ("令和", 1)
+        assert date_to_era(date(2020, 1, 1)) == ("令和", 2)
+
+    def test_a_date_before_the_table_is_refused(self):
+        with pytest.raises(UnknownEraError):
+            date_to_era(date(1868, 1, 24))
+
+
+class TestTheSpring2019Cohort:
+    """The case users will actually hit.
+
+    The Japanese academic and fiscal year ends on 31 March and begins on
+    1 April. Everyone who graduated in March 2019 or started work on 1 April
+    2019 did so in 平成, a month before 令和 began.
+    """
+
+    def test_a_1_april_2019_start_is_heisei_31(self):
+        assert format_year_month(date(2019, 4, 1)) == "平成31年4月"
+        assert format_japanese_date(date(2019, 4, 1)) == "平成31年4月1日"
+
+    def test_a_march_2019_graduation_is_heisei_31(self):
+        assert format_year_month(date(2019, 3, 31)) == "平成31年3月"
+        assert format_japanese_date(date(2019, 3, 31)) == "平成31年3月31日"
+
+    def test_may_2019_is_reiwa_gannen(self):
+        assert format_year_month(date(2019, 5, 1)) == "令和元年5月"
+
+    def test_early_january_1989_is_showa_64(self):
+        assert format_japanese_date(date(1989, 1, 5)) == "昭和64年1月5日"
+        assert format_japanese_date(date(1989, 1, 8)) == "平成元年1月8日"
+
+
 class TestFormatting:
     def test_an_era_date(self):
         assert format_japanese_date(date(2021, 4, 1)) == "令和3年4月1日"
@@ -176,6 +237,13 @@ class TestRoundTrip:
             date(2018, 10, 15),
             date(1995, 7, 20),
             date(1970, 1, 1),
+            # Either side of a changeover. The wrong era round-trips too, since
+            # both directions share the table, so these guard the parsing side
+            # of #76's fix rather than detect the original bug.
+            date(2019, 4, 1),
+            date(2019, 4, 30),
+            date(1989, 1, 7),
+            date(1989, 1, 8),
         ],
     )
     def test_rendering_then_parsing_returns_the_original(self, value):
