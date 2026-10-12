@@ -164,7 +164,11 @@ class TestEntriesWithoutJapanese:
 class TestTheReportAgreesWithGeneration:
     """For every shape of profile, can_generate is what generation does."""
 
-    @pytest.mark.parametrize("shape", ["no_identity", "blank_name", "name_only", "full"])
+    # "spaces_name" is the one where two separate checks would part company: a
+    # truthiness test accepts "   " and a strip() test does not.
+    @pytest.mark.parametrize(
+        "shape", ["no_identity", "blank_name", "spaces_name", "name_only", "full"]
+    )
     def test_can_generate_matches_an_actual_generation(
         self, client, auth_headers, session, request, shape
     ):
@@ -176,6 +180,8 @@ class TestTheReportAgreesWithGeneration:
             profile = request.getfixturevalue("profile")
             if shape == "blank_name":
                 session.add(models.Identity(profile_id=profile.id, full_name_latin=""))
+            elif shape == "spaces_name":
+                session.add(models.Identity(profile_id=profile.id, full_name_latin="   "))
             elif shape == "name_only":
                 session.add(models.Identity(profile_id=profile.id, full_name_latin="Hanako"))
             session.flush()
