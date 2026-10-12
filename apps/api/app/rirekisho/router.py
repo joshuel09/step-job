@@ -59,3 +59,16 @@ def generate_rirekisho(
             "X-Snapshot-Id": str(snapshot.id),
         },
     )
+
+
+@router.get(
+    "/profile/documents/rirekisho/readiness",
+    response_model=schemas.ReadinessReport,
+)
+def rirekisho_readiness(session: Db, caller: Caller):
+    """What a document would lack, so the user can fix it before printing.
+
+    Read-only: nothing is generated and no snapshot is captured.
+    """
+    profile = career_service.require_profile(session, caller.user_id)
+    return service.readiness_report(session, profile)

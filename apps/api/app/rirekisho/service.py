@@ -19,15 +19,11 @@ from sqlalchemy.orm import Session
 from app.career import models as career_models
 from app.career import snapshots
 from app.core.errors import ValidationFailed
-from app.rirekisho import render
+from app.rirekisho import readiness, render
 from app.rirekisho.rows import build_rows
 from app.rirekisho.schemas import DateConvention, PaperSize
 
 logger = logging.getLogger(__name__)
-
-# Without these a document is not a 履歴書, so generation refuses rather than
-# producing one with a blank where a name belongs (FR-015).
-REQUIRED = ("full_name_latin",)
 
 
 def _section(session: Session, profile: career_models.CareerProfile, model: type) -> list[Any]:
@@ -41,16 +37,31 @@ def _identity(session: Session, profile: career_models.CareerProfile):
 
 
 def _require_identity(identity) -> None:
-    if identity is None:
+    """Refuse rather than produce a 履歴書 with a blank where a name belongs (FR-015).
+
+    The rule lives in readiness.py, so the report a user reads before generating
+    and the refusal they would meet cannot disagree.
+    """
+    missing = readiness.missing_required(identity)
+    if missing == ["identity"]:
         raise ValidationFailed(
             [("identity", "add your name before generating a 履歴書")],
             "A 履歴書 cannot be produced without a name.",
         )
 
-    missing = [field for field in REQUIRED if not getattr(identity, field, None)]
     if missing:
         reason = "is required before a 履歴書 can be produced"
-        raise ValidationFailed([(f"identity.{field}", reason) for field in missing])
+        raise ValidationFailed([(field, reason) for field in missing])
+
+
+def readiness_report(session: Session, profile: career_models.CareerProfile):
+    """What a document would lack, from the same entries generation would use."""
+    return readiness.build_report(
+        _identity(session, profile),
+        education=_section(session, profile, career_models.Education),
+        experiences=_section(session, profile, career_models.WorkExperience),
+        certifications=_section(session, profile, career_models.Certification),
+    )
 
 
 def generate(

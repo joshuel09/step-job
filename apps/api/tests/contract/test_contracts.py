@@ -26,17 +26,11 @@ SPECS = Path(__file__).resolve().parents[4] / "specs"
 # deliberate deferral; a path missing from both here and the implementation is a
 # failure.
 DEFERRED: dict[str, set[str]] = {
-    "001-master-career-profile": set(),
-    # Every documented path in both features is implemented. Kept as empty
+    # Every documented path in these features is implemented. Kept as empty
     # sets so a future story defers a path deliberately rather than by omission.
+    "001-master-career-profile": set(),
     "002-ai-resume-import": set(),
-    # Specified and planned; not yet built. Listed so the gap is deliberate —
-    # and so this test keeps covering the two features that are built, rather
-    # than failing on a third nobody has started.
-    # Readiness arrives with Phase 6; generation is implemented.
-    "003-rirekisho-generator": {
-        "/profile/documents/rirekisho/readiness",
-    },
+    "003-rirekisho-generator": set(),
     # Planned, not yet built. Both paths land with the implementation; this list
     # shrinks as they do, rather than all at the end.
     "004-shokumu-keirekisho": {
