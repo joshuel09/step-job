@@ -100,6 +100,19 @@ def _page_lines(pdf: bytes) -> list[list[str]]:
     ]
 
 
+def _stranded(pages: list[list[str]]) -> list[str]:
+    """Headings left at the foot of a page while their rows start overleaf.
+
+    A section that is empty by design (本人希望記入欄 with nothing disclosed)
+    may end a page: it has no rows to be separated from.
+    """
+    return [
+        lines[-1]
+        for lines, following in zip(pages, pages[1:], strict=False)
+        if following and following[0] == f"{lines[-1]}（続き）"
+    ]
+
+
 def _overflowing(pdf: bytes) -> list[str]:
     """Every drawn string whose right edge passes the page's right margin."""
     from app.rirekisho.render import FONT_NAME, MARGIN
@@ -180,11 +193,9 @@ class TestLaterPagesReadOnTheirOwn:
         pages = _page_lines(_generate(client, auth_headers, paper).content)
         assert pages[1][0] == "学歴・職歴（続き）"
 
-    def test_no_page_ends_on_a_bare_heading(self, client, auth_headers, long_profile, paper):
+    def test_no_heading_is_parted_from_its_rows(self, client, auth_headers, long_profile, paper):
         """A heading at the foot of a page, with its rows overleaf, reads as empty."""
-        pages = _page_lines(_generate(client, auth_headers, paper).content)
-        for lines in pages[:-1]:
-            assert lines[-1] not in ("学歴・職歴", "免許・資格", "本人希望記入欄")
+        assert _stranded(_page_lines(_generate(client, auth_headers, paper).content)) == []
 
 
 def test_the_guard_sees_a_line_off_the_page():
@@ -203,3 +214,39 @@ def test_the_guard_sees_a_line_off_the_page():
     canvas.save()
 
     assert _overflowing(buffer.getvalue()) != []
+
+
+@pytest.mark.parametrize("paper", ["a4", "b5"])
+def test_no_history_length_strands_a_heading(paper):
+    """Every length from 20 to 60 roles, rendered directly.
+
+    Whether a heading lands at the foot of a page depends on exactly how long
+    the history is, so one profile can miss it. Sweeping the lengths finds the
+    ones that put a heading on a page's last line with its rows overleaf.
+    """
+    import uuid
+    from types import SimpleNamespace
+
+    from app.rirekisho.render import render_rirekisho
+    from app.rirekisho.rows import build_rows
+
+    stranded = []
+    for count in range(20, 61):
+        roles = [
+            SimpleNamespace(
+                id=uuid.uuid4(),
+                employer_name=_employer(i),
+                started_on=date(1990 + i // 2, 1 + (i % 2) * 6, 1),
+                ended_on=date(1990 + i // 2, 5 + (i % 2) * 6, 30),
+            )
+            for i in range(count)
+        ]
+        pdf, _ = render_rirekisho(
+            identity={"full_name_latin": "Taro Yamada"},
+            rows=build_rows([], roles),
+            certifications=[(date(2000, 1, 1), "基本情報技術者")],
+            paper=paper,
+        )
+        stranded += [(count, heading) for heading in _stranded(_page_lines(pdf))]
+
+    assert stranded == []
