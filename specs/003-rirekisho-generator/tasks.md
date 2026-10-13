@@ -170,8 +170,8 @@ confirm the whole thing.
 - [X] T049 Implement the readiness route in `apps/api/app/rirekisho/router.py`
 - [X] T050 Remove `/profile/documents/rirekisho/readiness` from the deferred list in `apps/api/tests/contract/test_contracts.py`, leaving feature 003 with an empty deferral set
 - [X] T051 [P] Integration test for the readiness report in `apps/api/tests/integration/test_rirekisho_readiness.py`, asserting it names missing required fields, blank optional ones, and English entries
-- [ ] T052 Support a history longer than the conventional two pages in `apps/api/app/rirekisho/render.py`, producing every entry across as many pages as needed and reporting the count, per FR-018a
-- [ ] T053 [P] Integration test for quickstart Scenario 6 in `apps/api/tests/integration/test_rirekisho_long_history.py`, asserting no entry is dropped or shortened to fit
+- [X] T052 Support a history longer than the conventional two pages in `apps/api/app/rirekisho/render.py`, producing every entry across as many pages as needed and reporting the count, per FR-018a — rows already flowed; this adds wrapping so nothing runs off the paper, and （続き） headings
+- [X] T053 [P] Integration test for quickstart Scenario 6 in `apps/api/tests/integration/test_rirekisho_long_history.py`, asserting no entry is dropped or shortened to fit
 - [ ] T054 Regenerate all three typed clients into `packages/api-client/src/`
 - [ ] T055 [P] Build the readiness view in `apps/web/components/profile/rirekisho-readiness.tsx`, showing what is missing and which entries have no Japanese version
 - [ ] T056 [P] Add structured logging across `apps/api/app/rirekisho/`, recording outcomes and never document content, following the existing allow-list formatter
