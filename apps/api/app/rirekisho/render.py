@@ -78,6 +78,7 @@ register_font()
 from datetime import date  # noqa: E402
 from io import BytesIO  # noqa: E402
 
+from reportlab.pdfbase.pdfmetrics import stringWidth  # noqa: E402
 from reportlab.pdfgen.canvas import Canvas  # noqa: E402
 
 from app.imports.dates import format_japanese_date, format_year_month  # noqa: E402
@@ -89,10 +90,49 @@ HEADING_SIZE = 11
 BODY_SIZE = 10
 LINE_HEIGHT = 18
 
+# Marks a section that carries on from the previous page.
+CONTINUED = "（続き）"
+
 
 def _format(value: date | None, *, era: bool) -> str:
     """A date as the table writes it, or nothing where there is none."""
     return "" if value is None else format_year_month(value, era=era)
+
+
+def _wrap(text: str, first: float, rest: float, size: int, keep: int = 0) -> list[str]:
+    """Split text into lines no wider than the space each one has.
+
+    Every character is kept: a long name moves onto more lines, it is never cut
+    to fit (FR-018a). Japanese breaks between any two characters. Where a break
+    would split an English word, it moves back to the last space instead — but
+    never into the first `keep` characters, the date column or label, which is
+    padded with spaces and must stay on the first line with what follows it.
+    """
+    lines: list[str] = []
+    width, floor = first, keep
+    while stringWidth(text, FONT_NAME, size) > width:
+        cut = floor + 1
+        while cut < len(text) and stringWidth(text[: cut + 1], FONT_NAME, size) <= width:
+            cut += 1
+
+        if _mid_word(text, cut):
+            space = text.rfind(" ", floor + 1, cut)
+            if space > floor:
+                cut = space + 1
+
+        lines.append(text[:cut].rstrip(" "))
+        text = text[cut:].lstrip(" ")
+        width, floor = rest, 0
+    lines.append(text)
+    return lines
+
+
+def _mid_word(text: str, cut: int) -> bool:
+    """Whether a break at `cut` would split a word of Latin letters or digits."""
+    if not 0 < cut < len(text):
+        return False
+    before, after = text[cut - 1], text[cut]
+    return before.isascii() and after.isascii() and before.isalnum() and after.isalnum()
 
 
 class _Page:
@@ -101,6 +141,9 @@ class _Page:
     A history longer than the conventional length produces more pages rather
     than losing entries (FR-018a). Only the user can judge which roles matter,
     so the renderer never makes that choice for them.
+
+    A page that starts partway through a section says which section it is, so
+    page two can be read on its own: an employer may well hold the pages apart.
     """
 
     def __init__(self, canvas: Canvas, size: tuple[float, float]) -> None:
@@ -108,6 +151,7 @@ class _Page:
         self.width, self.height = size
         self.y = self.height - MARGIN
         self.pages = 1
+        self.section: str | None = None
 
     def space_for(self, lines: int = 1) -> None:
         if self.y - lines * LINE_HEIGHT < MARGIN:
@@ -115,15 +159,37 @@ class _Page:
             self.canvas.setFont(FONT_NAME, BODY_SIZE)
             self.y = self.height - MARGIN
             self.pages += 1
+            if self.section:
+                self._draw(f"{self.section}{CONTINUED}", MARGIN, HEADING_SIZE)
 
-    def line(self, text: str, x: float = MARGIN, size: int = BODY_SIZE) -> None:
-        self.space_for()
-        self.canvas.setFont(FONT_NAME, size)
-        self.canvas.drawString(x, self.y, text)
-        self.y -= LINE_HEIGHT
+    def heading(self, text: str) -> None:
+        """A section title, kept on the same page as its first line."""
+        self.section = None
+        self.space_for(2)
+        self._draw(text, MARGIN, HEADING_SIZE)
+        self.section = text
+
+    def line(self, text: str, x: float = MARGIN, size: int = BODY_SIZE, hang: str = "") -> None:
+        """One entry, wrapped onto as many lines as it needs and kept together.
+
+        Continuation lines start under the text after `hang` — the date column,
+        or a label — so a wrapped name still reads as one entry.
+        """
+        indent = stringWidth(hang, FONT_NAME, size)
+        available = self.width - MARGIN - x
+        lines = _wrap(text, available, available - indent, size, keep=len(hang))
+
+        self.space_for(len(lines))
+        for number, part in enumerate(lines):
+            self._draw(part, x if number == 0 else x + indent, size)
 
     def gap(self, lines: float = 0.5) -> None:
         self.y -= LINE_HEIGHT * lines
+
+    def _draw(self, text: str, x: float, size: int) -> None:
+        self.canvas.setFont(FONT_NAME, size)
+        self.canvas.drawString(x, self.y, text)
+        self.y -= LINE_HEIGHT
 
 
 def render_rirekisho(
@@ -153,16 +219,16 @@ def render_rirekisho(
 
     # Identity. Each label is drawn whether or not it has a value, so a user can
     # see what is blank rather than discovering it after printing (FR-022c).
-    page.line(f"ふりがな　{identity.get('furigana') or ''}")
+    page.line(f"ふりがな　{identity.get('furigana') or ''}", hang="ふりがな　")
     display_name = identity.get("full_name_japanese") or identity.get("full_name_latin") or ""
-    page.line(f"氏名　　　{display_name}")
+    page.line(f"氏名　　　{display_name}", hang="氏名　　　")
     # In the chosen convention like every other date, or the document would mix
     # the two (FR-019).
     born = identity.get("date_of_birth")
     page.line(f"生年月日　{format_japanese_date(born, era=era) if isinstance(born, date) else ''}")
-    page.line(f"現住所　　{identity.get('address') or ''}")
+    page.line(f"現住所　　{identity.get('address') or ''}", hang="現住所　　")
     page.line(f"電話　　　{identity.get('phone') or ''}")
-    page.line(f"メール　　{identity.get('email') or ''}")
+    page.line(f"メール　　{identity.get('email') or ''}", hang="メール　　")
     page.gap()
 
     # The photograph frame, drawn where convention places it and left empty.
@@ -171,7 +237,7 @@ def render_rirekisho(
     canvas.setFont(FONT_NAME, 8)
     canvas.drawString(page.width - MARGIN - 86, page.height - MARGIN - 134, "写真貼付欄")
 
-    page.line("学歴・職歴", size=HEADING_SIZE)
+    page.heading("学歴・職歴")
     for row in rows:
         if row.event is RowEvent.end:
             # 以上 sits at the right, as convention places it.
@@ -181,23 +247,24 @@ def render_rirekisho(
             page.y -= LINE_HEIGHT
             continue
 
-        when = _format(row.date, era=era)
-        page.line(f"{when:<14}{row.institution}　{row.event}")
+        column = f"{_format(row.date, era=era):<14}"
+        page.line(f"{column}{row.institution}　{row.event}", hang=column)
 
     page.gap()
-    page.line("免許・資格", size=HEADING_SIZE)
+    page.heading("免許・資格")
     for when, name in certifications or []:
-        page.line(f"{_format(when, era=era):<14}{name}")
+        column = f"{_format(when, era=era):<14}"
+        page.line(f"{column}{name}", hang=column)
 
     page.gap()
-    page.line("本人希望記入欄", size=HEADING_SIZE)
+    page.heading("本人希望記入欄")
     # Only fields the user marked includable reach this far; the filter runs
     # before rendering, so an undisclosed value is never passed in (gate G5).
     for label, value in (disclosed or {}).items():
-        page.line(f"{label}　{value}")
+        page.line(f"{label}　{value}", hang=f"{label}　")
 
     page.gap()
-    page.line("志望の動機", size=HEADING_SIZE)
+    page.heading("志望の動機")
     # Written for a particular employer rather than held as career history, so
     # the section is labelled and left for the user (FR-022b).
 
