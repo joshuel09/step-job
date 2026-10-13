@@ -166,10 +166,10 @@ quickstart Scenarios 3, 4, 5 and 7.
 **Purpose**: The readiness report, the long-history case, and the checks that
 confirm the whole thing.
 
-- [ ] T048 Implement the readiness report in `apps/api/app/rirekisho/readiness.py`, separating what cannot be left out from what will simply be blank, and naming the entries written in English
-- [ ] T049 Implement the readiness route in `apps/api/app/rirekisho/router.py`
-- [ ] T050 Remove `/profile/documents/rirekisho/readiness` from the deferred list in `apps/api/tests/contract/test_contracts.py`, leaving feature 003 with an empty deferral set
-- [ ] T051 [P] Integration test for the readiness report in `apps/api/tests/integration/test_rirekisho_readiness.py`, asserting it names missing required fields, blank optional ones, and English entries
+- [X] T048 Implement the readiness report in `apps/api/app/rirekisho/readiness.py`, separating what cannot be left out from what will simply be blank, and naming the entries written in English — English is judged from the text shown, not the recorded source language, which defaults to English
+- [X] T049 Implement the readiness route in `apps/api/app/rirekisho/router.py`
+- [X] T050 Remove `/profile/documents/rirekisho/readiness` from the deferred list in `apps/api/tests/contract/test_contracts.py`, leaving feature 003 with an empty deferral set
+- [X] T051 [P] Integration test for the readiness report in `apps/api/tests/integration/test_rirekisho_readiness.py`, asserting it names missing required fields, blank optional ones, and English entries
 - [X] T052 Support a history longer than the conventional two pages in `apps/api/app/rirekisho/render.py`, producing every entry across as many pages as needed and reporting the count, per FR-018a — rows already flowed; this adds wrapping so nothing runs off the paper, and （続き） headings
 - [X] T053 [P] Integration test for quickstart Scenario 6 in `apps/api/tests/integration/test_rirekisho_long_history.py`, asserting no entry is dropped or shortened to fit
 - [ ] T054 Regenerate all three typed clients into `packages/api-client/src/`
