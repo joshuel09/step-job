@@ -93,6 +93,18 @@ LINE_HEIGHT = 18
 # Marks a section that carries on from the previous page.
 CONTINUED = "（続き）"
 
+# How each Japan-specific field is labelled in 本人希望記入欄. Keyed by the
+# profile field, as the disclosure filter returns them. A field missing here is
+# refused rather than drawn under its raw name.
+DISCLOSED_LABELS = {
+    "residence_status": "在留資格",
+    "nationality": "国籍",
+    "visa_type": "ビザの種類",
+    "visa_expires_on": "在留期限",
+    "work_authorisation": "就労資格",
+    "japanese_qualification": "日本語能力",
+}
+
 
 def _format(value: date | None, *, era: bool) -> str:
     """A date as the table writes it, or nothing where there is none."""
@@ -133,6 +145,19 @@ def _mid_word(text: str, cut: int) -> bool:
         return False
     before, after = text[cut - 1], text[cut]
     return before.isascii() and after.isascii() and before.isalnum() and after.isalnum()
+
+
+def _disclosed_value(value: str | date | bool, *, era: bool) -> str:
+    """A disclosed value as the document writes it.
+
+    A date follows the document's convention like every other date (FR-019).
+    Work authorisation is recorded as yes or no, and written as such.
+    """
+    if isinstance(value, bool):
+        return "あり" if value else "なし"
+    if isinstance(value, date):
+        return format_japanese_date(value, era=era)
+    return value
 
 
 class _Page:
@@ -197,7 +222,7 @@ def render_rirekisho(
     identity: dict[str, str | date | None],
     rows: list[Row],
     certifications: list[tuple[date | None, str]] | None = None,
-    disclosed: dict[str, str] | None = None,
+    disclosed: dict[str, str | date | bool] | None = None,
     era: bool = False,
     paper: str = "a4",
 ) -> tuple[bytes, int]:
@@ -260,8 +285,10 @@ def render_rirekisho(
     page.heading("本人希望記入欄")
     # Only fields the user marked includable reach this far; the filter runs
     # before rendering, so an undisclosed value is never passed in (gate G5).
-    for label, value in (disclosed or {}).items():
-        page.line(f"{label}　{value}", hang=f"{label}　")
+    # Neither is its label: an undisclosed field leaves no trace, not a blank.
+    for field, value in (disclosed or {}).items():
+        label = f"{DISCLOSED_LABELS[field]}　"
+        page.line(f"{label}{_disclosed_value(value, era=era)}", hang=label)
 
     page.gap()
     page.heading("志望の動機")
