@@ -17,9 +17,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.career import models as career_models
+from app.career import service as career_service
 from app.career import snapshots
 from app.core.errors import ValidationFailed
 from app.rirekisho import readiness, render
+from app.rirekisho.disclosure import disclosed_fields
 from app.rirekisho.rows import build_rows
 from app.rirekisho.schemas import DateConvention, PaperSize
 
@@ -115,7 +117,11 @@ def generate(
         },
         rows=rows,
         certifications=[(c.issued_on, c.name) for c in certifications],
-        disclosed=None,  # the filter arrives with User Story 3
+        # Filtered here, before the renderer sees anything, so an undisclosed
+        # value never reaches it (gate G5).
+        disclosed=disclosed_fields(
+            career_service.get_singleton(session, profile, career_models.JapanProfile)
+        ),
         era=date_convention is DateConvention.wareki,
         paper=str(paper_size),
     )
