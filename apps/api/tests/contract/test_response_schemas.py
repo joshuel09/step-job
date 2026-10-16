@@ -315,6 +315,24 @@ class TestDocuments:
         assert response.status_code == 404
         check(DOCUMENTS, "/profile/documents/rirekisho", "post", 404, response.json())
 
+    def test_the_readiness_report(self, client, auth_headers, rirekisho_profile):
+        """The shared fixture on purpose: it has an English entry.
+
+        `entries_without_japanese` is the only part of this response with a
+        shape of its own, and an empty array validates against any item schema.
+        A fixture with nothing in English would check the enum by not reaching
+        it.
+        """
+        response = client.get("/api/v1/profile/documents/rirekisho/readiness", headers=auth_headers)
+        assert response.status_code == 200, response.text
+        assert response.json()["entries_without_japanese"], "the fixture must have one"
+        check(DOCUMENTS, "/profile/documents/rirekisho/readiness", "get", 200, response.json())
+
+    def test_the_readiness_report_without_a_profile(self, client, auth_headers):
+        response = client.get("/api/v1/profile/documents/rirekisho/readiness", headers=auth_headers)
+        assert response.status_code == 404
+        check(DOCUMENTS, "/profile/documents/rirekisho/readiness", "get", 404, response.json())
+
 
 # --- the shared unauthorised shape -------------------------------------------
 
@@ -354,9 +372,6 @@ UNVALIDATED: set[tuple[str, str, str, str]] = {
     (IMPORTS, "/profile/imports/upload", "post", "201"),
     # Needs an import still running, which is a timing setup rather than a shape.
     (IMPORTS, "/profile/imports/{import_id}/cancel", "post", "200"),
-    # Not built yet — it is also in DEFERRED in `test_contracts.py`, and arrives
-    # with Phase 6. Remove from both lists together.
-    (DOCUMENTS, "/profile/documents/rirekisho/readiness", "get", "200"),
     # Feature 004 is planned, not built. Its contract exists so the client and
     # the contract tests see it; these come off this list as the routes land.
     (SHOKUMU, "/profile/documents/shokumu-keirekisho/readiness", "get", "200"),
