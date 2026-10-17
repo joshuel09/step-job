@@ -216,13 +216,38 @@ def test_the_guard_sees_a_line_off_the_page():
     assert _overflowing(buffer.getvalue()) != []
 
 
+# Long enough to wrap on either paper size, so the row after a heading needs two
+# lines. A sweep whose first rows all fit on one line cannot see a heading that
+# reserves room for only one (#105).
+LONG_CERT = (
+    "一般社団法人日本ディープラーニング協会ディープラーニングのための数学基礎検定上級"
+    "（応用数理・統計学編）"
+)
+LONG_QUALIFICATION = (
+    "日本語能力試験N1合格、ビジネス日本語能力テスト J1+ 取得、"
+    "日本語教育能力検定試験合格、日本漢字能力検定準一級"
+)
+
+FIRST_ROWS = {
+    "short": {"certifications": [(date(2000, 1, 1), "基本情報技術者")]},
+    "wrapping_certification": {"certifications": [(date(2000, 1, 1), LONG_CERT)]},
+    "wrapping_disclosure": {
+        "certifications": [(date(2000, 1, 1), "基本情報技術者")],
+        "disclosed": {"japanese_qualification": LONG_QUALIFICATION},
+    },
+}
+
+
 @pytest.mark.parametrize("paper", ["a4", "b5"])
-def test_no_history_length_strands_a_heading(paper):
-    """Every length from 20 to 60 roles, rendered directly.
+@pytest.mark.parametrize("first_rows", FIRST_ROWS)
+def test_no_history_length_strands_a_heading(paper, first_rows):
+    """Every length from 10 to 80 roles, rendered directly.
 
     Whether a heading lands at the foot of a page depends on exactly how long
     the history is, so one profile can miss it. Sweeping the lengths finds the
-    ones that put a heading on a page's last line with its rows overleaf.
+    ones that put a heading on a page's last line with its rows overleaf — and
+    the first row after each heading is varied too, because a heading has to
+    keep room for that whole row, however many lines it wraps to.
     """
     import uuid
     from types import SimpleNamespace
@@ -231,7 +256,7 @@ def test_no_history_length_strands_a_heading(paper):
     from app.rirekisho.rows import build_rows
 
     stranded = []
-    for count in range(20, 61):
+    for count in range(10, 81):
         roles = [
             SimpleNamespace(
                 id=uuid.uuid4(),
@@ -244,9 +269,19 @@ def test_no_history_length_strands_a_heading(paper):
         pdf, _ = render_rirekisho(
             identity={"full_name_latin": "Taro Yamada"},
             rows=build_rows([], roles),
-            certifications=[(date(2000, 1, 1), "基本情報技術者")],
             paper=paper,
+            **FIRST_ROWS[first_rows],
         )
         stranded += [(count, heading) for heading in _stranded(_page_lines(pdf))]
 
     assert stranded == []
+
+
+def test_the_long_rows_really_wrap():
+    """Guards the guard: the sweep only tests anything if these need two lines."""
+    from app.rirekisho.render import FONT_NAME, MARGIN, page_size
+
+    for paper in ("a4", "b5"):
+        width = page_size(paper)[0] - 2 * MARGIN
+        assert stringWidth(f"{'2000年1月':<14}{LONG_CERT}", FONT_NAME, 10) > width
+        assert stringWidth(f"日本語能力　{LONG_QUALIFICATION}", FONT_NAME, 10) > width
