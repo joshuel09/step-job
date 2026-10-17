@@ -143,6 +143,27 @@ class TestTheAllowlistCoversTheModel:
         profile.religion = "should never appear"  # type: ignore[attr-defined]
         assert "religion" not in disclosed_fields(profile)
 
+    def test_every_governed_field_has_a_label(self):
+        """The chain has to reach the page, not stop at the filter.
+
+        The tests above hold the model to POLICY to GOVERNED_BY, so a new
+        Japan-specific column cannot be added without deciding which flag
+        governs it. The renderer keeps a fourth table — a field reaching it
+        without a label raises KeyError part way through a document.
+
+        Without this, that column passes every test here and then fails for
+        the first user who opens its flag. It fails closed, which is the right
+        direction for this feature, but the person who added the column has no
+        way to find out before they do.
+        """
+        from app.rirekisho.render import DISCLOSED_LABELS
+
+        governed, labelled = set(GOVERNED_BY), set(DISCLOSED_LABELS)
+        assert governed == labelled, (
+            f"governed but unlabelled: {sorted(governed - labelled)}; "
+            f"labelled but ungoverned: {sorted(labelled - governed)}"
+        )
+
 
 def test_the_order_is_stable():
     """So a document lists the same fields in the same order every time."""
