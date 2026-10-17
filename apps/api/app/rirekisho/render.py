@@ -177,22 +177,41 @@ class _Page:
         self.y = self.height - MARGIN
         self.pages = 1
         self.section: str | None = None
+        self._pending: str | None = None
 
     def space_for(self, lines: int = 1) -> None:
-        if self.y - lines * LINE_HEIGHT < MARGIN:
+        """Make room for `lines` lines, and for a heading still waiting to be drawn.
+
+        A heading waits for its first row so the two land on the same page,
+        however many lines that row wraps to (#105).
+        """
+        needed = lines + (1 if self._pending else 0)
+        if self.y - needed * LINE_HEIGHT < MARGIN:
             self.canvas.showPage()
             self.canvas.setFont(FONT_NAME, BODY_SIZE)
             self.y = self.height - MARGIN
             self.pages += 1
-            if self.section:
+            if self.section and not self._pending:
                 self._draw(f"{self.section}{CONTINUED}", MARGIN, HEADING_SIZE)
 
+        if self._pending:
+            self._draw(self._pending, MARGIN, HEADING_SIZE)
+            self.section, self._pending = self._pending, None
+
     def heading(self, text: str) -> None:
-        """A section title, kept on the same page as its first line."""
+        """A section title, kept on the same page as its first row.
+
+        Drawn when that row arrives, since only then is its height known. A
+        section with no rows has its heading drawn before whatever comes next.
+        """
+        self.finish()
         self.section = None
-        self.space_for(2)
-        self._draw(text, MARGIN, HEADING_SIZE)
-        self.section = text
+        self._pending = text
+
+    def finish(self) -> None:
+        """Draw a heading still waiting for a row that never came."""
+        if self._pending:
+            self.space_for(0)
 
     def line(self, text: str, x: float = MARGIN, size: int = BODY_SIZE, hang: str = "") -> None:
         """One entry, wrapped onto as many lines as it needs and kept together.
@@ -209,6 +228,7 @@ class _Page:
             self._draw(part, x if number == 0 else x + indent, size)
 
     def gap(self, lines: float = 0.5) -> None:
+        self.finish()
         self.y -= LINE_HEIGHT * lines
 
     def _draw(self, text: str, x: float, size: int) -> None:
@@ -295,5 +315,6 @@ def render_rirekisho(
     # Written for a particular employer rather than held as career history, so
     # the section is labelled and left for the user (FR-022b).
 
+    page.finish()
     canvas.save()
     return buffer.getvalue(), page.pages
