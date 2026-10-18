@@ -9,6 +9,9 @@ from datetime import date
 
 import pytest
 from app.imports.dates import (
+    ALIASES,
+    ERA_STARTS,
+    ERAS,
     UnknownEraError,
     date_to_era,
     era_to_year,
@@ -219,6 +222,66 @@ class TestFormatting:
     def test_year_and_month_only(self):
         assert format_year_month(date(2021, 4, 1)) == "令和3年4月"
         assert format_year_month(date(2021, 4, 1), era=False) == "2021年4月"
+
+
+class TestTheErasAreOneTable:
+    """Both directions read one list of eras (#98).
+
+    `ERAS`, which parsing adds the era year to, is derived from `ERA_STARTS`
+    rather than written out beside it. These tests read `ERA_STARTS` and check
+    what the rest of the module does with each entry, so they cover whatever
+    that list holds rather than the five eras it holds today. The next
+    changeover is the one moment this table is certain to be edited, probably
+    in a hurry.
+
+    The two halves of a half-added era were not equally visible. Parsing an era
+    the table lacks returns nothing and the entry is left for the user to
+    correct — the module's refuse-rather-than-guess rule. Rendering a date in
+    that era wrote it as a year of the previous era with no error anywhere,
+    which is the shape of #76.
+    """
+
+    @pytest.mark.parametrize(("name", "start"), ERA_STARTS)
+    def test_each_era_parses_from_its_first_day(self, name, start):
+        assert parse_japanese_date(f"{name}元年{start.month}月{start.day}日") == start
+
+    @pytest.mark.parametrize(("name", "start"), ERA_STARTS)
+    def test_each_era_renders_on_its_first_day(self, name, start):
+        assert format_japanese_date(start) == f"{name}元年{start.month}月{start.day}日"
+
+    # The letters, written out here rather than read from the module. They are
+    # the one thing on this page that cannot be derived from anything, so a
+    # change to them has to be made twice to pass: once in the code and once
+    # where a reviewer reads it.
+    LETTERS = {"R": "令和", "H": "平成", "S": "昭和", "T": "大正", "M": "明治"}
+
+    def test_each_letter_stands_for_the_era_a_form_means_by_it(self):
+        assert ALIASES == self.LETTERS
+
+    @pytest.mark.parametrize(
+        ("written", "expected"),
+        [
+            ("R3年4月", date(2021, 4, 1)),
+            ("H3年4月", date(1991, 4, 1)),
+            ("S3年4月", date(1928, 4, 1)),
+            ("T3年4月", date(1914, 4, 1)),
+            ("M3年4月", date(1870, 4, 1)),
+        ],
+    )
+    def test_a_letter_parses_to_the_year_it_names(self, written, expected):
+        """Against a year written out, not against the kanji form.
+
+        Comparing the two forms would pass whatever the letters pointed at,
+        since both sides read the same derived table.
+        """
+        assert parse_japanese_date(written) == expected
+
+    def test_every_era_has_a_letter(self):
+        """A new era should parse in the letter form too, as the others do."""
+        assert set(ALIASES.values()) == {name for name, _ in ERA_STARTS}
+
+    def test_the_parse_table_holds_the_eras_and_their_letters_and_nothing_else(self):
+        assert set(ERAS) == {name for name, _ in ERA_STARTS} | set(ALIASES)
 
 
 class TestRoundTrip:
