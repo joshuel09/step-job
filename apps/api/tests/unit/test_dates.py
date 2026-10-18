@@ -9,6 +9,9 @@ from datetime import date
 
 import pytest
 from app.imports.dates import (
+    ERA_LETTERS,
+    ERA_STARTS,
+    ERAS,
     UnknownEraError,
     date_to_era,
     era_to_year,
@@ -252,3 +255,53 @@ class TestRoundTrip:
     @pytest.mark.parametrize("value", [date(2024, 3, 1), date(2019, 5, 1), date(1988, 12, 1)])
     def test_year_and_month_round_trips_to_the_first_of_that_month(self, value):
         assert parse_japanese_date(format_year_month(value)) == value
+
+
+class TestOneEraTable:
+    """Parsing and rendering read one table, so they cannot drift apart (#98).
+
+    Before, the parse table and the render table each held the eras. An era
+    added to the parse side alone would parse, and then a date in it would
+    render as a year of the previous era that never existed — 令和13年 for a
+    date in the new one — with no error anywhere.
+    """
+
+    def test_the_parse_table_has_the_values_it_always_had(self):
+        """Pinned, so deriving the table changed nothing it returns.
+
+        Adding an era to ERA_STARTS makes this fail on purpose: the new entry
+        here is the reviewer's sign that an era was added, and parsing and
+        rendering both pick it up from that one edit.
+        """
+        assert ERAS == {
+            "令和": 2018,
+            "R": 2018,
+            "平成": 1988,
+            "H": 1988,
+            "昭和": 1925,
+            "S": 1925,
+            "大正": 1911,
+            "T": 1911,
+            "明治": 1867,
+            "M": 1867,
+        }
+
+    def test_every_era_that_parses_can_be_rendered(self):
+        """The silent direction: nothing parses that the renderer does not know."""
+        names = {name for name, _ in ERA_STARTS}
+        assert set(ERAS) == names | set(ERA_LETTERS)
+        assert set(ERA_LETTERS.values()) <= names
+
+    @pytest.mark.parametrize("letter", ERA_LETTERS)
+    def test_each_letter_is_its_era(self, letter):
+        assert ERAS[letter] == ERAS[ERA_LETTERS[letter]]
+        assert parse_japanese_date(f"{letter}3年4月") == parse_japanese_date(
+            f"{ERA_LETTERS[letter]}3年4月"
+        )
+
+    @pytest.mark.parametrize(("name", "start"), ERA_STARTS)
+    def test_each_era_round_trips_from_its_first_day(self, name, start):
+        """Rendered and parsed back through both directions, at the boundary."""
+        written = format_japanese_date(start)
+        assert written.startswith(f"{name}元年")
+        assert parse_japanese_date(written) == start
