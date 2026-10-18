@@ -36,12 +36,11 @@ ERA_STARTS: list[tuple[str, date]] = [
     ("明治", date(1868, 1, 25)),
 ]
 
-# The single letter forms and databases often write instead of the era name,
-# each the initial of its romanised reading. Written out because there is
-# nothing in the kanji to derive them from. A letter naming an era the table
-# above does not hold raises KeyError at import, rather than parsing dates into
-# an era that does not exist.
-ALIASES: dict[str, str] = {
+# The letters Japanese forms use for each era, as in H31年4月. Written out
+# because there is nothing in the kanji to derive them from. A letter naming an
+# era the table above does not hold raises KeyError at import, rather than
+# parsing dates into an era that does not exist.
+ERA_LETTERS: dict[str, str] = {
     "R": "令和",
     "H": "平成",
     "S": "昭和",
@@ -55,7 +54,7 @@ ALIASES: dict[str, str] = {
 # omissions are not equally visible — leaving an era out of this one is silent,
 # and renders dates in the new era as years of the previous era (#98).
 ERAS: dict[str, int] = {name: start.year - 1 for name, start in ERA_STARTS}
-ERAS.update({letter: ERAS[name] for letter, name in ALIASES.items()})
+ERAS.update({letter: ERAS[name] for letter, name in ERA_LETTERS.items()})
 
 # The first year of an era is written 元年 rather than 1年.
 FIRST_YEAR = "元"
