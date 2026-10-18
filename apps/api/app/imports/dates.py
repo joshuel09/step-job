@@ -19,20 +19,43 @@ from datetime import date
 
 logger = logging.getLogger(__name__)
 
-# First Gregorian year of each era. 令和 began in 1989 + 30; the arithmetic is
-# (start_year + era_year - 1), so 令和3年 is 2018 + 3 = 2021.
-ERAS: dict[str, int] = {
-    "令和": 2018,
-    "R": 2018,
-    "平成": 1988,
-    "H": 1988,
-    "昭和": 1925,
-    "S": 1925,
-    "大正": 1911,
-    "T": 1911,
-    "明治": 1867,
-    "M": 1867,
+# The day each era began, newest first. An era applies from that day until the
+# next one begins. Everything else here is derived from this list, so the two
+# directions cannot name different years for the same era (#98).
+#
+# The day, not the year: eras change mid-year. 令和 began on 1 May 2019, so a
+# graduation in March 2019 or a start on 1 April 2019 is 平成31年, and that is
+# the most common pair of dates a Japanese career history holds. 明治 was
+# proclaimed later in 1868 but applied from the first day of that year in the
+# old calendar, which is 25 January in the Gregorian one.
+ERA_STARTS: list[tuple[str, date]] = [
+    ("令和", date(2019, 5, 1)),
+    ("平成", date(1989, 1, 8)),
+    ("昭和", date(1926, 12, 25)),
+    ("大正", date(1912, 7, 30)),
+    ("明治", date(1868, 1, 25)),
+]
+
+# The single letter forms and databases often write instead of the era name,
+# each the initial of its romanised reading. Written out because there is
+# nothing in the kanji to derive them from. A letter naming an era the table
+# above does not hold raises KeyError at import, rather than parsing dates into
+# an era that does not exist.
+ALIASES: dict[str, str] = {
+    "R": "令和",
+    "H": "平成",
+    "S": "昭和",
+    "T": "大正",
+    "M": "明治",
 }
+
+# The year before each era's first, which is what parsing adds the era year to:
+# 令和3年 is 2018 + 3 = 2021. Derived, not written out. A second copy of the
+# table would be a second place to remember when the era changes, and the two
+# omissions are not equally visible — leaving an era out of this one is silent,
+# and renders dates in the new era as years of the previous era (#98).
+ERAS: dict[str, int] = {name: start.year - 1 for name, start in ERA_STARTS}
+ERAS.update({letter: ERAS[name] for letter, name in ALIASES.items()})
 
 # The first year of an era is written 元年 rather than 1年.
 FIRST_YEAR = "元"
@@ -130,24 +153,9 @@ def normalise_dates(values: dict[str, str]) -> dict[str, str]:
 #
 # Feature 003 renders calendar dates as era years for a 履歴書. It lives here,
 # beside the parsing, rather than in that feature, so both directions share the
-# one era table. Two copies would eventually disagree, and the disagreement
-# would surface as a date that imports one way and prints another.
-
-# The day each era began, newest first. An era applies from that day until the
-# next one begins.
-#
-# The day, not the year: eras change mid-year. 令和 began on 1 May 2019, so a
-# graduation in March 2019 or a start on 1 April 2019 is 平成31年, and that is
-# the most common pair of dates a Japanese career history holds. 明治 was
-# proclaimed later in 1868 but applied from the first day of that year in the
-# old calendar, which is 25 January in the Gregorian one.
-ERA_STARTS: list[tuple[str, date]] = [
-    ("令和", date(2019, 5, 1)),
-    ("平成", date(1989, 1, 8)),
-    ("昭和", date(1926, 12, 25)),
-    ("大正", date(1912, 7, 30)),
-    ("明治", date(1868, 1, 25)),
-]
+# one era table — `ERA_STARTS`, at the top of this module. Two copies would
+# eventually disagree, and the disagreement would surface as a date that
+# imports one way and prints another.
 
 
 def date_to_era(value: date) -> tuple[str, int]:
