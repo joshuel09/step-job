@@ -9,7 +9,7 @@ from datetime import date
 
 import pytest
 from app.imports.dates import (
-    ALIASES,
+    ERA_LETTERS,
     ERA_STARTS,
     ERAS,
     UnknownEraError,
@@ -256,7 +256,7 @@ class TestTheErasAreOneTable:
     LETTERS = {"R": "令和", "H": "平成", "S": "昭和", "T": "大正", "M": "明治"}
 
     def test_each_letter_stands_for_the_era_a_form_means_by_it(self):
-        assert ALIASES == self.LETTERS
+        assert ERA_LETTERS == self.LETTERS
 
     @pytest.mark.parametrize(
         ("written", "expected"),
@@ -278,10 +278,10 @@ class TestTheErasAreOneTable:
 
     def test_every_era_has_a_letter(self):
         """A new era should parse in the letter form too, as the others do."""
-        assert set(ALIASES.values()) == {name for name, _ in ERA_STARTS}
+        assert set(ERA_LETTERS.values()) == {name for name, _ in ERA_STARTS}
 
     def test_the_parse_table_holds_the_eras_and_their_letters_and_nothing_else(self):
-        assert set(ERAS) == {name for name, _ in ERA_STARTS} | set(ALIASES)
+        assert set(ERAS) == {name for name, _ in ERA_STARTS} | set(ERA_LETTERS)
 
 
 class TestRoundTrip:
