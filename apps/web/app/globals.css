@@ -1,3 +1,90 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/**
+ * The surface the 2018 app did not have.
+ *
+ * That app was flat white cards on one blue. The same two colours here, but
+ * the page sits on a soft gradient wash and the cards are translucent over
+ * it, so the blue shows through rather than being painted on.
+ */
+
+@layer base {
+  :root {
+    --wash-a: 186 230 253; /* brand-200 */
+    --wash-b: 224 242 254; /* brand-100 */
+    --surface: 255 255 255;
+    --surface-alpha: 0.72;
+    --hairline: 255 255 255;
+    --hairline-alpha: 0.7;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --wash-a: 3 61 94;
+      --wash-b: 8 23 38;
+      --surface: 17 32 48;
+      --surface-alpha: 0.6;
+      --hairline: 125 211 252;
+      --hairline-alpha: 0.14;
+    }
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-white text-ink dark:bg-[#081726] dark:text-brand-50;
+    /* Three soft pools of brand colour rather than a linear sweep: a linear
+       gradient on a tall page bands visibly, and these stay put while the
+       content scrolls over them. */
+    background-image:
+      radial-gradient(55rem 38rem at 8% -8%, rgb(var(--wash-a) / 0.95), transparent 62%),
+      radial-gradient(45rem 30rem at 95% 4%, rgb(var(--wash-a) / 0.6), transparent 60%),
+      radial-gradient(60rem 40rem at 50% 108%, rgb(var(--wash-b) / 0.95), transparent 64%);
+    background-attachment: fixed;
+    min-height: 100dvh;
+  }
+}
+
+@layer components {
+  /* A translucent surface: the page's wash shows through it, a hairline keeps
+     its edge visible against white, and the shadow is blue so it reads as
+     depth rather than grime. */
+  .glass {
+    background-color: rgb(var(--surface) / var(--surface-alpha));
+    border: 1px solid rgb(var(--hairline) / var(--hairline-alpha));
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    @apply shadow-glass;
+  }
+
+  /* The primary action. The gradient runs along the same blue the mark uses,
+     and the glow beneath it is that blue at low alpha, not a grey drop. */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br
+      from-brand-400 to-brand-600 px-5 py-2.5 text-sm font-semibold text-white
+      shadow-[0_10px_24px_-10px_rgb(2_132_199/0.9)] transition
+      hover:brightness-[1.06] active:translate-y-px;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border
+      border-brand-200/80 bg-white/70 px-5 py-2.5 text-sm font-semibold text-brand-700
+      backdrop-blur transition hover:bg-white
+      dark:border-brand-300/20 dark:bg-white/5 dark:text-brand-100 dark:hover:bg-white/10;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

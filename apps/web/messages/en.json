@@ -9,6 +9,7 @@
     "language": "Language"
   },
   "home": {
+    "brandline": "Boost your confidence",
     "nav": "Open your profile",
     "headline": "Write your career once. Generate the documents from it.",
     "lead": "Step Job keeps one profile of your work history and produces the documents a job search in Japan asks for — starting with a 履歴書 that follows the convention, in 和暦 or 西暦, on A4 or B5.",
@@ -55,7 +56,8 @@
       "resume": "English resume — a US-style resume from the same profile"
     },
     "truthTitle": "Nothing is invented",
-    "truthBody": "A generated document can only say what your profile says. Where a suggestion comes from a model, you see it beside your own words and decide whether it is yours before it reaches a document."
+    "truthBody": "A generated document can only say what your profile says. Where a suggestion comes from a model, you see it beside your own words and decide whether it is yours before it reaches a document.",
+    "since": "Step Job began as an Android app in 2018. Same idea, same two people."
   },
   "profile": {
     "title": "Career profile",
