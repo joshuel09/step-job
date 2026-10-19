@@ -112,6 +112,41 @@ glare = np.zeros_like(lab_full, dtype=bool)
 glare[:, 1880:] = True
 lab_full[glare & np.isin(lab_full, [9, 12, 13, 15, 17])] = 255
 
+# The window and the laptop are not traced at all.
+#
+# They are the one part of this picture made of rectangles, an ellipse and a
+# grid: shapes a photograph traces badly — every edge carries the camera's
+# grain, and four near-identical greys fight along each one — and shapes that
+# draw exactly. So they are cut out here and drawn as geometry underneath,
+# while everything with a shape worth tracing (her, the chair, the desk, the
+# drawers, the clock) stays traced.
+#
+# Her, the desk and the drawers cross the window, so only the window's own
+# colours are cut: greys, white, yellow. The clusters that make up the desk
+# and the figure stay.
+# Above the desk, and to the left of the drawer unit below it, nothing is
+# traced: that is all window, and the geometry underneath draws it. Keeping
+# any cluster here let the photograph's ragged buildings and a ghost of the
+# billboard's own lettering paint over the clean shapes.
+#
+# The laptop goes too, but its box stops short of her hand.
+# The desk and the drawer unit are rectangles as well, and traced they came
+# out with a wobbling edge. Their clusters only describe the desk now that the
+# window is cut, so they go entirely and are drawn below.
+# Everything grey is either the window or the desk, and both are drawn now.
+# What stays traced is what cannot be described with a rectangle: her, the
+# chair, the cup, the clock face.
+TRACED = [0, 1, 2, 10, 16, 17]  # dark, hair, red, skin, white
+lab_full[~np.isin(lab_full, TRACED + [255])] = 255
+
+for rx0, ry0, rx1, ry1 in (
+    (112, 56, 916, 660),     # the window, above the desk
+    (112, 660, 588, 992),    # the window, left of the drawer unit
+    (686, 392, 1120, 734),   # the laptop, stopping before her cuff
+    (1570, 130, 1840, 400),  # the clock, which is drawn over the top
+):
+    lab_full[ry0:ry1, rx0:rx1] = 255
+
 # STEP is lettered in blue on the billboard; the same cluster is glass elsewhere.
 bx0, by0, bx1, by1 = BILLBOARD
 region = np.zeros_like(lab_full, dtype=bool)
@@ -174,13 +209,99 @@ for cluster, colour in COLOUR.items():
         layers.append((mask.sum(), colour, d))
 
 layers.sort(key=lambda layer: -layer[0])
-body = "\n".join(f'  <path fill="{c}" d="{d}"/>' for _, c, d in layers)
+def windows_grid(x, y, cols, rows, gap, w, h):
+    return "".join(
+        f'<rect x="{x + c * gap}" y="{y + r * gap}" width="{w}" height="{h}" rx="1"/>'
+        for r in range(rows)
+        for c in range(cols)
+    )
+
+
+# Drawn, not traced: the window, the skyline, the billboard and the laptop.
+GEOMETRY = f"""  <g>
+    <rect x="68" y="60" width="388" height="432" fill="#eeefe9"/>
+    <rect x="86" y="96" width="352" height="378" fill="#b6b9bb"/>
+    <g clip-path="url(#pane)">
+      <g fill="#c9cccd" opacity="0.5">
+        <ellipse cx="150" cy="126" rx="42" ry="26"/>
+        <ellipse cx="236" cy="112" rx="52" ry="30"/>
+        <ellipse cx="330" cy="130" rx="46" ry="26"/>
+      </g>
+      <rect x="96" y="226" width="74" height="26" fill="#6f6a63"/>
+      <g fill="#6f6a63">
+        <rect x="90" y="252" width="118" height="222"/>
+        <rect x="288" y="238" width="86" height="236"/>
+      </g>
+      <g fill="#4f4b48">
+        <rect x="208" y="268" width="80" height="206"/>
+        <rect x="374" y="262" width="64" height="212"/>
+      </g>
+      <rect x="196" y="286" width="64" height="40" fill="#b6b9bb"/>
+      <g fill="#c8d1d6">
+        {windows_grid(104, 282, 3, 5, 26, 14, 20)}
+        {windows_grid(216, 300, 4, 6, 17, 9, 11)}
+        {windows_grid(298, 266, 3, 7, 22, 12, 14)}
+        {windows_grid(384, 292, 3, 6, 17, 9, 11)}
+      </g>
+      <rect x="252" y="236" width="10" height="36" fill="#59544f"/>
+      <path d="M196 212h124l-14 28H210z" fill="#59544f"/>
+      <g fill="#e4cf3f">
+        <circle cx="224" cy="226" r="8"/>
+        <circle cx="258" cy="226" r="8"/>
+        <circle cx="292" cy="226" r="8"/>
+      </g>
+      <ellipse cx="258" cy="162" rx="146" ry="70" fill="#e4cf3f"/>
+      <text x="258" y="166" text-anchor="middle" font-size="54" font-weight="800"
+            letter-spacing="1" fill="#1f1d1a"
+            font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+      ><tspan fill="#2a93c7">STEP</tspan> JOB</text>
+      <text x="258" y="196" text-anchor="middle" font-size="16" font-weight="700"
+            letter-spacing="0.6" fill="#1f1d1a"
+            font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+      >BOOST YOUR CONFIDENCE</text>
+      <path d="M86 96h150L86 330z" fill="#c9cccd" opacity="0.38"/>
+      <path d="M306 96h132v58L166 474h-80z" fill="#c9cccd" opacity="0.2"/>
+    </g>
+    <rect x="62" y="40" width="400" height="34" rx="3" fill="#eeefe9"/>
+    <rect x="285" y="346" width="660" height="24" rx="3" fill="#8a8f88"/>
+    <rect x="285" y="366" width="660" height="12" rx="3" fill="#615c57"/>
+    <rect x="903" y="376" width="22" height="236" rx="4" fill="#7b746b"/>
+    <rect x="292" y="376" width="179" height="252" rx="4" fill="#7b746b"/>
+    <g fill="#615c57">
+      <rect x="292" y="458" width="179" height="4"/>
+      <rect x="292" y="540" width="179" height="4"/>
+    </g>
+    <g fill="#eeefe9">
+      <rect x="359" y="422" width="46" height="9" rx="4"/>
+      <rect x="359" y="504" width="46" height="9" rx="4"/>
+      <rect x="359" y="586" width="46" height="9" rx="4"/>
+    </g>
+    <path d="M392 228h170l26 122H358z" fill="#c8c6c2"/>
+    <path d="M474 282l15 9v18l-15 9-15-9v-18z" fill="#a9a7a3" opacity="0.6"/>
+    <path d="M350 350h248l12 16H338z" fill="#a9a7a3"/>
+  </g>
+"""
+
+# Drawn over the trace: the clock is a ring, a face and two hands, and the
+# camera lost the hands in the glare off the glass.
+CLOCK = """  <g>
+    <circle cx="851" cy="131" r="52" fill="#d9503a"/>
+    <circle cx="851" cy="131" r="43" fill="#f4f8f8"/>
+    <path d="M851 98v33l24 14" fill="none" stroke="#2b2a27" stroke-width="4"
+          stroke-linecap="round"/>
+  </g>
+"""
+
+body = GEOMETRY + "\n".join(f'  <path fill="{c}" d="{d}"/>' for _, c, d in layers)
 svg = (
     f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W_OUT} {H_OUT}">\n'
-    f'  <defs><clipPath id="card">'
-    f'<rect width="{W_OUT}" height="{H_OUT}" rx="26"/></clipPath></defs>\n'
+    f'  <defs>'
+    f'<clipPath id="card"><rect width="{W_OUT}" height="{H_OUT}" rx="26"/></clipPath>'
+    f'<clipPath id="pane"><rect x="86" y="96" width="352" height="378"/></clipPath>'
+    f'</defs>\n'
     f'  <g clip-path="url(#card)">\n'
-    f'  <rect width="{W_OUT}" height="{H_OUT}" fill="#3fb0dc"/>\n{body}\n  </g>\n</svg>\n'
+    f'  <rect width="{W_OUT}" height="{H_OUT}" fill="#3fb0dc"/>\n{body}\n{CLOCK}  </g>\n'
+    f'</svg>\n'
 )
 open(f"{out_dir}/artwork.svg", "w").write(svg)
 print(f"{len(layers)} layers, {len(svg) / 1024:.0f} KB")
