@@ -17,8 +17,11 @@ im = im.resize((im.width * SCALE, im.height * SCALE), Image.LANCZOS)
 a = np.asarray(im).astype(np.float32)
 rgb, alpha = a[..., :3], a[..., 3]
 
-# The banner is drawn on transparency, with a white halo where it was flattened.
-background = (alpha < 128) | (rgb.min(2) > 246)
+# Transparency is the only background. White is a colour this artwork draws
+# with — her teeth, her collar, the cup, the clock face — and treating it as
+# background punched holes that are invisible on a white page and look like a
+# scream on a dark one.
+background = alpha < 128
 fg = ~background
 print("background", f"{background.mean() * 100:.1f}%", "| drawn pixels", int(fg.sum()))
 
