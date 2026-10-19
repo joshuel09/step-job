@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import en from "../messages/en.json";
 import ja from "../messages/ja.json";
+import { GLYPHS } from "../components/brand/icons";
 import { AVAILABLE, PLANNED, STEPS } from "../lib/site";
 
 /**
@@ -33,6 +34,10 @@ describe("the landing page", () => {
     expect(existsSync(join(pages, href, "page.tsx"))).toBe(true);
   });
 
+  it.each(AVAILABLE)("draws a glyph for $key", ({ key }) => {
+    expect(typeof GLYPHS[key]).toBe("function");
+  });
+
   it("never offers something that is only specified", () => {
     const offered = AVAILABLE.map(({ key }) => key) as readonly string[];
     expect(offered.filter((key) => (PLANNED as readonly string[]).includes(key))).toEqual([]);
@@ -42,6 +47,7 @@ describe("the landing page", () => {
     const catalogue = locale === "en" ? en : ja;
     const required = [
       "nav",
+      "brandline",
       "headline",
       "lead",
       "start",
@@ -52,6 +58,7 @@ describe("the landing page", () => {
       "plannedBody",
       "truthTitle",
       "truthBody",
+      "since",
       ...STEPS.flatMap((step) => [`steps.${step}.title`, `steps.${step}.body`]),
       ...AVAILABLE.flatMap(({ key }) => [`available.${key}.title`, `available.${key}.body`]),
       ...PLANNED.map((key) => `planned.${key}`),

@@ -17,6 +17,9 @@ export const AVAILABLE = [
   { key: "stories", href: "profile/stories" },
 ] as const;
 
+/** The key of a card the page offers. */
+export type AvailableKey = (typeof AVAILABLE)[number]["key"];
+
 /** Specified, not built. Named on the page, never linked. */
 export const PLANNED = ["shokumu", "resume"] as const;
 

@@ -52,7 +52,7 @@ export function LocaleSwitcher() {
         value={current}
         disabled={pending}
         onChange={(event) => onChange(event.target.value)}
-        className="rounded border border-neutral-300 bg-transparent px-2 py-1 text-sm dark:border-neutral-700"
+        className="rounded-full border border-brand-200/80 bg-white/70 px-3 py-1 text-sm text-ink-soft backdrop-blur transition hover:bg-white dark:border-brand-300/20 dark:bg-white/5 dark:text-brand-100"
       >
         <option value="en">English</option>
         <option value="ja">日本語</option>
