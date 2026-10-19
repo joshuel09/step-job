@@ -7,14 +7,23 @@ import { BrandMark } from "@/components/brand/footsteps";
  * The brand name is not translated, so this is the one piece of text on the
  * page that is the same in both locales.
  */
-export function Wordmark({ size = "sm" }: { size?: "sm" | "lg" }) {
+export function Wordmark({
+  size = "sm",
+  compact = false,
+}: {
+  size?: "sm" | "lg";
+  /** Tile only on a narrow screen, where the name costs a navigation item. */
+  compact?: boolean;
+}) {
   const large = size === "lg";
 
   return (
     <span className="inline-flex items-center gap-2">
       <BrandMark className={large ? "h-11 w-11" : "h-7 w-7"} />
       <span
-        className={`font-semibold tracking-tight ${large ? "text-3xl" : "text-base"}`}
+        className={`font-semibold tracking-tight ${large ? "text-3xl" : "text-base"} ${
+          compact ? "hidden sm:inline" : ""
+        }`}
         // One accessible name for the two differently coloured halves.
         aria-label="Step Job"
       >
