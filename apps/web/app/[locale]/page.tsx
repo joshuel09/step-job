@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { BrandMark } from "@/components/brand/footsteps";
 import { GLYPHS } from "@/components/brand/icons";
+import { Cat, Josh, Mich } from "@/components/brand/people";
+import { DeskScene } from "@/components/brand/scene";
 import { Wordmark } from "@/components/brand/wordmark";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { AVAILABLE, PLANNED, STEPS } from "@/lib/site";
@@ -42,24 +44,27 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       </header>
 
       <main className="mx-auto flex max-w-4xl flex-col gap-16 px-6 pb-20 pt-14">
-        <section className="flex animate-rise flex-col items-start gap-5">
-          <span className="inline-flex items-center gap-2 rounded-full border border-brand-200/70 bg-white/60 px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-brand-700 backdrop-blur dark:border-brand-300/20 dark:bg-white/5 dark:text-brand-200">
-            {t("brandline")}
-          </span>
-          <h1 className="max-w-2xl text-pretty text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-            {t("headline")}
-          </h1>
-          <p className="max-w-xl text-base leading-relaxed text-ink-soft dark:text-brand-100/80">
-            {t("lead")}
-          </p>
-          <div className="mt-1 flex flex-wrap items-center gap-3">
-            <Link href={`/${locale}/profile`} className="btn-primary">
-              {t("start")}
-            </Link>
-            <Link href={`/${locale}/profile/documents/rirekisho`} className="btn-secondary">
-              {t("generate")}
-            </Link>
+        <section className="grid animate-rise items-center gap-10 lg:grid-cols-[1fr_auto]">
+          <div className="flex flex-col items-start gap-5">
+            <span className="inline-flex items-center gap-2 rounded-full border border-brand-200/70 bg-white/60 px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-brand-700 backdrop-blur dark:border-brand-300/20 dark:bg-white/5 dark:text-brand-200">
+              {t("brandline")}
+            </span>
+            <h1 className="max-w-2xl text-pretty text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+              {t("headline")}
+            </h1>
+            <p className="max-w-xl text-base leading-relaxed text-ink-soft dark:text-brand-100/80">
+              {t("lead")}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              <Link href={`/${locale}/profile`} className="btn-primary">
+                {t("start")}
+              </Link>
+              <Link href={`/${locale}/profile/documents/rirekisho`} className="btn-secondary">
+                {t("generate")}
+              </Link>
+            </div>
           </div>
+          <DeskScene className="hidden w-[22rem] drop-shadow-[0_24px_48px_rgba(3,105,161,0.18)] lg:block" />
         </section>
 
         <section className="flex flex-col gap-5">
@@ -134,6 +139,37 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <p className="max-w-2xl text-sm leading-relaxed text-ink-soft dark:text-brand-100/75">
             {t("truthBody")}
           </p>
+        </section>
+
+        <section className="flex flex-col gap-5">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-faint">
+              {t("makersTitle")}
+            </h2>
+            {/* The cat had a line in the 2018 About screen. It keeps it. */}
+            <span className="flex items-center gap-2">
+              <span className="rounded-full bg-white/70 px-3 py-1 text-xs text-ink-soft dark:bg-white/10 dark:text-brand-100/75">
+                {t("makers.cat")}
+              </span>
+              <Cat className="h-7 w-9" />
+            </span>
+          </div>
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {[
+              { key: "josh", Portrait: Josh },
+              { key: "mich", Portrait: Mich },
+            ].map(({ key, Portrait }) => (
+              <li key={key} className="glass flex items-center gap-4 rounded-card p-5">
+                <Portrait className="h-14 w-14 shrink-0" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold">{t(`makers.${key}.name`)}</span>
+                  <span className="text-sm text-ink-soft dark:text-brand-100/75">
+                    {t(`makers.${key}.role`)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <footer className="flex items-center gap-3 text-xs text-ink-faint">
