@@ -9,6 +9,7 @@ out_dir = sys.argv[1]
 W_OUT, H_OUT = 1040, 640
 
 lab_full = np.load(f"{out_dir}/labels.npy")
+corrected = np.asarray(Image.open(f"{out_dir}/corrected.png").convert("RGB")).astype(np.float32)
 
 # Cluster -> the colour the artwork paints it.
 COLOUR = {
@@ -33,7 +34,8 @@ COLOUR = {
 }
 CAT = 8  # left out; the Persian is drawn over the gap
 CAT_REGION = (1470, 420, 1870, 700)
-BILLBOARD = (380, 230, 1420, 480)  # where cluster 9 is lettering, not glass
+BILLBOARD = (224, 170, 812, 420)  # the ellipse itself: wider, and it
+# recoloured her eye blue
 
 
 def fill_holes(mask: np.ndarray) -> np.ndarray:
@@ -57,6 +59,14 @@ def fill_holes(mask: np.ndarray) -> np.ndarray:
                 q.append((ny, nx))
     return (~seen[1:-1, 1:-1]) | mask
 
+
+# Her eyes and brows are a few dark pixels each, and the camera's blur put
+# them in with the window glass. Take them back by luminance, inside her face.
+FACE = (1195, 170, 1420, 420)
+fx0, fy0, fx1, fy1 = FACE
+face = np.zeros_like(lab_full, dtype=bool)
+face[fy0:fy1, fx0:fx1] = True
+lab_full[face & (corrected.mean(2) < 105)] = 2
 
 # The cat: her tan appears elsewhere, so take the cluster only in her corner,
 # grow it, and fill it, so her stripes go with her rather than being left
@@ -116,15 +126,24 @@ H, W = lab.shape
 scale = W_OUT / W
 
 
-def clean(mask: np.ndarray) -> np.ndarray:
-    """Take the speckle off, and nothing else."""
-    im = Image.fromarray((mask * 255).astype(np.uint8)).filter(ImageFilter.ModeFilter(5))
+def clean(mask: np.ndarray, radius: float = 4) -> np.ndarray:
+    """Smooth the boundary without losing anything that is actually drawn.
+
+    Blur the mask and threshold it back. A wiggle of a few pixels — which is
+    all the camera's grain is — blurs below half and disappears; a shape ten
+    pixels across survives, because most of its area is still above half.
+    Morphology ate the laptop; this does not.
+    """
+    im = Image.fromarray((mask * 255).astype(np.uint8))
+    im = im.filter(ImageFilter.ModeFilter(5)).filter(ImageFilter.GaussianBlur(radius))
     return np.asarray(im) > 127
 
 
-def to_path(mask: np.ndarray) -> str:
+def to_path(mask: np.ndarray, noisy: bool = False) -> str:
     bmp = potrace.Bitmap(~mask)  # potracer treats zero as ink, so invert
-    path = bmp.trace(turdsize=140, alphamax=1.0, opticurve=True, opttolerance=0.8)
+    path = bmp.trace(
+        turdsize=260, alphamax=1.3, opticurve=True, opttolerance=1.4
+    )
 
     def pt(p):
         return f"{p.x * scale:.1f} {p.y * scale:.1f}"
@@ -142,11 +161,15 @@ def to_path(mask: np.ndarray) -> str:
 
 
 layers = []
+# The pale clusters are the window glass and the glare on it, where the
+# photograph is noisiest and the drawing has the least detail to lose.
+NOISY: set[int] = set()
+
 for cluster, colour in COLOUR.items():
-    mask = clean(lab == cluster)
+    mask = clean(lab == cluster, radius=4)
     if mask.sum() < 500:
         continue
-    d = to_path(mask)
+    d = to_path(mask, noisy=cluster in NOISY)
     if d:
         layers.append((mask.sum(), colour, d))
 
