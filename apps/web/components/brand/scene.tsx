@@ -1,115 +1,244 @@
 import { CatShapes } from "@/components/brand/people";
 
 /**
- * The 2018 home header, redrawn: a window onto the city, the STEP JOB
- * billboard on a rooftop, a desk with a laptop, someone working, the clock on
- * the wall and the cat sitting where it always sat.
+ * The 2018 home header, traced.
  *
- * Flat and geometric rather than detailed. The original was a raster
- * illustration with shading and a dozen greys; this is a handful of shapes in
- * the brand palette plus the one warm colour the people need, so it recolours
- * with the theme and stays sharp at any size.
+ * Not a scene in the brand palette that borrows the subjects — the artwork
+ * itself: the window and the glare across it, the skyline, the billboard with
+ * its bulbs, the leaning laptop, the desk and its drawers, Mich with the cup,
+ * the red chair, the clock. Colours are sampled from the original and taken
+ * off the warm cast of the photograph it was shot from, which is why the
+ * background is the artwork's blue rather than the brand's.
+ *
+ * The one departure is the cat, who is the Persian she actually is (#130).
  */
+
+const SKY = "#3fb0dc";
+const FRAME = "#eeefe9";
+const GLASS = "#b6b9bb";
+const GLARE = "#c9cccd";
+const BUILDING = "#6e6a66";
+const BUILDING_DARK = "#4f4b48";
+const LIT = "#c9c9c6";
+const YELLOW = "#e9d24f";
+const DESK = "#615c57";
+const DESK_EDGE = "#4f4a46";
+const DRAWERS = "#5e5751";
+const LAPTOP = "#c8c6c2";
+const LAPTOP_DARK = "#a9a7a3";
+const HAIR = "#2a1a12";
+const SKIN = "#f0b98f";
+const SUIT = "#1c1c1a";
+const WHITE = "#fbfbf8";
+const RED = "#c6503a";
+
+/** Lit windows as a grid, rather than a hundred hand-placed rectangles. */
+function Windows({
+  x,
+  y,
+  cols,
+  rows,
+  gap = 15,
+  size = 8,
+  height,
+}: {
+  x: number;
+  y: number;
+  cols: number;
+  rows: number;
+  gap?: number;
+  size?: number;
+  height?: number;
+}) {
+  return (
+    <g fill={LIT}>
+      {Array.from({ length: rows }).flatMap((_, row) =>
+        Array.from({ length: cols }).map((_, col) => (
+          <rect
+            key={`${row}-${col}`}
+            x={x + col * gap}
+            y={y + row * gap}
+            width={size}
+            height={height ?? size + 2}
+            rx="1"
+          />
+        )),
+      )}
+    </g>
+  );
+}
+
 export function DeskScene({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 320 260" role="presentation" aria-hidden className={className}>
+    <svg viewBox="0 0 1040 640" role="presentation" aria-hidden className={className}>
       <defs>
-        <linearGradient id="scene-sky" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#e0f2fe" />
-          <stop offset="100%" stopColor="#bae6fd" />
-        </linearGradient>
-        <linearGradient id="scene-screen" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="100%" stopColor="#e0f2fe" />
-        </linearGradient>
+        <clipPath id="scene-pane">
+          <rect x="86" y="96" width="352" height="378" />
+        </clipPath>
       </defs>
 
-      {/* The room. */}
-      <rect width="320" height="260" rx="28" fill="url(#scene-sky)" />
+      <rect width="1040" height="640" rx="26" fill={SKY} />
 
-      {/* The window, and the city through it. */}
-      <rect x="26" y="28" width="150" height="110" rx="10" fill="#ffffff" opacity="0.75" />
-      <g fill="#7dd3fc">
-        <rect x="38" y="86" width="26" height="44" rx="3" />
-        <rect x="70" y="68" width="22" height="62" rx="3" />
-        <rect x="98" y="96" width="24" height="34" rx="3" />
-        <rect x="128" y="76" width="34" height="54" rx="3" />
-      </g>
-      <g fill="#ffffff" opacity="0.8">
-        <rect x="44" y="94" width="5" height="6" rx="1" />
-        <rect x="54" y="94" width="5" height="6" rx="1" />
-        <rect x="44" y="106" width="5" height="6" rx="1" />
-        <rect x="76" y="78" width="5" height="6" rx="1" />
-        <rect x="76" y="92" width="5" height="6" rx="1" />
-        <rect x="136" y="88" width="5" height="6" rx="1" />
-        <rect x="148" y="88" width="5" height="6" rx="1" />
-        <rect x="136" y="102" width="5" height="6" rx="1" />
-      </g>
+      {/* --- the window -------------------------------------------------- */}
+      <rect x="68" y="60" width="388" height="432" fill={FRAME} />
+      <rect x="86" y="96" width="352" height="378" fill={GLASS} />
 
-      {/* The rooftop billboard. In 2018 it was a yellow ellipse reading
-          STEP JOB; here it is the mark, because type that small is a smudge. */}
-      <g>
-        <rect x="64" y="38" width="56" height="26" rx="7" fill="#0284c7" />
-        <g fill="#ffffff">
-          <g opacity="0.5" transform="rotate(-24 78 54)">
-            <ellipse cx="78" cy="51" rx="2.6" ry="4" />
-            <ellipse cx="78" cy="56" rx="1.9" ry="2" />
-          </g>
-          <g opacity="0.78" transform="rotate(-24 92 48)">
-            <ellipse cx="92" cy="45" rx="2.6" ry="4" />
-            <ellipse cx="92" cy="50" rx="1.9" ry="2" />
-          </g>
-          <g transform="rotate(-24 106 42)">
-            <ellipse cx="106" cy="39" rx="2.6" ry="4" />
-            <ellipse cx="106" cy="44" rx="1.9" ry="2" />
-          </g>
+      <g clipPath="url(#scene-pane)">
+        {/* Clouds behind the billboard. */}
+        <g fill={GLARE} opacity="0.55">
+          <ellipse cx="150" cy="126" rx="42" ry="26" />
+          <ellipse cx="236" cy="112" rx="52" ry="30" />
+          <ellipse cx="330" cy="130" rx="46" ry="26" />
         </g>
-        <rect x="86" y="64" width="4" height="10" fill="#0284c7" opacity="0.5" />
+
+        {/* The skyline. Roofs at different heights, the darker blocks in
+            front, and the left building's windows larger than the right's. */}
+        <rect x="96" y="226" width="74" height="26" fill={BUILDING} />
+        <g fill={BUILDING}>
+          <rect x="90" y="252" width="118" height="222" />
+          <rect x="288" y="238" width="86" height="236" />
+        </g>
+        <g fill={BUILDING_DARK}>
+          <rect x="208" y="268" width="80" height="206" />
+          <rect x="374" y="262" width="64" height="212" />
+        </g>
+        <rect x="196" y="286" width="64" height="40" fill={GLASS} />
+
+        {/* Windows: tall ones on the near building, small squares beyond. */}
+        <Windows x={104} y={282} cols={3} rows={5} gap={26} size={14} height={20} />
+        <Windows x={216} y={300} cols={4} rows={6} gap={17} size={9} />
+        <Windows x={298} y={266} cols={3} rows={7} gap={22} size={12} height={14} />
+        <Windows x={384} y={292} cols={3} rows={6} gap={17} size={9} />
+
+        {/* The billboard, standing on the near building's roof. */}
+        <rect x="252" y="236" width="10" height="36" fill="#59544f" />
+        <path d="M196 212h124l-14 28H210z" fill="#59544f" />
+        <g fill={YELLOW}>
+          <circle cx="224" cy="226" r="8" />
+          <circle cx="258" cy="226" r="8" />
+          <circle cx="292" cy="226" r="8" />
+        </g>
+        <ellipse cx="258" cy="162" rx="146" ry="70" fill={YELLOW} />
+        <text
+          x="258"
+          y="166"
+          textAnchor="middle"
+          fontSize="54"
+          fontWeight="800"
+          letterSpacing="1"
+          fill="#1f1d1a"
+        >
+          <tspan fill="#2a93c7">STEP</tspan> JOB
+        </text>
+        <text
+          x="258"
+          y="196"
+          textAnchor="middle"
+          fontSize="16"
+          fontWeight="700"
+          letterSpacing="0.6"
+          fill="#1f1d1a"
+        >
+          BOOST YOUR CONFIDENCE
+        </text>
+
+        {/* The glare: one wedge across the glass, as in the original. */}
+        <path d="M86 96h150L86 330z" fill={GLARE} opacity="0.4" />
+        <path d="M306 96h132v58L166 474h-80z" fill={GLARE} opacity="0.22" />
       </g>
 
-      {/* The clock, red-rimmed in the original. */}
-      <circle cx="268" cy="54" r="20" fill="#ffffff" />
-      <circle cx="268" cy="54" r="20" fill="none" stroke="#c6392f" strokeWidth="3" />
+      {/* The valance above the window. */}
+      <rect x="62" y="40" width="400" height="34" rx="3" fill={FRAME} />
+
+      {/* --- the clock ---------------------------------------------------- */}
+      <circle cx="851" cy="131" r="52" fill={RED} />
+      <circle cx="851" cy="131" r="43" fill={WHITE} />
       <path
-        d="M268 42v12l8 5"
+        d="M851 98v33l24 14"
         fill="none"
-        stroke="#1c2530"
-        strokeWidth="2.6"
+        stroke="#2b2a27"
+        strokeWidth="4"
         strokeLinecap="round"
       />
 
-      {/* Whoever is working today: the chair, then the figure, then the desk
-          in front, so the desk overlaps as it does in a photograph. */}
-      <path d="M196 150c0-16 10-24 24-24s24 8 24 24v30h-48z" fill="#c6392f" opacity="0.85" />
-      <ellipse cx="220" cy="112" rx="17" ry="19" fill="#f3c9a6" />
-      <path
-        d="M203 112c0-14 8-22 17-22s17 8 17 22v12c-3-2-5-5-5-10-8 3-20 2-24-6v16c-3 0-5 3-5 8z"
-        fill="#3b2a24"
+      {/* --- Mich --------------------------------------------------------- */}
+      {/* The chair: backrest behind her, stem and foot below. Measured from
+          the artwork at x 700–824, y 272–470. */}
+      <path d="M716 272h66c24 0 42 18 42 42v156h-150V314c0-24 18-42 42-42z" fill={RED} />
+      <rect x="742" y="470" width="14" height="118" rx="4" fill={FRAME} />
+      <rect x="700" y="586" width="100" height="13" rx="6" fill={FRAME} />
+
+      {/* Legs, crossed. Thigh out to the knee, shin back under it, and the
+          heel turned the way a crossed ankle turns. Drawn before the torso so
+          the hip sits over the top of them. */}
+      {/* Scaled about the hip so the heels land inside the frame, as they
+          do in the original. */}
+      <g transform="translate(740 420) scale(0.82) translate(-740 -420)">
+        <path d="M770 404c0 62-34 94-108 134l-22 12-26-42 26-14c62-34 86-54 86-96z" fill={SUIT} />
+        <path d="M784 436c0 66-38 100-112 142l-24 14-26-42 28-16c62-34 86-58 86-100z" fill={SUIT} />
+        <path d="M614 508l-28 16 26 42 28-16z" fill={SKIN} />
+        <path d="M636 566l-28 16 26 42 28-16z" fill={SKIN} />
+        <path d="M586 556l20 34-62 24-10-16 30-20z" fill={SUIT} />
+        <path d="M536 598h18l6 16h-18z" fill={SUIT} />
+        <path d="M608 614l20 34-62 24-10-16 30-20z" fill={SUIT} />
+        <path d="M558 656h18l6 16h-18z" fill={SUIT} />
+      </g>
+
+      {/* Torso, the arm reaching to the keyboard, the cuff and the hand. */}
+      <path d="M688 236c48 0 80 30 80 80v132h-98l-18-132c0-50 14-80 36-80z" fill={SUIT} />
+      <path d="M702 288c-2 0-70 28-112 42l12 36c56-16 112-38 112-38z" fill={SUIT} />
+      <rect
+        x="578"
+        y="318"
+        width="28"
+        height="34"
+        rx="7"
+        fill={WHITE}
+        transform="rotate(-16 592 335)"
       />
-      <path d="M190 182c0-20 13-32 30-32s30 12 30 32z" fill="#1c2530" />
-      <path d="M212 152l8 10 8-10z" fill="#ffffff" />
+      <ellipse cx="558" cy="338" rx="19" ry="14" fill={SKIN} transform="rotate(-16 558 338)" />
 
-      {/* The desk. */}
-      <rect x="44" y="180" width="236" height="12" rx="6" fill="#ffffff" />
-      <rect x="60" y="192" width="16" height="48" rx="5" fill="#bae6fd" />
-      <rect x="248" y="192" width="16" height="48" rx="5" fill="#bae6fd" />
-      <rect x="86" y="192" width="78" height="48" rx="7" fill="#e0f2fe" />
-      <g fill="#bae6fd">
-        <rect x="96" y="204" width="58" height="4" rx="2" />
-        <rect x="96" y="218" width="58" height="4" rx="2" />
+      {/* The cup, with the heart. */}
+      <rect x="640" y="300" width="58" height="48" rx="7" fill={WHITE} />
+      <path d="M698 312h10a10 10 0 0 1 0 20h-10" fill="none" stroke={WHITE} strokeWidth="7" />
+      <path d="M669 336c-15-11-17-19-12-23 4-3 9-1 12 3 3-4 8-6 12-3 5 4 3 12-12 23z" fill={RED} />
+
+      {/* Collar and buttons. */}
+      <path d="M674 230l20 26 22-26-20-10z" fill={WHITE} />
+      <circle cx="700" cy="270" r="9" fill={WHITE} />
+      <circle cx="706" cy="298" r="9" fill={WHITE} />
+
+      {/* Head: face, smile, eye, then the bob over all of it. */}
+      <ellipse cx="702" cy="156" rx="48" ry="56" fill={SKIN} />
+      <path d="M670 182c14 11 31 11 45 0-2 19-12 29-24 29s-20-10-21-29z" fill={WHITE} />
+      <circle cx="666" cy="148" r="6" fill={HAIR} />
+      <path
+        d="M702 60c50 0 82 34 82 86v100c-18 0-28-12-28-30V166c-24 14-68 16-94-6-4 24-10 38-26 42V146c0-52 16-86 66-86z"
+        fill={HAIR}
+      />
+
+      {/* --- the laptop ---------------------------------------------------- */}
+      <path d="M392 228h170l26 122H358z" fill={LAPTOP} />
+      <path d="M474 282l15 9v18l-15 9-15-9v-18z" fill={LAPTOP_DARK} opacity="0.6" />
+      <path d="M350 350h248l12 16H338z" fill={LAPTOP_DARK} />
+
+      {/* --- the desk ------------------------------------------------------ */}
+      <rect x="285" y="346" width="660" height="24" rx="3" fill={DESK} />
+      <rect x="285" y="368" width="660" height="10" rx="3" fill={DESK_EDGE} />
+      <rect x="903" y="376" width="22" height="236" rx="4" fill={DESK} />
+      <rect x="292" y="376" width="179" height="252" rx="4" fill={DRAWERS} />
+      <g fill={DESK_EDGE}>
+        <rect x="292" y="458" width="179" height="4" />
+        <rect x="292" y="540" width="179" height="4" />
+      </g>
+      <g fill={FRAME}>
+        <rect x="359" y="422" width="46" height="9" rx="4" />
+        <rect x="359" y="504" width="46" height="9" rx="4" />
+        <rect x="359" y="586" width="46" height="9" rx="4" />
       </g>
 
-      {/* The laptop, open towards the figure. */}
-      <path d="M118 180l10-44h54l10 44z" fill="#ffffff" opacity="0.9" />
-      <path d="M131 142h48l7 32h-62z" fill="url(#scene-screen)" />
-      <g fill="#7dd3fc">
-        <rect x="138" y="150" width="34" height="3.4" rx="1.7" />
-        <rect x="138" y="158" width="26" height="3.4" rx="1.7" />
-        <rect x="138" y="166" width="30" height="3.4" rx="1.7" />
-      </g>
-
-      {/* The cat, on the desk, where it has been since 2018. */}
-      <g transform="translate(196 134) scale(0.72)">
+      {/* --- the cat, on the desk where she has always been ---------------- */}
+      <g transform="translate(766 259) scale(1.9)">
         <CatShapes />
       </g>
     </svg>
