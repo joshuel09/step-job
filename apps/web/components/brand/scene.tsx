@@ -1,18 +1,18 @@
 import { CatShapes } from "@/components/brand/people";
 
 /**
- * The 2018 home header.
+ * The 2018 Android banner.
  *
- * Not drawn again — traced from the artwork itself and served from
- * `public/artwork/desk-2018.svg`. Two attempts at drawing it by hand got the
- * window and the desk close and the figure wrong, which is the part a person
- * looks at. `tools/trace-artwork/` has the pipeline that produced the file.
+ * Traced from the artwork file rather than drawn again, and rather than
+ * traced from a photograph of a phone, which is what the first few attempts
+ * had to work from. `tools/trace-artwork/` has the pipeline.
  *
- * The cat was taken out of the trace, and the Persian is placed over the gap.
- * These percentages are where the original cat sat: x 756–904, y 248–331 of
- * the artwork's 1040 × 640, with her feet on the desk line.
+ * The cat is cut out of the trace and the Persian drawn over the gap. These
+ * percentages are the corner the original cat occupied — x 566–723 of 800,
+ * her feet on the desk at y 245 of 478 — with the Persian fitted to that
+ * width.
  */
-const CAT = { left: "72.7%", top: "34.4%", width: "14.2%" };
+const CAT = { left: "70.75%", top: "26.6%", width: "19.6%" };
 
 export function DeskScene({ className }: { className?: string }) {
   return (
@@ -20,7 +20,7 @@ export function DeskScene({ className }: { className?: string }) {
       <div className="relative">
         {/* eslint-disable-next-line @next/next/no-img-element -- an SVG needs
             no optimisation, and next/image would only add a request. */}
-        <img src="/artwork/desk-2018.svg" alt="" width={1040} height={640} className="w-full" />
+        <img src="/artwork/desk-2018.svg" alt="" width={800} height={478} className="w-full" />
         <svg viewBox="0 0 64 48" aria-hidden className="absolute" style={CAT}>
           <CatShapes />
         </svg>
