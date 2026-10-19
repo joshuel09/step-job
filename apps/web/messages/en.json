@@ -57,6 +57,18 @@
     },
     "truthTitle": "Nothing is invented",
     "truthBody": "A generated document can only say what your profile says. Where a suggestion comes from a model, you see it beside your own words and decide whether it is yours before it reaches a document.",
+    "makersTitle": "The two of us",
+    "makers": {
+      "josh": {
+        "name": "Josh",
+        "role": "Programming and design"
+      },
+      "mich": {
+        "name": "Mich",
+        "role": "Design and programming"
+      },
+      "cat": "Meoow!"
+    },
     "since": "Step Job began as an Android app in 2018. Same idea, same two people."
   },
   "profile": {
