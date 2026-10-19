@@ -25,3 +25,17 @@ export const PLANNED = ["shokumu", "resume"] as const;
 
 /** The three steps the page explains, in order. */
 export const STEPS = ["capture", "import", "generate"] as const;
+
+/**
+ * The navigation bar under /profile. `label` is a key in the `profile`
+ * namespace, and it must resolve to a string: `settings` is that page's own
+ * namespace, and asking for a namespace prints the key path on screen (#126).
+ */
+export const PROFILE_LINKS = [
+  { href: "", label: "title" },
+  { href: "/stories", label: "storiesNav" },
+  { href: "/import", label: "importNav" },
+  { href: "/review", label: "reviewNav" },
+  { href: "/documents/rirekisho", label: "rirekishoNav" },
+  { href: "/settings", label: "settings.title" },
+] as const;
