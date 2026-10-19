@@ -42,7 +42,7 @@ discriminated reference. Two consequences, both handled rather than tolerated:
 - **Deletion.** Removing an entry must remove its translations. A database-level
   cascade is unavailable, so the service does it, and an integration test
   asserts no orphan survives the deletion of each of the four entry types. That
-  test is the foreign key.
+  test is the foreign key (FR-024).
 - **Profile deletion.** Covered by the real foreign key on `profile_id`, which
   cascades.
 
@@ -55,7 +55,7 @@ column per entity added later. Rejected in research.md R-001.
 The digest is of the source text *at the moment of approval*. Recomputing it
 later from the current source answers a different question. Comparing the
 stored value against a fresh digest of the current source is what makes
-staleness detectable at all (R-009), and it is the whole reason this is a row
+staleness detectable at all (FR-023, R-009), and it is the whole reason this is a row
 with history rather than a column beside the text it renders.
 
 ---

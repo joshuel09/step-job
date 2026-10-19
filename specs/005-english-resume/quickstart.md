@@ -135,7 +135,7 @@ US2-6. FR-019, SC-011.
 **When** it is submitted
 **Then** the response is 422
 
-Edge case. An approved blank would make an entry vanish from the document
+FR-025. An approved blank would make an entry vanish from the document
 silently, which is worse than having no English version at all.
 
 ## Scenario 11 — Editing the source does not discard the approval
@@ -149,8 +149,8 @@ text, and **is still stored** — not deleted and not re-drafted
 **And when** the resume is generated
 **Then** it is generated, carrying the approved text
 
-R-009. The user approved those words; a typo fix in the source does not
-withdraw their approval.
+FR-023, R-009. The user approved those words; a typo fix in the source does
+not withdraw their approval.
 
 ## Scenario 12 — Nothing personal
 
@@ -236,8 +236,8 @@ experience, education, career story, skill
 **When** each entry is deleted
 **Then** no `entry_translation` row survives for it
 
-data-model.md. `entry_id` cannot be a foreign key across four tables, so this
-test is the foreign key.
+FR-024, data-model.md. `entry_id` cannot be a foreign key across four tables,
+so this test is the foreign key.
 
 ## Scenario 20 — The document is not retained
 
