@@ -71,8 +71,8 @@ puts it on the profile. One migration (constitution gate G11).
 - [ ] T006 Add `employer_name_english` to `WorkExperience`, `institution_english` to `Education`, and `name_english` and `issuer_english` to `Certification` in `apps/api/app/career/models.py`, all nullable with no default
 - [ ] T007 Generate one Alembic migration in `apps/api/migrations/versions/` creating `entry_translation` with its unique constraint on `(profile_id, entry_type, entry_id, field, language)` and its `(profile_id, language)` index, plus the four columns from T006. No backfill — a guessed English name is the transliteration FR-021 forbids
 - [ ] T008 Run `alembic upgrade head`, then `downgrade -1`, then `upgrade head` again against a real database for the migration in `apps/api/migrations/versions/`, confirming the schema returns to the same state each time — a downgrade nobody runs is a downgrade that does not work
-- [ ] T009 [P] Create `apps/api/app/translations/fingerprint.py` with a digest of a source string, stable across processes — a salted or address-based hash would mark every approval stale on restart
-- [ ] T010 [P] Unit tests in `apps/api/tests/unit/test_fingerprint.py` — the same text digests the same twice, different text differs, and whitespace-only changes are **not** treated as equal, since a user may have fixed spacing deliberately
+- [ ] T009 [P] Create `apps/api/app/translations/fingerprint.py` with a digest of a source string, stable across processes — a salted or address-based hash would mark every approval stale on restart (FR-023)
+- [ ] T010 [P] Unit tests in `apps/api/tests/unit/test_fingerprint.py` — the same text digests the same twice, different text differs, and whitespace-only changes are **not** treated as equal, since a user may have fixed spacing deliberately (FR-023)
 - [ ] T011 Add `employer_name_english`, `institution_english`, `name_english` and `issuer_english` to `WorkExperienceIn/Out`, `EducationIn/Out` and `CertificationIn/Out` in `apps/api/app/career/schemas.py`, all optional
 - [ ] T012 Document the same four properties on `specs/001-master-career-profile/contracts/openapi.yaml`. They are profile fields set through the existing section routes — a route of this feature's own would be a second way to edit an entry, which Principle I rules out
 - [ ] T013 Regenerate the typed client (`pnpm gen:api`) and commit `packages/api-client/src/`; CI fails on a stale client
@@ -92,7 +92,7 @@ go through the single `AIProvider` abstraction, not beside it.
 satisfying it the moment the method is added. That is the order working.
 
 - [ ] T014 [P] Add `TranslationDraft` and `RenderingAlternative` to `apps/api/app/ai/schemas.py` — `text`, `source_text` and `alternatives`, and **no field for a summary, a seniority or an outcome**, so a provider cannot return an embellishment through the schema (plan.md G13)
-- [ ] T015 Add `draft_translation(text, source_language, target_language) -> TranslationDraft` to the `AIProvider` protocol in `apps/api/app/ai/provider.py`, with a docstring saying why a second operation does not breach "one operation, deliberately" — it is still given text and nothing else (research.md R-003)
+- [ ] T015 Add `draft_translation(text, source_language, target_language) -> TranslationDraft` to the `AIProvider` protocol in `apps/api/app/ai/provider.py` (FR-018), with a docstring saying why a second operation does not breach "one operation, deliberately" — it is still given text and nothing else (research.md R-003)
 - [ ] T016 [P] Implement `draft_translation` on `FakeAIProvider` in `apps/api/app/ai/fake.py`, including behaviours for a confident rendering, a rendering with alternatives, unavailability and an unusable response
 - [ ] T017 Implement `draft_translation` on `OpenAIProvider` in `apps/api/app/ai/openai_provider.py`, requesting structured output against the `TranslationDraft` schema, with a prompt that asks for a rendering of the given text and nothing beyond it
 - [ ] T018 Run feature 002's provider conformance tests in `apps/api/tests/unit/test_ai_boundary.py` and confirm they pass again — the red introduced at T015 is now resolved
@@ -157,19 +157,19 @@ next document without being translated again.
 
 - [ ] T039 [P] [US2] Integration tests for quickstart Scenarios 6 and 7 in `apps/api/tests/integration/test_translation_flow.py` — a draft is returned with its source beside it, **querying stored versions afterwards returns nothing**, and a 課長 title comes back with at least two options (the second assertion is the one that matters: the request that drafts must store nothing)
 - [ ] T040 [P] [US2] Integration tests for quickstart Scenarios 8, 9 and 10 in `apps/api/tests/integration/test_translation_flow.py` — an approval is stored and reused, the user's wording appears character for character and the draft's does not, and a blank or whitespace approval is refused 422
-- [ ] T041 [P] [US2] Integration test for quickstart Scenario 11 in `apps/api/tests/integration/test_translation_staleness.py` — editing the source marks the approval stale, **leaves it stored**, and does not block generation
-- [ ] T042 [P] [US2] Integration test for quickstart Scenario 19 in `apps/api/tests/integration/test_translation_flow.py` — deleting an entry of each of the four translatable types leaves no orphan row. `entry_id` cannot be a foreign key across four tables, so this test is the foreign key
+- [ ] T041 [P] [US2] Integration test for quickstart Scenario 11 in `apps/api/tests/integration/test_translation_staleness.py` — editing the source marks the approval stale, **leaves it stored**, and does not block generation (FR-023)
+- [ ] T042 [P] [US2] Integration test for quickstart Scenario 19 in `apps/api/tests/integration/test_translation_flow.py` — deleting an entry of each of the four translatable types leaves no orphan row (FR-024). `entry_id` cannot be a foreign key across four tables, so this test is the foreign key
 - [ ] T043 [P] [US2] Contract tests in `apps/api/tests/contract/test_translations.py` for all four translation routes, including 502 and 503 on the drafts route
 
 ### Implementation for User Story 2
 
-- [ ] T044 [US2] Create `apps/api/app/translations/service.py` with approve (upsert on the natural key, storing the text exactly as given and recording the fingerprint), delete, and list with staleness computed by comparing a fresh digest against the stored one
-- [ ] T045 [US2] Refuse an empty or whitespace-only approval with 422 in `apps/api/app/translations/service.py` — an approved blank is not an English version, it is an entry that vanishes from a document silently
-- [ ] T046 [US2] Delete an entry's translations when the entry is deleted, in `apps/api/app/career/service.py`, for each of the four translatable types
+- [ ] T044 [US2] Create `apps/api/app/translations/service.py` with approve (upsert on the natural key, storing the text exactly as given and recording the fingerprint), delete, and list with staleness computed by comparing a fresh digest against the stored one (FR-019, FR-023)
+- [ ] T045 [US2] Refuse an empty or whitespace-only approval with 422 in `apps/api/app/translations/service.py` (FR-025) — an approved blank is not an English version, it is an entry that vanishes from a document silently
+- [ ] T046 [US2] Delete an entry's translations when the entry is deleted, in `apps/api/app/career/service.py`, for each of the four translatable types (FR-024)
 - [ ] T047 [US2] Create `apps/api/app/translations/schemas.py` with `TranslationApproval`, `StoredTranslation`, `TranslationDraftRequest` and the draft response per the contract
 - [ ] T048 [US2] Add drafting to `apps/api/app/translations/service.py`, calling `get_provider().draft_translation(...)` and returning the result **without storing it**. Map `ProviderUnavailable` to 503 and `ProviderResponseInvalid` to 502, because a user needs to know whether trying again is worth their time
 - [ ] T049 [US2] Create `apps/api/app/translations/router.py` serving `GET`/`PUT /profile/translations`, `DELETE /profile/translations/{translation_id}` and `POST /profile/translations/drafts`, and register it in `apps/api/app/main.py`
-- [ ] T050 [US2] Create `apps/api/app/resume/readiness.py` reporting `needs_english`, `untranslated_names` and `stale_translations`, reusing the shape #65 establishes for the 履歴書 rather than writing a third one
+- [ ] T050 [US2] Create `apps/api/app/resume/readiness.py` reporting `needs_english`, `untranslated_names` and `stale_translations` (FR-020, FR-023), reusing the shape #65 establishes for the 履歴書 rather than writing a third one
 - [ ] T051 [US2] Serve `GET /profile/documents/resume/readiness` from `apps/api/app/resume/router.py` (FR-020 — before a document is produced, not after)
 - [ ] T052 [US2] Remove the four translation and readiness paths from `DEFERRED` in `apps/api/tests/contract/test_contracts.py` and their four entries from `UNVALIDATED` in `apps/api/tests/contract/test_response_schemas.py`
 - [ ] T053 [P] [US2] Create `apps/web/app/[locale]/profile/translations/page.tsx` and `apps/web/components/profile/translation-review.tsx` showing the source beside the draft, the alternatives as choices, and an editable field — the user must be able to compare, not just accept
@@ -246,11 +246,14 @@ been written, and the cheapest place to find the next one is here.
 | FR-015 record what it drew on | T033, T061 |
 | FR-016 agrees with the 履歴書 | T060 |
 | FR-017 stored English, no model at generation | T003, T028, T059 |
-| FR-018 draft offered, never placed unapproved | T039, T048 |
+| FR-018 draft offered, never placed unapproved | T015, T016, T017, T039, T048 |
 | FR-019 approved wording used exactly | T040, T044 |
 | FR-020 told before generating | T050, T051 |
 | FR-021 supplied name or as recorded, never guessed | T006, T023, T028, T063 |
 | FR-022 US-style convention | T029, T032 |
+| FR-023 approval kept, staleness reported, generation not blocked | T009, T010, T041, T044, T050 |
+| FR-024 deleting an entry deletes its English | T042, T046 |
+| FR-025 an approved blank is refused | T045 |
 | SC-001 no re-entry | T024 |
 | SC-002 zero personal fields | T055 |
 | SC-003 no era anywhere | T025 |
@@ -265,7 +268,7 @@ been written, and the cheapest place to find the next one is here.
 | SC-012 approving once is enough | T040 |
 | SC-013 no proper noun the user did not supply | T063 |
 
-All 22 functional requirements and all 13 success criteria have at least one
+All 25 functional requirements and all 13 success criteria have at least one
 task. Two are worth naming because they are held by shape rather than by a
 check: **FR-009 and FR-010** are satisfied at T027, where the dataclasses are
 defined without a field that could hold the data. T055 and T056 prove it rather
@@ -275,25 +278,35 @@ than create it.
 
 Twenty-three tasks map to no numbered requirement. Checking that way round is
 worth the minute it takes, because a task with no reason to exist is as much a
-defect as a requirement with no task — and one group below turned out not to be
-scaffolding at all.
+defect as a requirement with no task.
 
-- **Infrastructure and delivery** — T001, T002, T007, T008, T011, T012, T013,
-  T036, T037, T038, T043, T047, T049, T052, T053, T054, T064, T065. Routers,
-  schemas, migrations, the web pages, the contract bookkeeping.
-- **Constitution gates, not requirements** — T019 (G12: no provider SDK in
-  feature code).
-- **Spec edge cases that were never given FR numbers** — T041 (an approval goes
-  stale when its source is edited), T042 and T046 (deleting an entry takes its
-  translations with it), T045 (an approved blank is not an English version).
+- **Infrastructure and delivery** — T001, T002, T004, T005, T007, T008, T011,
+  T012, T013, T036, T037, T038, T043, T047, T049, T052, T053, T054, T064, T065.
+  Routers, schemas, enums, migrations, the web pages, the contract bookkeeping.
+- **Gates, not requirements** — T019 (G12: no provider SDK in feature code),
+  T018 (feature 002's provider conformance tests pass again), T066 (every new
+  test shown to fail before it is trusted).
 
-That last group is the useful finding. Three real behaviours, each with a test
-and an implementation task, sit in the spec's *Edge Cases* prose and in
-research.md R-009 rather than in a numbered requirement — so nothing that
-counts requirements would ever report them missing. They are listed here so
-that deleting one is a decision rather than an accident. Promoting them to
-numbered requirements is a change to spec.md and belongs in its own issue, not
-in a task list.
+Forty-three mapped and twenty-three unmapped account for all sixty-six tasks,
+which is the arithmetic that makes the claim above checkable.
+
+**What this table found, and what it took to fix.** Three behaviours used to
+sit here — an approval going stale when its source is edited, a deletion
+taking its translations with it, and an approved blank being refused — each
+with a test and an implementation task, each living in the spec's *Edge Cases*
+prose and in research.md R-009 rather than in a numbered requirement. Nothing
+that counts requirements would have reported them missing. Numbering them
+needed a change to spec.md, so it went through its own issue (#100): they are
+now FR-023, FR-024 and FR-025, and the rows above cite the tasks that already
+existed.
+
+Promoting them also closed a second hole. T009 and T010, the source-text
+fingerprint and its unit tests, appeared in neither direction of this table —
+not mapped to a requirement and not listed as unmapped. They exist only to
+make staleness detectable, so they had no requirement to map to, and the
+earlier audit silently left them out instead of saying so. They are FR-023's
+now. T004, T005 and T015–T018 were missing from the accounting the same way,
+and are placed above.
 
 ---
 

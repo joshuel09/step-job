@@ -161,8 +161,9 @@ else, generate, and confirm the document says exactly that much.
 - A profile written entirely in English: no language handling is needed at all, and the document should be straightforward.
 - A profile mixing both: the resulting document must not switch language mid-sentence or mid-section.
 - An employer whose only recorded name is Japanese: it appears as recorded, never guessed at, and the readiness report names it so the user can supply the official English name.
-- A user who approves a draft and later edits the underlying Japanese entry: the stored English no longer matches its source, and the user must be able to find out.
-- A user who approves an empty or whitespace translation: an approved blank is not an English version.
+- A user who approves a draft and later edits the underlying Japanese entry: the stored English no longer matches its source, and the user must be able to find out (FR-023).
+- A user who approves an empty or whitespace translation: an approved blank is not an English version (FR-025).
+- A user who deletes an entry they had approved English for: the English goes with it (FR-024).
 - A career long enough to exceed the conventional length: a resume is conventionally short, and shortening is done by the user choosing what to include, never by the system silently dropping entries.
 - The same profile generating a 履歴書 and an English resume: the two must not disagree on any fact both carry, even though they present it differently.
 - A user who edits a profile entry after sending the resume: what was sent stays inspectable.
@@ -207,6 +208,14 @@ else, generate, and confirm the document says exactly that much.
 **Convention**
 
 - **FR-022**: The document MUST follow a US-style resume convention: reverse-chronological, concise, carrying no personal details and no references. Other English conventions are out of scope for this feature.
+
+**Approvals over time**
+
+An approval is the user's own words about their own work. These three say what happens to it afterwards, and they were written down in *Edge Cases* and research.md R-009 before they were numbered here.
+
+- **FR-023**: Where an entry's source text is edited after its English version was approved, the system MUST keep the approved English, MUST report that it no longer matches the source and show the current source text, and MUST NOT block document generation or replace the approved wording with a new draft. Editing a source is not withdrawing an approval, but the user MUST be able to find out that the two have diverged.
+- **FR-024**: Deleting a profile entry MUST delete every English version stored against it. No stored English may outlive the entry it is a translation of.
+- **FR-025**: The system MUST refuse an approval whose text is empty or whitespace. An approved blank is not an English version: it would take the entry out of the document with nothing to tell the user it had gone, which is worse than having no English version at all.
 
 ### Key Entities
 
