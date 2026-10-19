@@ -8,6 +8,55 @@
     "edit": "Edit",
     "language": "Language"
   },
+  "home": {
+    "nav": "Open your profile",
+    "headline": "Write your career once. Generate the documents from it.",
+    "lead": "Step Job keeps one profile of your work history and produces the documents a job search in Japan asks for — starting with a 履歴書 that follows the convention, in 和暦 or 西暦, on A4 or B5.",
+    "start": "Start your profile",
+    "generate": "Generate a 履歴書",
+    "howTitle": "How it works",
+    "steps": {
+      "capture": {
+        "title": "Enter it once",
+        "body": "Your work history, education, skills and certifications live in one profile. No document asks you to type them again."
+      },
+      "import": {
+        "title": "Or bring what you already have",
+        "body": "Upload an existing resume and review what was read from it, field by field. Nothing reaches your profile until you approve it."
+      },
+      "generate": {
+        "title": "Generate what you need",
+        "body": "Every document is assembled from the profile, so each line traces back to something you wrote."
+      }
+    },
+    "availableTitle": "What you can do now",
+    "available": {
+      "profile": {
+        "title": "Career profile",
+        "body": "Your name, contact details, work history, education, skills and certifications."
+      },
+      "import": {
+        "title": "Import a resume",
+        "body": "Read an existing document and propose entries for your approval."
+      },
+      "rirekisho": {
+        "title": "履歴書",
+        "body": "A conventional 履歴書 as a PDF, A4 or B5, dates in 和暦 or 西暦."
+      },
+      "stories": {
+        "title": "Career stories",
+        "body": "The longer accounts of your work that a resume has no room for."
+      }
+    },
+    "plannedTitle": "Being built",
+    "plannedBody": "Specified and not yet available. They will appear here when they work.",
+    "planned": {
+      "shokumu": "職務経歴書 — the Japanese career history document",
+      "resume": "English resume — a US-style resume from the same profile"
+    },
+    "truthTitle": "Nothing is invented",
+    "truthBody": "A generated document can only say what your profile says. Where a suggestion comes from a model, you see it beside your own words and decide whether it is yours before it reaches a document."
+  },
   "profile": {
     "title": "Career profile",
     "subtitle": "Enter your career once. Everything else is generated from it.",
