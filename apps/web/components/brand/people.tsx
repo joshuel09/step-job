@@ -141,9 +141,11 @@ export function CatShapes() {
     <>
       {/* The tail: a plume curling up the side, three tufted blobs rather
           than one, so it tapers. */}
-      <path d={fur(12, 40, 8, 7, 11, 0.2, 4)} fill={COAT} />
-      <path d={fur(8, 32, 6, 7, 10, 0.22, 7)} fill={COAT} />
-      <path d={fur(8, 25, 4.5, 5, 9, 0.24, 12)} fill={COAT_LIGHT} />
+      <g className="cat-tail">
+        <path d={fur(12, 40, 8, 7, 11, 0.2, 4)} fill={COAT} />
+        <path d={fur(8, 32, 6, 7, 10, 0.22, 7)} fill={COAT} />
+        <path d={fur(8, 25, 4.5, 5, 9, 0.24, 12)} fill={COAT_LIGHT} />
+      </g>
 
       {/* The body, loafed. Two layers: the coat, and a lighter chest. */}
       <path d={fur(32, 37, 23, 13, 16, 0.14, 2)} fill={COAT} />
@@ -176,26 +178,32 @@ export function CatShapes() {
       <ellipse cx="27.5" cy="27.5" rx="5" ry="4" fill={CREAM} />
       <ellipse cx="36.5" cy="27.5" rx="5" ry="4" fill={CREAM} />
 
-      {/* Eyes: round and green, with the lid carried low. */}
+      {/* Eyes: half-lidded, with the lid level across the top rather than
+          slanting towards the nose. The slant was a scowl; a flat heavy lid
+          is boredom, which is the look she actually has. The left one sits a
+          fraction lower, because a face that is exactly symmetrical reads as
+          posed. */}
       <g>
-        <ellipse cx="25.6" cy="20.4" rx="3.3" ry="3.1" fill={EYE} />
-        <ellipse cx="38.4" cy="20.4" rx="3.3" ry="3.1" fill={EYE} />
-        <ellipse cx="25.6" cy="20.6" rx="1.3" ry="2.4" fill={HAIR} />
-        <ellipse cx="38.4" cy="20.6" rx="1.3" ry="2.4" fill={HAIR} />
-        <path
-          d="M22.3 19.4c1-1.6 5.6-1.6 6.6 0l.4-2.6h-7.4zM35.1 19.4c1-1.6 5.6-1.6 6.6 0l.4-2.6h-7.4z"
-          fill={COAT}
-        />
+        <ellipse cx="25.6" cy="20.6" rx="3.6" ry="2.9" fill={EYE} />
+        <ellipse cx="38.4" cy="20.6" rx="3.6" ry="2.9" fill={EYE} />
+        <ellipse cx="25.8" cy="21.2" rx="1.2" ry="1.7" fill={HAIR} />
+        <ellipse cx="38.2" cy="21.2" rx="1.2" ry="1.7" fill={HAIR} />
+        <path className="cat-lid" d="M21.9 19.9h7.4v-2.3h-7.4z" fill={COAT} />
+        <path className="cat-lid" d="M34.7 19.6h7.4v-2.3h-7.4z" fill={COAT} />
       </g>
 
       {/* Nose and the mouth that makes the expression. */}
       <path d="M32 24.6l-2.2-2h4.4z" fill={NOSE} />
+      {/* The mouth: nearly flat, with the corners a hair below the middle.
+          A deep frown is a complaint; this is a cat who has considered you
+          and decided not to comment. */}
       <path
-        d="M32 26.6v1.6M32 28.2c-1.4 1.6-3.4 1.6-4.6.2M32 28.2c1.4 1.6 3.4 1.6 4.6.2"
+        d="M32 26.6v1.3M28.8 29.3c1.1-.9 2.2-.9 3.2-.3 1-.6 2.1-.6 3.2.3"
         fill="none"
         stroke={COAT_DARK}
         strokeWidth="1.1"
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
 
       {/* Fur over the top of the ruff, so the chest is not one flat shape. */}
