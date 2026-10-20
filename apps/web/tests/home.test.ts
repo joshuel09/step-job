@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import en from "../messages/en.json";
 import ja from "../messages/ja.json";
 import { GLYPHS } from "../components/brand/icons";
-import { AVAILABLE, PLANNED, STEPS } from "../lib/site";
+import { AVAILABLE, HOTSPOTS, PLANNED, STEPS } from "../lib/site";
 
 /**
  * The landing page is the only page that describes the product rather than
@@ -36,6 +36,20 @@ describe("the landing page", () => {
 
   it.each(AVAILABLE)("draws a glyph for $key", ({ key }) => {
     expect(typeof GLYPHS[key]).toBe("function");
+  });
+
+  it.each(HOTSPOTS.filter((h) => h.href))("puts $key on a page that exists", ({ href }) => {
+    expect(existsSync(join(pages, href as string, "page.tsx"))).toBe(true);
+  });
+
+  it.each(["en", "ja"] as const)("writes every marker's card in %s", (locale) => {
+    const catalogue = locale === "en" ? en : ja;
+    const required = ["visit", ...HOTSPOTS.flatMap(({ key }) => [`${key}.title`, `${key}.body`])];
+
+    const missing = required.filter(
+      (path) => typeof message((catalogue as Record<string, unknown>).world, path) !== "string",
+    );
+    expect(missing).toEqual([]);
   });
 
   it("never offers something that is only specified", () => {
