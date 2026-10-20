@@ -9,6 +9,10 @@ import type { Config } from "tailwindcss";
  * second brand.
  */
 export default {
+  // Class-based, and nothing ever sets the class. The palette is light blue
+  // and white; a dark page puts white text over an illustration that is
+  // always daylight, which is how the hero became unreadable.
+  darkMode: "class",
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
@@ -24,6 +28,20 @@ export default {
           700: "#036ba1",
           800: "#075985",
           900: "#0c4a6e",
+        },
+        // Paper and sky. `cream` keeps its name for the surfaces it already
+        // names, but every value is now white through palest blue, and
+        // `warm` — the one accent — is the brand's own deeper blue.
+        cream: {
+          50: "#ffffff",
+          100: "#f5fbfe",
+          200: "#e3f2fb",
+          300: "#c9e6f7",
+        },
+        warm: {
+          DEFAULT: "#0ea5e9",
+          soft: "#a5dcf7",
+          deep: "#0369a1",
         },
         ink: {
           DEFAULT: "#1c2530",
