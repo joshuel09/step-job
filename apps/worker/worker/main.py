@@ -1,7 +1,7 @@
 """Worker entrypoint and schedule.
 
-Run the actors with:   uv run dramatiq app.main
-Run the scheduler with: uv run python -m app.main
+Run the actors with:   uv run dramatiq worker.main
+Run the scheduler with: uv run python -m worker.main
 
 They are separate processes on purpose: the scheduler only enqueues, so a
 scheduler restart never interrupts work already in flight.
