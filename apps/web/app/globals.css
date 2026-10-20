@@ -12,23 +12,12 @@
 
 @layer base {
   :root {
-    --wash-a: 186 230 253; /* brand-200 */
-    --wash-b: 224 242 254; /* brand-100 */
+    --wash-a: 206 234 250; /* sky, top left */
+    --wash-b: 227 242 251; /* paler sky, bottom right */
     --surface: 255 255 255;
     --surface-alpha: 0.72;
     --hairline: 255 255 255;
     --hairline-alpha: 0.7;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --wash-a: 3 61 94;
-      --wash-b: 8 23 38;
-      --surface: 17 32 48;
-      --surface-alpha: 0.6;
-      --hairline: 125 211 252;
-      --hairline-alpha: 0.14;
-    }
   }
 
   html {
@@ -37,29 +26,56 @@
   }
 
   body {
-    @apply bg-white text-ink dark:bg-[#081726] dark:text-brand-50;
+    @apply bg-white text-ink;
     /* Three soft pools of brand colour rather than a linear sweep: a linear
        gradient on a tall page bands visibly, and these stay put while the
        content scrolls over them. */
     background-image:
-      radial-gradient(55rem 38rem at 8% -8%, rgb(var(--wash-a) / 0.95), transparent 62%),
-      radial-gradient(45rem 30rem at 95% 4%, rgb(var(--wash-a) / 0.6), transparent 60%),
-      radial-gradient(60rem 40rem at 50% 108%, rgb(var(--wash-b) / 0.95), transparent 64%);
+      radial-gradient(48rem 34rem at 6% -10%, rgb(var(--wash-a) / 0.6), transparent 60%),
+      radial-gradient(52rem 36rem at 92% 104%, rgb(var(--wash-b) / 0.6), transparent 62%);
     background-attachment: fixed;
     min-height: 100dvh;
   }
 }
 
 @layer components {
+  /* A marker on the drawing: the one thing on it you can press. Orange
+     against a cream-and-blue picture, because everything else in the scene
+     is either. */
+  .marker {
+    @apply flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center
+      rounded-full border-2 border-white bg-warm font-serif text-sm font-bold
+      italic leading-none text-white shadow-[0_4px_14px_-4px_rgba(2,132,199,0.55)]
+      transition hover:scale-110 sm:h-8 sm:w-8 sm:text-base;
+    animation: marker-pulse 2.8s ease-in-out infinite;
+  }
+
+  .marker-open {
+    @apply scale-110 bg-warm-deep;
+  }
+
+  /* The card a marker opens, anchored to it. */
+  .world-card {
+    @apply absolute left-5 top-5 z-20 w-64 rounded-card border border-cream-300
+      bg-cream-50 p-4 text-left shadow-lift;
+    animation: card-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .world-card-left {
+    @apply left-auto right-5;
+  }
+
+  .world-card-up {
+    @apply top-auto bottom-5;
+  }
+
   /* A translucent surface: the page's wash shows through it, a hairline keeps
      its edge visible against white, and the shadow is blue so it reads as
      depth rather than grime. */
+  /* A card is a sheet of paper with a line round it, which is what the
+     illustration is made of. The glass version read as a dashboard. */
   .glass {
-    background-color: rgb(var(--surface) / var(--surface-alpha));
-    border: 1px solid rgb(var(--hairline) / var(--hairline-alpha));
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
-    @apply shadow-glass;
+    @apply border border-cream-300 bg-white shadow-[0_10px_30px_-18px_rgba(56,116,153,0.4)];
   }
 
   /* The primary action. The gradient runs along the same blue the mark uses,
@@ -128,6 +144,46 @@
     animation: arm-type 0.42s ease-in-out -0.2s infinite;
   }
 
+  .drift {
+    animation: drift 22s ease-in-out -6s infinite;
+  }
+
+  .drift-slow {
+    animation: drift 30s ease-in-out -14s infinite;
+  }
+
+  .drift-slower {
+    animation: drift 38s ease-in-out -3s infinite;
+  }
+
+  /* The plane crosses the sky and comes round again. Slow: it should be
+     something you notice on the second look, not a carousel. */
+  .fly {
+    animation: fly 46s linear -12s infinite;
+  }
+
+  .bob {
+    animation: bob 7s ease-in-out -2s infinite;
+  }
+
+  .roll {
+    animation: roll 9s ease-in-out -4s infinite;
+  }
+
+  /* Everybody in the drawing breathes, on their own offset so the crowd
+     never pulses in unison. */
+  .breathe {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: breathe 3.1s ease-in-out -0.7s infinite;
+  }
+
+  .breathe-slow {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: breathe 3.8s ease-in-out -1.3s infinite;
+  }
+
   .banner-floats {
     animation: float 7s ease-in-out -2.3s infinite;
   }
@@ -176,6 +232,67 @@
   }
   50% {
     transform: scale(1.025);
+  }
+}
+
+@keyframes marker-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 4px 14px -4px rgba(2, 132, 199, 0.55),
+      0 0 0 0 rgba(56, 189, 248, 0.5);
+  }
+  60% {
+    box-shadow:
+      0 4px 14px -4px rgba(2, 132, 199, 0.55),
+      0 0 0 12px rgba(56, 189, 248, 0);
+  }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* The sky's weather. Slow enough to notice only if you stay. */
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(26px);
+  }
+}
+
+@keyframes fly {
+  0% {
+    transform: translateX(-150px);
+  }
+  100% {
+    transform: translateX(2170px);
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes roll {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-10px);
   }
 }
 

@@ -8,6 +8,33 @@
     "edit": "Edit",
     "language": "Language"
   },
+  "world": {
+    "visit": "Take me there",
+    "sign": {
+      "title": "This is Step Job",
+      "body": "One profile of your career, and every document a job search in Japan asks for generated from it. Nothing is asked for twice."
+    },
+    "rirekisho": {
+      "title": "履歴書, on the top floor",
+      "body": "A conventional 履歴書 as a PDF — A4 or B5, dates in 和暦 or 西暦, every line of it taken from your profile."
+    },
+    "import": {
+      "title": "Bring what you already have",
+      "body": "Upload a resume you have written before. What is read from it is shown to you field by field, and nothing reaches your profile until you say so."
+    },
+    "profile": {
+      "title": "Your career, written once",
+      "body": "Work history, education, skills and certifications. This is the floor everything else is built on."
+    },
+    "stories": {
+      "title": "The longer version",
+      "body": "The accounts of your work that a resume has no room for, kept for the moment an employer asks."
+    },
+    "makers": {
+      "title": "The two of us, and makaka",
+      "body": "Josh and Mich have been building this since 2018, when it was an Android app. The cat has been supervising for about as long."
+    }
+  },
   "home": {
     "brandline": "Boost your confidence",
     "nav": "Open your profile",
@@ -15,6 +42,7 @@
     "lead": "Step Job keeps one profile of your work history and produces the documents a job search in Japan asks for — starting with a 履歴書 that follows the convention, in 和暦 or 西暦, on A4 or B5.",
     "start": "Start your profile",
     "generate": "Generate a 履歴書",
+    "worldHint": "Point at a blue dot to look inside.",
     "howTitle": "How it works",
     "steps": {
       "capture": {
