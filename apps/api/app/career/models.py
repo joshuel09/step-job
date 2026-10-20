@@ -85,7 +85,9 @@ class EntrySnapshot(Entity):
     Insert-only by contract (FR-029). Nothing in the application updates a
     snapshot after creation, which is what keeps a generated document's claims
     traceable once the entries behind them are edited or deleted (FR-028, and
-    constitution Principle IV).
+    constitution Principle IV). The one exception is profile deletion, which
+    removes the immediately-erased Japan-specific fields from every snapshot
+    that recorded them (FR-024, see career/deletion.py).
     """
 
     __tablename__ = "entry_snapshot"
