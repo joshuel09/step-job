@@ -1,5 +1,7 @@
 import type { Components002, Components003, components } from "@step-job/api-client";
 
+import { authorization, currentUserId } from "./dev-session";
+
 type Schemas = components["schemas"];
 type ImportSchemas = Components002["schemas"];
 type DocumentSchemas = Components003["schemas"];
@@ -63,6 +65,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...authorization(await currentUserId()),
       ...(init.headers ?? {}),
     },
     credentials: "include",
@@ -146,6 +149,7 @@ export const api = {
 
     const response = await fetch(`${BASE}/profile/imports/upload`, {
       method: "POST",
+      headers: authorization(await currentUserId()),
       body,
       credentials: "include",
       cache: "no-store",
@@ -175,7 +179,7 @@ export const api = {
   ): Promise<GeneratedDocument> => {
     const response = await fetch(`${BASE}/profile/documents/rirekisho`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authorization(await currentUserId()) },
       body: JSON.stringify(options),
       credentials: "include",
       cache: "no-store",
