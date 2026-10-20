@@ -6,6 +6,9 @@ obligations (FR-024, FR-025, research.md R-002).
 Residence status, nationality, visa type and visa expiry are destroyed on the
 request path, inside the same transaction that marks the profile deleted. They do
 not wait on a scheduler: if the purge job never runs, that data is still gone.
+That includes any copy a snapshot holds of a field the user disclosed in a
+document: it is the one change a snapshot ever receives, because erasure on
+deletion (FR-024) outranks a snapshot staying unchanged (FR-029).
 
 Everything else is soft deleted and swept by the purge job once the recovery
 window closes. Reads exclude soft-deleted profiles at the data-access layer
@@ -19,7 +22,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.career.models import CareerProfile, JapanProfile
+from app.career.models import CareerProfile, EntrySnapshot, JapanProfile
 from app.core.errors import ConflictError, NotFoundError
 from app.core.settings import get_settings
 from app.db.soft_delete import with_deleted
@@ -61,13 +64,35 @@ def _erase_sensitive_fields(session: Session, profile: CareerProfile) -> list[st
     japan = session.scalars(
         select(JapanProfile).where(JapanProfile.profile_id == profile.id)
     ).first()
-    if japan is None:
-        return list(JapanProfile.IMMEDIATELY_ERASED)
+    if japan is not None:
+        for field in JapanProfile.IMMEDIATELY_ERASED:
+            setattr(japan, field, None)
 
-    for field in JapanProfile.IMMEDIATELY_ERASED:
-        setattr(japan, field, None)
+    _erase_from_snapshots(session, profile)
     session.flush()
     return list(JapanProfile.IMMEDIATELY_ERASED)
+
+
+def _erase_from_snapshots(session: Session, profile: CareerProfile) -> None:
+    """Remove the same fields from every snapshot that recorded them.
+
+    Removed rather than blanked: a null nationality in the record of a sent
+    document would still say one was disclosed.
+    """
+    for snapshot in session.scalars(
+        select(EntrySnapshot).where(EntrySnapshot.profile_id == profile.id)
+    ):
+        payload = {
+            entry_id: (
+                {k: v for k, v in entry.items() if k not in JapanProfile.IMMEDIATELY_ERASED}
+                if entry.get("__entity__") == JapanProfile.__name__
+                else entry
+            )
+            for entry_id, entry in snapshot.payload.items()
+        }
+        if payload != snapshot.payload:
+            # A new dict, so the change to the JSON column is seen and written.
+            snapshot.payload = payload
 
 
 def restore_profile(session: Session, user_id) -> CareerProfile:

@@ -149,25 +149,141 @@ class TestWithdrawal:
         assert "国籍" not in text
 
 
-class TestTheSnapshotHoldsNoJapanProfile:
-    """The snapshot records what a document drew on, and persists.
+# Each flag's fields as the snapshot stores them.
+SNAPSHOTTED = {
+    "disclose_residence_status": {"residence_status": "永住者"},
+    "disclose_nationality": {"nationality": "Philippines"},
+    "disclose_visa": {"visa_type": "技術・人文知識・国際業務", "visa_expires_on": "2028-03-31"},
+    "disclose_work_authorisation": {"work_authorisation": True},
+    "disclose_japanese_qualification": {"japanese_qualification": "JLPT N2"},
+}
 
-    It copies whole entries, so capturing the Japan profile would store every
-    undisclosed field alongside the disclosed one — and keep the fields that
-    profile deletion must erase immediately (FR-024). Until the snapshot can
-    hold only what was disclosed, it holds none of it.
+# Strings no flag-free snapshot may contain. `True` is left out: a payload is
+# full of booleans that are not this one.
+WITHHELD_TEXT = {
+    flag: [v for v in vals.values() if isinstance(v, str)] for flag, vals in SNAPSHOTTED.items()
+}
+
+
+def _snapshot(session):
+    from app.career import models
+
+    return session.scalars(select(models.EntrySnapshot)).one()
+
+
+class TestTheSnapshotRecordsWhatWasDisclosed:
+    """FR-016: every line of the document traces to the entry behind it.
+
+    A disclosed field is captured, so a line naming a nationality stays
+    traceable after the user edits it. Only the disclosed fields are: the
+    snapshot is the durable record of what was sent, and a withheld field in
+    it would be the leak gate G5 exists to prevent (#110).
     """
 
-    def test_no_japan_specific_value_reaches_the_snapshot(
+    def test_nothing_disclosed_captures_no_japan_profile(
         self, client, auth_headers, session, japan
     ):
-        from app.career import models
+        _generate(client, auth_headers)
+
+        snapshot = _snapshot(session)
+        assert japan.id not in snapshot.captured_entry_ids
+        for values in WITHHELD_TEXT.values():
+            for value in values:
+                assert value not in str(snapshot.payload)
+
+    @pytest.mark.parametrize("flag", FLAGS)
+    def test_a_disclosed_field_is_captured_alone(self, client, auth_headers, session, japan, flag):
+        _set(session, japan, **{flag: True})
+        _generate(client, auth_headers)
+
+        snapshot = _snapshot(session)
+        assert japan.id in snapshot.captured_entry_ids
+        assert snapshot.payload[str(japan.id)] == {
+            "__entity__": "JapanProfile",
+            "id": str(japan.id),
+            "profile_id": str(japan.profile_id),
+            **SNAPSHOTTED[flag],
+        }
+
+    @pytest.mark.parametrize("flag", FLAGS)
+    def test_with_every_other_flag_open_this_one_stays_out(
+        self, client, auth_headers, session, japan, flag
+    ):
+        _set(session, japan, **{f: True for f in FLAGS if f != flag})
+        _generate(client, auth_headers)
+
+        snapshot = _snapshot(session)
+        captured = snapshot.payload[str(japan.id)]
+        for field in SNAPSHOTTED[flag]:
+            assert field not in captured
+        for value in WITHHELD_TEXT[flag]:
+            assert value not in str(snapshot.payload)
+        for flag_name in FLAGS:
+            assert flag_name not in captured, "the flags themselves are not document content"
+
+    def test_the_record_outlives_an_edit(self, client, auth_headers, session, japan):
+        """The #110 scenario: disclose, generate, edit — the record keeps what went out."""
+        _set(session, japan, disclose_nationality=True)
+        _generate(client, auth_headers)
+
+        japan.nationality = "Viet Nam"
+        session.flush()
+
+        assert _snapshot(session).payload[str(japan.id)]["nationality"] == "Philippines"
+
+    def test_a_japan_profile_cannot_be_captured_whole(self, client, auth_headers, japan):
+        """The general capture endpoint takes no field list, so it must refuse."""
+        response = client.post(
+            "/api/v1/profile/snapshots",
+            headers=auth_headers,
+            json={"document_ref": "anything", "entry_ids": [str(japan.id)]},
+        )
+        assert response.status_code == 422
+        assert "Philippines" not in response.text
+
+
+class TestDeletionErasesWhatTheSnapshotHolds:
+    """FR-024: the immediately-erased fields go on the request path, copies included."""
+
+    def test_deleting_the_profile_erases_them_from_the_snapshot(
+        self, client, auth_headers, session, japan
+    ):
+        from app.career.models import JapanProfile
 
         _set(session, japan, **{f: True for f in FLAGS})
         _generate(client, auth_headers)
 
-        snapshot = session.scalars(select(models.EntrySnapshot)).one()
-        payload = str(snapshot.payload)
-        assert japan.id not in snapshot.captured_entry_ids
-        for value in ("永住者", "Philippines", "技術・人文知識・国際業務", "JLPT N2"):
-            assert value not in payload
+        assert client.delete("/api/v1/profile", headers=auth_headers).status_code == 200
+        session.expire_all()
+
+        captured = _snapshot(session).payload[str(japan.id)]
+        for field in JapanProfile.IMMEDIATELY_ERASED:
+            assert field not in captured
+        for value in ("永住者", "Philippines", "技術・人文知識・国際業務", "2028-03-31"):
+            assert value not in str(_snapshot(session).payload)
+
+    def test_what_is_not_erased_immediately_stays_until_the_purge(
+        self, client, auth_headers, session, japan
+    ):
+        _set(session, japan, **{f: True for f in FLAGS})
+        _generate(client, auth_headers)
+
+        assert client.delete("/api/v1/profile", headers=auth_headers).status_code == 200
+        session.expire_all()
+
+        captured = _snapshot(session).payload[str(japan.id)]
+        assert captured["work_authorisation"] is True
+        assert captured["japanese_qualification"] == "JLPT N2"
+
+    def test_the_other_entries_in_the_snapshot_are_untouched(
+        self, client, auth_headers, session, japan
+    ):
+        _set(session, japan, disclose_nationality=True)
+        _generate(client, auth_headers)
+        before = {k: v for k, v in _snapshot(session).payload.items() if k != str(japan.id)}
+
+        assert client.delete("/api/v1/profile", headers=auth_headers).status_code == 200
+        session.expire_all()
+
+        after = {k: v for k, v in _snapshot(session).payload.items() if k != str(japan.id)}
+        assert after == before

@@ -98,11 +98,23 @@ def generate(
     used += [row.source_entry_id for row in rows if row.source_entry_id is not None]
     used += [c.id for c in certifications]
 
+    # Filtered here, before the renderer sees anything, so an undisclosed
+    # value never reaches it (gate G5). The snapshot records the same fields
+    # and nothing more: what was withheld from the employer is withheld from
+    # the record of what the employer was sent.
+    japan = career_service.get_singleton(session, profile, career_models.JapanProfile)
+    disclosed = disclosed_fields(japan)
+    shown: dict = {}
+    if disclosed:
+        used.append(japan.id)
+        shown[japan.id] = list(disclosed)
+
     snapshot = snapshots.capture(
         session,
         profile,
         document_ref=f"rirekisho:{datetime.now(UTC).isoformat()}",
         entry_ids=list(dict.fromkeys(used)),
+        fields=shown,
     )
 
     pdf, pages = render.render_rirekisho(
@@ -117,11 +129,7 @@ def generate(
         },
         rows=rows,
         certifications=[(c.issued_on, c.name) for c in certifications],
-        # Filtered here, before the renderer sees anything, so an undisclosed
-        # value never reaches it (gate G5).
-        disclosed=disclosed_fields(
-            career_service.get_singleton(session, profile, career_models.JapanProfile)
-        ),
+        disclosed=disclosed,
         era=date_convention is DateConvention.wareki,
         paper=str(paper_size),
     )

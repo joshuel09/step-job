@@ -282,7 +282,12 @@ research.md R-001).
 
 **Rules**
 
-- Insert-only. A snapshot is never updated after creation (FR-029).
+- Insert-only. A snapshot is never updated after creation (FR-029), with one
+  exception: deleting the profile removes the immediately-erased fields of
+  `JapanProfile` from every snapshot that recorded them, in the same transaction
+  (FR-024).
+- `JapanProfile` is never captured whole, only the fields the document
+  disclosed. A withheld field never enters a snapshot.
 - Remains readable and unchanged after the entries it captured are edited or
   deleted — that is its entire purpose.
 - `captured_entry_ids` preserves the link back to live entries where they still
