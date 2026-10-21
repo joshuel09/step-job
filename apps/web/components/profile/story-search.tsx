@@ -38,31 +38,31 @@ export function StorySearch({ initial }: { initial: CareerStory[] }) {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("searchPlaceholder")}
-          className="rounded border border-neutral-300 bg-transparent px-3 py-2 text-sm dark:border-neutral-700"
+          className="field"
         />
       </label>
 
-      <p className="text-xs opacity-70" aria-live="polite">
+      <p className="hint" aria-live="polite">
         {searching ? t("searching") : t("resultCount", { count: results.length })}
       </p>
 
       {results.length === 0 ? (
-        <p className="text-sm opacity-70">{query ? t("noMatches") : t("empty")}</p>
+        <p className="explain">{query ? t("noMatches") : t("empty")}</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {results.map((story) => (
             <li
               key={story.id}
-              className="rounded border border-neutral-200 p-3 text-sm dark:border-neutral-800"
+              className="entry"
             >
               <p className="font-medium">{story.title}</p>
-              <p className="mt-1 text-xs opacity-80">
+              <p className="hint mt-1">
                 <span className="font-medium">{t("challenge")}:</span> {story.challenge}
               </p>
-              <p className="text-xs opacity-80">
+              <p className="hint">
                 <span className="font-medium">{t("action")}:</span> {story.action}
               </p>
-              <p className="text-xs opacity-80">
+              <p className="hint">
                 <span className="font-medium">{t("result")}:</span> {story.result}
               </p>
             </li>

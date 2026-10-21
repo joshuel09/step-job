@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import Link from "next/link";
 
+import { PageHeading } from "@/components/profile/page-heading";
 import { StoryForm } from "@/components/profile/story-form";
 import { StorySearch } from "@/components/profile/story-search";
 import { api, type CareerStory, type WorkExperience } from "@/lib/api";
@@ -24,13 +24,8 @@ export default async function StoriesPage({ params }: { params: Promise<{ locale
   }
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
-      <header>
-        <Link href={`/${locale}/profile`} className="text-sm underline opacity-70">
-          {t("back")}
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold">{t("title")}</h1>
-      </header>
+    <main className="page">
+      <PageHeading title={t("title")} back={{ href: `/${locale}/profile`, label: t("back") }} />
 
       <StorySearch initial={stories} />
       <StoryForm existing={stories} experiences={experiences} />

@@ -71,26 +71,26 @@ export function StoryForm({
 
   return (
     <Section title={t("title")}>
-      <p className="mb-3 text-xs opacity-70">{t("explanation")}</p>
+      <p className="hint mb-3">{t("explanation")}</p>
 
       {existing.length > 0 && (
         <ul className="mb-4 flex flex-col gap-2">
           {existing.map((story) => (
             <li
               key={story.id}
-              className="rounded border border-neutral-200 p-3 text-sm dark:border-neutral-800"
+              className="entry"
             >
               <div className="flex items-start justify-between gap-3">
                 <p className="font-medium">{story.title}</p>
                 <button
                   type="button"
                   onClick={() => onDelete(story.id!)}
-                  className="text-xs underline opacity-70"
+                  className="link text-xs"
                 >
                   {tc("delete")}
                 </button>
               </div>
-              <dl className="mt-2 flex flex-col gap-1 text-xs opacity-80">
+              <dl className="mt-2 flex flex-col gap-1 text-xs text-ink-soft">
                 <div>
                   <dt className="inline font-medium">{t("challenge")}: </dt>
                   <dd className="inline">{story.challenge}</dd>

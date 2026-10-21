@@ -506,3 +506,124 @@
     opacity: 0.55;
   }
 }
+
+/* --- the rooms behind the front door ------------------------------------
+   The profile pages, in the landing page's materials: paper cards with a
+   line round them on the blue wash, ink rather than faded black for text,
+   and the one blue for everything that acts or needs attention (#125).
+
+   Defined once here rather than repeated per component, so a form field or
+   a notice looks the same on every page and changes in one place. */
+@layer base {
+  /* Checkboxes and radios take the brand blue rather than the browser's. */
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: theme(colors.brand.600);
+  }
+}
+
+@layer components {
+  /* The header every page shares, and a link in it. The page you are on is
+     marked, so the bar says where you are as well as where you can go. */
+  .site-header {
+    @apply sticky top-0 z-20 border-b border-cream-200 bg-cream-50/90 backdrop-blur-xl;
+  }
+
+  .nav-link {
+    @apply whitespace-nowrap rounded-full px-3 py-1.5 text-sm text-ink-soft transition
+      hover:bg-cream-200 hover:text-warm-deep;
+  }
+
+  .nav-link[aria-current="page"] {
+    @apply bg-brand-50 font-medium text-brand-700;
+  }
+
+  .page {
+    @apply mx-auto flex w-full max-w-3xl animate-rise flex-col gap-6 px-6 pb-24 pt-10;
+  }
+
+  /* A title breaks between words, never inside one: 履歴書 split across two
+     lines on a phone, as the navigation did in #126. A word too long for the
+     line still wraps rather than running off the screen. */
+  .page-title {
+    @apply text-3xl font-semibold tracking-tight text-ink;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+
+  .back-link {
+    @apply inline-flex items-center gap-1 text-sm text-brand-700 transition hover:text-brand-800;
+  }
+
+  /* A section of a page: the landing page's card, with room to fill in. */
+  .surface {
+    @apply glass rounded-card p-6;
+  }
+
+  .surface-title {
+    @apply mb-4 text-lg font-semibold text-ink;
+  }
+
+  /* Text that explains rather than states. Ink at a lower weight, not black
+     at a lower opacity: faded black on a blue wash reads as grey dirt. */
+  .hint {
+    @apply text-xs leading-relaxed text-ink-soft;
+  }
+
+  .explain {
+    @apply text-sm leading-relaxed text-ink-soft;
+  }
+
+  .field-label {
+    @apply text-sm font-medium text-ink;
+  }
+
+  .field {
+    @apply w-full rounded-lg border border-cream-300 bg-white px-3 py-2 text-sm text-ink
+      transition placeholder:text-ink-faint hover:border-brand-200 focus:border-brand-400
+      focus:outline-none focus:ring-4 focus:ring-brand-100 disabled:bg-cream-100;
+  }
+
+  /* Invalid in the deepest blue, with a mark on the message: an error has to
+     be noticed without a second colour, so it is not told by colour alone. */
+  .field[aria-invalid="true"] {
+    @apply border-brand-800 bg-brand-50/50 focus:ring-brand-200;
+  }
+
+  .field-error {
+    @apply flex items-start gap-1.5 text-xs font-medium text-brand-800;
+  }
+
+  .field-error::before {
+    content: "!";
+    @apply mt-px flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-brand-800
+      text-[0.6rem] font-bold leading-none text-white;
+  }
+
+  /* One saved thing in a list: an entry, a story, an import. */
+  .entry {
+    @apply rounded-xl border border-cream-300 bg-cream-100/70 p-3 text-sm;
+  }
+
+  /* Something the user should read before going on. The blue the review
+     queue already uses, rather than amber. */
+  .notice {
+    @apply rounded-xl border border-brand-200 bg-brand-50 p-3 text-sm text-brand-800;
+  }
+
+  /* The alternative to a form's button: export, cancel, reject. */
+  .btn-quiet {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-cream-300
+      bg-white px-4 py-2 text-sm font-medium text-ink-soft transition hover:border-brand-200
+      hover:text-brand-700 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .link {
+    @apply text-brand-700 underline decoration-brand-200 underline-offset-2 transition
+      hover:decoration-brand-500;
+  }
+
+  .divider {
+    @apply border-cream-200;
+  }
+}

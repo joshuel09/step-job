@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ExperienceForm } from "@/components/profile/experience-form";
 import { IdentityForm } from "@/components/profile/identity-form";
 import { JapanForm } from "@/components/profile/japan-form";
+import { PageHeading } from "@/components/profile/page-heading";
 import { PreferenceForm } from "@/components/profile/preference-form";
 import {
   CertificationSection,
@@ -38,11 +39,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
   const [profile, stories] = await Promise.all([loadProfile(), loadStories()]);
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
-        <p className="mt-1 text-sm text-ink-soft dark:text-brand-100/75">{t("subtitle")}</p>
-      </header>
+    <main className="page">
+      <PageHeading title={t("title")} subtitle={t("subtitle")} />
 
       <IdentityForm initial={profile?.identity} />
       <ExperienceForm existing={profile?.experiences ?? []} stories={stories} />

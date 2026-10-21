@@ -41,7 +41,7 @@ export function ProposalReview({
   }
 
   if (proposals.length === 0) {
-    return <p className="text-sm opacity-70">{t("empty")}</p>;
+    return <p className="explain">{t("empty")}</p>;
   }
 
   return (
@@ -57,13 +57,13 @@ export function ProposalReview({
         return (
           <li
             key={proposal.id}
-            className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+            className="surface"
           >
             <div className="mb-3 flex items-center justify-between gap-3">
-              <span className="text-xs uppercase tracking-wide opacity-60">
+              <span className="text-xs uppercase tracking-wide text-ink-faint">
                 {t(`types.${proposal.entry_type}`)}
               </span>
-              <span className="text-xs opacity-60">{t("from", { source: proposal.source })}</span>
+              <span className="hint">{t("from", { source: proposal.source })}</span>
             </div>
 
             {duplicate && (
@@ -97,22 +97,18 @@ export function ProposalReview({
 
                 return (
                   <label key={field} className="flex flex-col gap-1">
-                    <span className="text-xs font-medium opacity-70">{field}</span>
+                    <span className="text-xs font-medium text-ink-soft">{field}</span>
                     <input
                       defaultValue={String(value ?? "")}
                       onChange={(event) => edit(proposal.id!, field, event.target.value)}
                       aria-invalid={conflicted || undefined}
-                      className={`rounded border bg-transparent px-2 py-1 text-sm ${
-                        conflicted
-                          ? "border-amber-500"
-                          : "border-neutral-300 dark:border-neutral-700"
-                      }`}
+                      className="field px-2 py-1"
                     />
                     {/* The passage this value was taken from. A user should be
                         able to see a value was read rather than guessed — which
                         is the whole reason the extraction records it. */}
                     {quote && (
-                      <span className="text-xs italic opacity-60">
+                      <span className="hint italic">
                         {t("fromSource")}: “{quote}”
                       </span>
                     )}
@@ -151,7 +147,7 @@ export function ProposalReview({
                       ),
                     )
                   }
-                  className="rounded border border-neutral-300 px-3 py-1.5 text-sm disabled:opacity-50 dark:border-neutral-700"
+                  className="btn-quiet px-3 py-1.5"
                 >
                   {t("merge")}
                 </button>
@@ -161,7 +157,7 @@ export function ProposalReview({
                 type="button"
                 disabled={busy}
                 onClick={() => act(proposal.id!, () => api.rejectProposal(proposal.id!))}
-                className="rounded border border-neutral-300 px-3 py-1.5 text-sm disabled:opacity-50 dark:border-neutral-700"
+                className="btn-quiet px-3 py-1.5"
               >
                 {t("reject")}
               </button>

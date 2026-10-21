@@ -33,13 +33,13 @@ export function Field({
 
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={name} className="text-sm font-medium">
+      <label htmlFor={name} className="field-label">
         {label}
       </label>
       {children}
-      {hint && !error && <p className="text-xs opacity-70">{hint}</p>}
+      {hint && !error && <p className="hint">{hint}</p>}
       {error && (
-        <p id={errorId} role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <p id={errorId} role="alert" className="field-error">
           {error}
         </p>
       )}
@@ -51,7 +51,10 @@ export function TextInput({
   name,
   errors,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { name: string; errors?: FieldErrors }) {
+}: React.InputHTMLAttributes<HTMLInputElement> & {
+  name: string;
+  errors?: FieldErrors;
+}) {
   const invalid = Boolean(errors?.[name]);
   return (
     <input
@@ -59,9 +62,7 @@ export function TextInput({
       name={name}
       aria-invalid={invalid || undefined}
       aria-describedby={invalid ? `${name}-error` : undefined}
-      className={`rounded border px-3 py-2 text-sm ${
-        invalid ? "border-red-500" : "border-neutral-300 dark:border-neutral-700"
-      } bg-transparent`}
+      className="field"
       {...props}
     />
   );
@@ -71,7 +72,10 @@ export function TextArea({
   name,
   errors,
   ...props
-}: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { name: string; errors?: FieldErrors }) {
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  name: string;
+  errors?: FieldErrors;
+}) {
   const invalid = Boolean(errors?.[name]);
   return (
     <textarea
@@ -80,9 +84,7 @@ export function TextArea({
       rows={4}
       aria-invalid={invalid || undefined}
       aria-describedby={invalid ? `${name}-error` : undefined}
-      className={`rounded border px-3 py-2 text-sm ${
-        invalid ? "border-red-500" : "border-neutral-300 dark:border-neutral-700"
-      } bg-transparent`}
+      className="field"
       {...props}
     />
   );
@@ -93,18 +95,13 @@ export function Select({
   errors,
   children,
   ...props
-}: React.SelectHTMLAttributes<HTMLSelectElement> & { name: string; errors?: FieldErrors }) {
+}: React.SelectHTMLAttributes<HTMLSelectElement> & {
+  name: string;
+  errors?: FieldErrors;
+}) {
   const invalid = Boolean(errors?.[name]);
   return (
-    <select
-      id={name}
-      name={name}
-      aria-invalid={invalid || undefined}
-      className={`rounded border px-3 py-2 text-sm ${
-        invalid ? "border-red-500" : "border-neutral-300 dark:border-neutral-700"
-      } bg-transparent`}
-      {...props}
-    >
+    <select id={name} name={name} aria-invalid={invalid || undefined} className="field" {...props}>
       {children}
     </select>
   );
@@ -112,8 +109,8 @@ export function Select({
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-      <h2 className="mb-3 text-lg font-semibold">{title}</h2>
+    <section className="surface">
+      <h2 className="surface-title">{title}</h2>
       {children}
     </section>
   );
@@ -121,7 +118,7 @@ export function Section({ title, children }: { title: string; children: ReactNod
 
 export function SubmitButton({ children, pending }: { children: ReactNode; pending?: boolean }) {
   return (
-    <button type="submit" disabled={pending} className="btn-form">
+    <button type="submit" disabled={pending} className="btn-form self-start">
       {children}
     </button>
   );
