@@ -249,6 +249,16 @@
     animation: marker-in 520ms cubic-bezier(0.34, 1.4, 0.64, 1) 680ms both;
   }
 
+  /* The blade and its smear swap places rather than fading between them:
+     a propeller does not ease, it flashes. steps(1) is what makes it snap. */
+  .prop {
+    animation: prop 0.12s steps(1, end) infinite;
+  }
+
+  .prop-blur {
+    animation: prop-blur 0.12s steps(1, end) infinite;
+  }
+
   /* The plane crosses the sky and comes round again. Slow: it should be
      something you notice on the second look, not a carousel. */
   .fly {
@@ -476,5 +486,23 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes prop {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.1;
+  }
+}
+
+@keyframes prop-blur {
+  0% {
+    opacity: 0.14;
+  }
+  50% {
+    opacity: 0.55;
   }
 }
