@@ -55,18 +55,66 @@
   }
 
   /* The card a marker opens, anchored to it. */
+  /* A speech bubble belonging to the dot that opened it: white, a light blue
+     edge, and a tail on the corner nearest the marker. It grows out of that
+     corner rather than fading in place, so it reads as coming from the dot
+     and not from the page. */
+  /* Offset so the tail lands directly under the marker rather than on the
+     card's corner: the card sits 26px back along its own edge, which is
+     exactly where the tail is, and 20px clear of the dot. The marker and the
+     card never overlap, so neither has to be stacked over the other. */
   .world-card {
-    @apply absolute left-5 top-5 z-20 w-64 rounded-card border border-cream-300
-      bg-cream-50 p-4 text-left shadow-lift;
-    animation: card-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+    @apply absolute left-[-26px] top-5 z-20 w-64 rounded-2xl border-2
+      border-brand-200 bg-white p-4 text-left;
+    box-shadow: 0 18px 40px -20px rgb(11 130 196 / 0.5);
+    transform-origin: 26px -20px;
+    animation: card-in 0.26s cubic-bezier(0.34, 1.35, 0.64, 1) both;
+  }
+
+  /* The tail: a square turned 45°, half of it outside the card, showing only
+     the two edges that form the corner pointing back at the marker. */
+  .world-card::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 18px;
+    height: 16px;
+    width: 16px;
+    transform: rotate(45deg);
+    border-top: 2px solid theme(colors.brand.200);
+    border-left: 2px solid theme(colors.brand.200);
+    border-top-left-radius: 4px;
+    background: #fff;
   }
 
   .world-card-left {
-    @apply left-auto right-5;
+    @apply left-auto right-[-26px];
+    transform-origin: calc(100% - 26px) -20px;
+  }
+
+  .world-card-left::before {
+    left: auto;
+    right: 18px;
   }
 
   .world-card-up {
-    @apply top-auto bottom-5;
+    @apply bottom-5 top-auto;
+    transform-origin: 26px calc(100% + 20px);
+  }
+
+  .world-card-up::before {
+    top: auto;
+    bottom: -10px;
+    border-top: none;
+    border-left: none;
+    border-bottom: 2px solid theme(colors.brand.200);
+    border-right: 2px solid theme(colors.brand.200);
+    border-top-left-radius: 0;
+    border-bottom-right-radius: 4px;
+  }
+
+  .world-card-left.world-card-up {
+    transform-origin: calc(100% - 26px) calc(100% + 20px);
   }
 
   /* A translucent surface: the page's wash shows through it, a hairline keeps
@@ -154,6 +202,30 @@
 
   .drift-slower {
     animation: drift 38s ease-in-out -3s infinite;
+  }
+
+  /* The scene assembles itself when it comes into view: the plate slides in
+     from the left, everything standing on it from the right, and the people
+     drop in from above. The delays are small against the duration, so the
+     three overlap into one movement rather than running in sequence.
+
+     The animations exist only while the drawing is on screen. world.tsx
+     takes the class off once it has scrolled away, which is what lets the
+     whole thing play again on the way back up. */
+  .world-enter .in-left {
+    animation: in-left 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .world-enter .in-right {
+    animation: in-right 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .world-enter .in-top {
+    animation: in-top 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .marker-in {
+    animation: marker-in 520ms cubic-bezier(0.34, 1.4, 0.64, 1) 680ms both;
   }
 
   /* The plane crosses the sky and comes round again. Slow: it should be
@@ -252,7 +324,11 @@
 @keyframes card-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: scale(0.45);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -335,5 +411,49 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes in-left {
+  from {
+    transform: translateX(-190px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes in-right {
+  from {
+    transform: translateX(230px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes in-top {
+  from {
+    transform: translateY(-170px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes marker-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

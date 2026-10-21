@@ -1,4 +1,6 @@
-import { BUILDING, HX, ROOF_SIGN, SLOPE, type Solid, gx, gy } from "@/lib/site";
+import type { ReactNode } from "react";
+
+import { BUILDING, HX, LAPTOP, LID, ROOF_SIGN, SLOPE, type Solid, gx, gy } from "@/lib/site";
 
 /**
  * The drawing on the landing page.
@@ -94,6 +96,30 @@ function topFace({ u, v, du, dv, h, base = 0 }: Solid) {
   const x = gx(u - du, v - dv);
   const y = gy(u - du, v - dv) - base - h;
   return `matrix(1 ${SLOPE} -1 ${SLOPE} ${x} ${y})`;
+}
+
+/**
+ * Brings a part of the scene in when the drawing comes into view: the plate
+ * from the left, what stands on it from the right, the people from above.
+ *
+ * A plain group with no transform of its own, so it can be wrapped around
+ * anything without moving it or changing what is drawn over what. The
+ * animation only exists while the drawing is on screen — see world.tsx.
+ */
+function Enter({
+  from,
+  delay = 0,
+  children,
+}: {
+  from: "left" | "right" | "top";
+  delay?: number;
+  children: ReactNode;
+}) {
+  return (
+    <g className={`in-${from}`} style={{ animationDelay: `${delay}ms` }}>
+      {children}
+    </g>
+  );
 }
 
 /** A limb: one rounded stroke in the outline colour with a thinner one over it. */
@@ -381,36 +407,61 @@ function Person({
 }
 
 /**
- * makaka, whole and small. The first version was a loaf — a big head on a
- * hunched blob — which at this size read as a hunched person rather than a
- * cat. A cat needs four legs, a tail and a body longer than it is tall.
+ * makaka, asleep on the warmest thing in the room. Curled rather than
+ * standing: the tail comes round the front, the head tucks into the body and
+ * the eyes are two closed curves. Supervising, in her way.
  */
 function Makaka({ u, v, lift = 0, s = 1 }: { u: number; v: number; lift?: number; s?: number }) {
   return (
     <g transform={`translate(${gx(u, v)} ${gy(u, v) - lift}) scale(${s})`}>
       <g className="breathe-slow">
-        {/* the tail curls up behind her */}
-        <Limb d="M-23 -17c-13 1-19-7-15-16" fill={WHITE} w={5} light />
+        {/* the tail, curled round the front */}
+        <Limb d="M-19 -9c-4 8 2 13 10 12 6-1 10-3 13-6" fill={WHITE} w={5} light />
 
-        {/* four legs, the near pair a little forward */}
-        <Limb d="M-15 -13V-3" fill={WHITE} w={5} light />
-        <Limb d="M6 -13V-3" fill={WHITE} w={5} light />
-        <Limb d="M-8 -11V-1" fill={WHITE} w={5} light />
-        <Limb d="M13 -11V-1" fill={WHITE} w={5} light />
+        <ellipse cx="-2" cy="-13" rx="21" ry="12" fill={WHITE} {...nib} />
+        <circle cx="16" cy="-16" r="10" fill={WHITE} {...nib} />
+        <path d="M9 -23l-3-9 9 4zM23 -23l3-9-9 4z" fill={WHITE} {...nib} />
 
-        <ellipse cx="-3" cy="-20" rx="21" ry="13" fill={WHITE} {...nib} />
-        <circle cx="18" cy="-31" r="11" fill={WHITE} {...nib} />
-        <path d="M10 -38l-3-10 10 5zM26 -38l3-10-10 5z" fill={WHITE} {...nib} />
-        <circle cx="14" cy="-32" r="1.8" fill={LINE} />
-        <circle cx="23" cy="-32" r="1.8" fill={LINE} />
-        <path d="M18.5 -28l-2.5-2.5h5z" fill={LINE} />
         <path
-          d="M13 -29l-7-1M13 -27h-7M13 -25l-7 2M24 -29l7-1M24 -27h7M24 -25l7 2"
+          d="M11 -17q2.5 3 5 0M19 -17q2.5 3 5 0"
+          fill="none"
+          stroke={LINE}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+        <path d="M16.5 -12l-2.5-2.5h5z" fill={LINE} />
+        <path
+          d="M11 -13l-7-1M11 -11h-7M22 -13l7-1M22 -11h7"
           fill="none"
           stroke={LINE}
           strokeWidth="1.4"
           strokeLinecap="round"
         />
+      </g>
+    </g>
+  );
+}
+
+/** A laptop, open, with the lid up behind the keys. */
+function Laptop() {
+  const { w, lean, h } = LID;
+  const x = gx(LAPTOP.u - LAPTOP.du, LAPTOP.v - LAPTOP.dv);
+  const y = gy(LAPTOP.u - LAPTOP.du, LAPTOP.v - LAPTOP.dv) - (LAPTOP.base ?? 0) - LAPTOP.h;
+  return (
+    <g>
+      <Box {...LAPTOP} top={WHITE} left={B1} right={B2} />
+      <g transform={topFace(LAPTOP)}>
+        <rect x="6" y="5" width={w - 12} height={2 * LAPTOP.dv * HX - 10} rx="2" fill={B1} />
+      </g>
+      <path
+        d={`M${x} ${y}l${w} ${w * SLOPE}l${lean} ${-h}l${-w} ${-w * SLOPE}z`}
+        fill={WHITE}
+        {...nib}
+      />
+      {/* The screen leans with the lid. Drawing it on an upright skew is what
+          made it sit crookedly inside its own frame. */}
+      <g transform={`matrix(1 ${SLOPE} ${-lean / h} 1 ${x + lean} ${y - h})`}>
+        <rect x="5" y="5" width={w - 10} height={h - 10} rx="2" fill={B2} />
       </g>
     </g>
   );
@@ -561,7 +612,7 @@ function Sheet({
         fill={WHITE}
         {...pen}
       />
-      <g transform={`matrix(1 ${SLOPE} 0 1 ${x + lean} ${y + lean * SLOPE - h})`}>
+      <g transform={`matrix(1 ${SLOPE} ${lean ? -lean / h : 0} 1 ${x + lean} ${y - h})`}>
         {Array.from({ length: lines }, (_, i) => (
           <rect
             key={i}
@@ -768,199 +819,255 @@ export function WorldArt() {
       <BannerPlane y={74} />
 
       {/* --- the plate ---------------------------------------------------- */}
-      <path
-        d={`M${plate.left}L${plate.left.split(" ")[0]} ${Number(plate.left.split(" ")[1]) + t}L${
-          plate.front.split(" ")[0]
-        } ${Number(plate.front.split(" ")[1]) + t}L${plate.front}Z`}
-        fill={B2}
-        {...pen}
-      />
-      <path
-        d={`M${plate.right}L${plate.right.split(" ")[0]} ${Number(plate.right.split(" ")[1]) + t}L${
-          plate.front.split(" ")[0]
-        } ${Number(plate.front.split(" ")[1]) + t}L${plate.front}Z`}
-        fill={B3}
-        {...pen}
-      />
-      <path
-        d={`M${plate.left}L${plate.back}L${plate.right}L${plate.front}Z`}
-        fill={PALE}
-        {...pen}
-      />
-
-      {/* footprints crossing the plate towards the door */}
-      {(
-        [
-          [-0.55, 0.95],
-          [-0.4, 0.83],
-          [-0.25, 0.71],
-          [-0.1, 0.59],
-          [0.05, 0.47],
-          [0.2, 0.35],
-          [0.35, 0.23],
-        ] as const
-      ).map(([fu, fv], i) => (
-        <ellipse
-          key={fu}
-          cx={gx(fu, fv) + (i % 2 ? 9 : -9)}
-          cy={gy(fu, fv)}
-          rx="9"
-          ry="5"
+      <Enter from="left">
+        <path
+          d={`M${plate.left}L${plate.left.split(" ")[0]} ${Number(plate.left.split(" ")[1]) + t}L${
+            plate.front.split(" ")[0]
+          } ${Number(plate.front.split(" ")[1]) + t}L${plate.front}Z`}
           fill={B2}
-          opacity={0.35 + i * 0.09}
+          {...pen}
         />
-      ))}
+        <path
+          d={`M${plate.right}L${plate.right.split(" ")[0]} ${Number(plate.right.split(" ")[1]) + t}L${
+            plate.front.split(" ")[0]
+          } ${Number(plate.front.split(" ")[1]) + t}L${plate.front}Z`}
+          fill={B3}
+          {...pen}
+        />
+        <path
+          d={`M${plate.left}L${plate.back}L${plate.right}L${plate.front}Z`}
+          fill={PALE}
+          {...pen}
+        />
+
+        {/* footprints crossing the plate towards the door */}
+        {(
+          [
+            [-0.55, 0.95],
+            [-0.4, 0.83],
+            [-0.25, 0.71],
+            [-0.1, 0.59],
+            [0.05, 0.47],
+            [0.2, 0.35],
+            [0.35, 0.23],
+          ] as const
+        ).map(([fu, fv], i) => (
+          <ellipse
+            key={fu}
+            cx={gx(fu, fv) + (i % 2 ? 9 : -9)}
+            cy={gy(fu, fv)}
+            rx="9"
+            ry="5"
+            fill={B2}
+            opacity={0.35 + i * 0.09}
+          />
+        ))}
+      </Enter>
 
       {/* --- the city, back to front -------------------------------------- */}
-      <BroadcastTower u={-0.85} v={-0.85} h={190} />
-      <Tower u={-0.45} v={-0.95} du={0.1} dv={0.09} h={200} />
-      <Tower u={-0.6} v={-0.95} du={0.07} dv={0.07} h={150} />
-      <Tower u={-0.6} v={-0.9} du={0.08} dv={0.08} h={175} />
-      <Tower u={-0.25} v={-0.9} du={0.08} dv={0.08} h={245} />
-      <Tower u={0.12} v={-0.92} du={0.1} dv={0.09} h={175} />
-      <Tower u={0.34} v={-0.98} du={0.09} dv={0.08} h={160} />
+      <Enter from="right" delay={80}>
+        <BroadcastTower u={-0.85} v={-0.85} h={190} />
+      </Enter>
+      <Enter from="right" delay={110}>
+        <Tower u={-0.45} v={-0.95} du={0.1} dv={0.09} h={200} />
+      </Enter>
+      <Enter from="right" delay={95}>
+        <Tower u={-0.6} v={-0.95} du={0.07} dv={0.07} h={150} />
+      </Enter>
+      <Enter from="right" delay={135}>
+        <Tower u={-0.6} v={-0.9} du={0.08} dv={0.08} h={175} />
+      </Enter>
+      <Enter from="right" delay={155}>
+        <Tower u={-0.25} v={-0.9} du={0.08} dv={0.08} h={245} />
+      </Enter>
+      <Enter from="right" delay={120}>
+        <Tower u={0.12} v={-0.92} du={0.1} dv={0.09} h={175} />
+      </Enter>
+      <Enter from="right" delay={170}>
+        <Tower u={0.34} v={-0.98} du={0.09} dv={0.08} h={160} />
+      </Enter>
 
       {/* --- the Step Job building ---------------------------------------- */}
-      <g>
-        <Box {...BUILDING} top={B1} left={WHITE} right={B2} />
-        <g transform={leftFace(BUILDING)}>
-          <Floor y={24} w={174} h={70} kind="rirekisho" />
-          <Floor y={104} w={174} h={70} kind="import" />
-          <Floor y={184} w={174} h={70} kind="profile" />
-        </g>
-        <g transform={rightFace(BUILDING)}>
-          {Array.from({ length: 5 }, (_, row) =>
-            Array.from({ length: 3 }, (_, col) => (
-              <rect
-                key={`${row}-${col}`}
-                x={22 + col * 50}
-                y={26 + row * 48}
-                width="34"
-                height="30"
-                rx="4"
-                fill={WHITE}
-                opacity="0.9"
-              />
-            )),
-          )}
-        </g>
+      <Enter from="right" delay={140}>
+        <g>
+          <Box {...BUILDING} top={B1} left={WHITE} right={B2} />
+          <g transform={leftFace(BUILDING)}>
+            <Floor y={24} w={174} h={70} kind="rirekisho" />
+            <Floor y={104} w={174} h={70} kind="import" />
+            <Floor y={184} w={174} h={70} kind="profile" />
+          </g>
+          <g transform={rightFace(BUILDING)}>
+            {Array.from({ length: 5 }, (_, row) =>
+              Array.from({ length: 3 }, (_, col) => (
+                <rect
+                  key={`${row}-${col}`}
+                  x={22 + col * 50}
+                  y={26 + row * 48}
+                  width="34"
+                  height="30"
+                  rx="4"
+                  fill={WHITE}
+                  opacity="0.9"
+                />
+              )),
+            )}
+          </g>
 
-        {/* the sign on the roof */}
-        <Box {...ROOF_SIGN} top={B4} left={B5} right={B4} />
-        <g transform={leftFace(ROOF_SIGN)}>
-          {(
-            [
-              [26, 20, 0.5],
-              [52, 26, 0.75],
-              [78, 32, 1],
-            ] as const
-          ).map(([fx, fy, o]) => (
-            <g key={fx} opacity={o} transform={`rotate(-16 ${fx} ${fy})`}>
-              <ellipse cx={fx} cy={fy} rx="4.6" ry="7" fill={WHITE} />
-              <ellipse cx={fx} cy={fy + 10} rx="3.2" ry="3.6" fill={WHITE} />
-            </g>
-          ))}
-        </g>
+          {/* the sign on the roof */}
+          <Box {...ROOF_SIGN} top={B4} left={B5} right={B4} />
+          <g transform={leftFace(ROOF_SIGN)}>
+            {(
+              [
+                [26, 20, 0.5],
+                [52, 26, 0.75],
+                [78, 32, 1],
+              ] as const
+            ).map(([fx, fy, o]) => (
+              <g key={fx} opacity={o} transform={`rotate(-16 ${fx} ${fy})`}>
+                <ellipse cx={fx} cy={fy} rx="4.6" ry="7" fill={WHITE} />
+                <ellipse cx={fx} cy={fy + 10} rx="3.2" ry="3.6" fill={WHITE} />
+              </g>
+            ))}
+          </g>
 
-        {/* the door, on the ground floor's near corner */}
-        <g transform={rightFace(BUILDING)}>
-          <path d="M132 190h38v80h-38z" fill={B1} {...nib} />
-          <circle cx="140" cy="232" r="3.4" fill={LINE} />
+          {/* the door, on the ground floor's near corner */}
+          <g transform={rightFace(BUILDING)}>
+            <path d="M132 190h38v80h-38z" fill={B1} {...nib} />
+            <circle cx="140" cy="232" r="3.4" fill={LINE} />
+          </g>
         </g>
-      </g>
+      </Enter>
 
-      <Tower u={0.88} v={-0.8} du={0.1} dv={0.09} h={215} />
+      <Enter from="right" delay={195}>
+        <Tower u={0.88} v={-0.8} du={0.1} dv={0.09} h={215} />
+      </Enter>
 
       {/* the desk by the window, and somebody at it with their back to us */}
       <g>
-        <Table u={0.25} v={0.02} du={0.16} dv={0.085} h={46} />
-        <DesktopPC u={0.22} v={-0.01} lift={46} />
-        <Person u={0.4} v={0.28} s={0.72} top={B3} arms="type" face="away" className="breathe" />
+        <Enter from="right" delay={210}>
+          <Table u={0.25} v={0.02} du={0.16} dv={0.085} h={46} />
+          <DesktopPC u={0.22} v={-0.01} lift={46} />
+        </Enter>
+        <Enter from="top" delay={330}>
+          <Person u={0.4} v={0.28} s={0.72} top={B3} arms="type" face="away" className="breathe" />
+        </Enter>
       </g>
 
       {/* two in the plaza behind, each doing their own thing rather than
           mirroring each other: one on a call, one reading what she is
           holding */}
-      <Person u={-0.5} v={-0.3} s={0.72} top={B4} legs={B1} arms="phone" className="breathe" />
-      <Person
-        u={-0.4}
-        v={-0.45}
-        s={0.68}
-        top={WHITE}
-        legs={B2}
-        arms="hold"
-        face="front"
-        className="breathe-slow"
-      />
+      <Enter from="top" delay={300}>
+        <Person u={-0.5} v={-0.3} s={0.72} top={B4} legs={B1} arms="phone" className="breathe" />
+      </Enter>
+      <Enter from="top" delay={350}>
+        <Person
+          u={-0.4}
+          v={-0.45}
+          s={0.68}
+          top={WHITE}
+          legs={B2}
+          arms="hold"
+          face="front"
+          className="breathe-slow"
+        />
+      </Enter>
 
       {/* on the pavement: one crossing the forecourt, one at the door */}
-      <Person u={0.44} v={-0.04} s={0.78} top={B2} legs={B1} dress className="breathe-slow" />
-      <Person
-        u={0.8}
-        v={-0.6}
-        s={0.7}
-        top={WHITE}
-        legs={B3}
-        arms="hang"
-        dress
-        className="breathe"
-      />
-      <Person
-        u={0.15}
-        v={0.35}
-        s={0.72}
-        top={B3}
-        face="profile"
-        arms="point"
-        className="breathe-slow"
-      />
+      <Enter from="top" delay={290}>
+        <Person u={0.44} v={-0.04} s={0.78} top={B2} legs={B1} dress className="breathe-slow" />
+      </Enter>
+      <Enter from="top" delay={345}>
+        <Person
+          u={0.8}
+          v={-0.6}
+          s={0.7}
+          top={WHITE}
+          legs={B3}
+          arms="hang"
+          dress
+          className="breathe"
+        />
+      </Enter>
+      <Enter from="top" delay={385}>
+        <Person
+          u={0.15}
+          v={0.35}
+          s={0.72}
+          top={B3}
+          face="profile"
+          arms="point"
+          className="breathe-slow"
+        />
+      </Enter>
 
       {/* the two of us, mid-conversation, and the cat ignoring both */}
       <g>
-        <Person u={0.46} v={0.86} s={0.76} top={B4} arms="talk" face="front" className="breathe" />
-        <Person
-          u={0.58}
-          v={0.78}
-          s={0.76}
-          top={B3}
-          arms="gesture"
-          face="away"
-          flip
-          className="breathe-slow"
-        />
-        <Makaka u={0.7} v={0.7} s={0.78} />
+        <Enter from="top" delay={425}>
+          <Person
+            u={0.46}
+            v={0.86}
+            s={0.76}
+            top={B4}
+            arms="talk"
+            face="front"
+            className="breathe"
+          />
+        </Enter>
+        <Enter from="top" delay={465}>
+          <Person
+            u={0.58}
+            v={0.78}
+            s={0.76}
+            top={B3}
+            arms="gesture"
+            face="away"
+            flip
+            className="breathe-slow"
+          />
+        </Enter>
       </g>
 
       {/* two of them over a document */}
       <g>
-        <Person
-          u={0.8}
-          v={0.46}
-          s={0.7}
-          top={B4}
-          arms="think"
-          face="profile"
-          dress
-          className="breathe-slow"
-        />
-        <Table u={0.82} v={0.54} du={0.1} dv={0.09} h={40} />
-        <Sheet u={0.78} v={0.52} w={46} h={34} lean={6} lines={3} />
+        <Enter from="right" delay={250}>
+          <Table u={0.82} v={0.54} du={0.1} dv={0.09} h={40} />
+          <Laptop />
+        </Enter>
+        <Enter from="top" delay={470}>
+          <Makaka u={0.84} v={0.58} lift={44} s={0.78} />
+        </Enter>
+        <Enter from="top" delay={445}>
+          <Person
+            u={0.825}
+            v={0.74}
+            s={0.7}
+            top={B4}
+            arms="think"
+            face="profile"
+            dress
+            className="breathe-slow"
+          />
+        </Enter>
       </g>
 
       {/* the stories: the long accounts, and somebody reading them */}
       <g>
-        <Person
-          u={0.88}
-          v={0.16}
-          s={0.72}
-          top={B3}
-          arms="point"
-          face="profile"
-          dress
-          className="breathe"
-        />
-        <Sheet u={0.86} v={0.06} w={78} h={104} lean={10} lines={5} />
-        <Sheet u={0.86} v={-0.1} w={70} h={88} lean={8} lines={4} />
+        <Enter from="top" delay={310}>
+          <Person
+            u={0.88}
+            v={0.16}
+            s={0.72}
+            top={B3}
+            arms="point"
+            face="profile"
+            dress
+            className="breathe"
+          />
+        </Enter>
+        <Enter from="right" delay={270}>
+          <Sheet u={0.86} v={0.06} w={78} h={104} lean={10} lines={5} />
+          <Sheet u={0.86} v={-0.1} w={70} h={88} lean={8} lines={4} />
+        </Enter>
       </g>
     </>
   );
