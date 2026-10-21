@@ -89,6 +89,13 @@ function rightFace({ u, v, du, dv, h, base = 0 }: Solid) {
   return `matrix(-1 ${SLOPE} 0 1 ${gx(u + du, v - dv)} ${gy(u + du, v - dv) - base - h})`;
 }
 
+/** The lid of a box: local x runs along +u, local y along +v. */
+function topFace({ u, v, du, dv, h, base = 0 }: Solid) {
+  const x = gx(u - du, v - dv);
+  const y = gy(u - du, v - dv) - base - h;
+  return `matrix(1 ${SLOPE} -1 ${SLOPE} ${x} ${y})`;
+}
+
 /** A limb: one rounded stroke in the outline colour with a thinner one over it. */
 function Limb({
   d,
@@ -439,22 +446,58 @@ function Table({ u, v, du, dv, h }: { u: number; v: number; du: number; dv: numb
   );
 }
 
-/** A screen on a stand. */
-function Monitor({ u, v, lift }: { u: number; v: number; lift: number }) {
-  const box: Solid = { u, v, du: 0.05, dv: 0.012, h: 38, base: lift };
+/**
+ * A desktop computer: a screen on a stand, a keyboard in front of it and the
+ * tower beside it. Two bare screens sitting on a desk read as display units
+ * in a shop rather than as somebody's machine.
+ */
+function DesktopPC({ u, v, lift }: { u: number; v: number; lift: number }) {
+  const foot: Solid = { u, v: v - 0.03, du: 0.035, dv: 0.014, h: 3, base: lift };
+  const screen: Solid = { u, v: v - 0.03, du: 0.075, dv: 0.014, h: 34, base: lift + 14 };
+  const keys: Solid = { u: u + 0.045, v: v + 0.075, du: 0.058, dv: 0.025, h: 4, base: lift };
+  const tower: Solid = { u: u + 0.115, v: v + 0.01, du: 0.024, dv: 0.021, h: 34, base: lift };
+  const neck = `M${gx(u, v - 0.03)} ${gy(u, v - 0.03) - lift - 3}v-12`;
+  const keyRow = 2 * keys.du * HX;
+
   return (
     <g>
-      <Box {...box} top={B1} left={WHITE} right={B2} />
-      <g transform={leftFace(box)}>
+      <Box {...foot} top={B2} left={B1} right={B2} />
+      <path d={neck} fill="none" stroke={LINE} strokeWidth="7" strokeLinecap="round" />
+      <path d={neck} fill="none" stroke={B1} strokeWidth="3" strokeLinecap="round" />
+
+      <Box {...screen} top={B1} left={WHITE} right={B2} />
+      <g transform={leftFace(screen)}>
         <rect
-          x="6"
-          y="6"
-          width={2 * box.du * HX - 12}
-          height={box.h - 14}
+          x="5"
+          y="5"
+          width={2 * screen.du * HX - 10}
+          height={screen.h - 13}
           rx="3"
           fill={B2}
           {...nib}
         />
+      </g>
+
+      <Box {...keys} top={WHITE} left={B1} right={B2} />
+      <g transform={topFace(keys)}>
+        {[0, 1, 2].map((row) => (
+          <rect
+            key={row}
+            x="5"
+            y={4 + row * 4.5}
+            width={keyRow - 10}
+            height="2.6"
+            rx="1.3"
+            fill={B2}
+          />
+        ))}
+      </g>
+
+      <Box {...tower} top={B1} left={WHITE} right={B2} />
+      <g transform={leftFace(tower)}>
+        <rect x="4" y="6" width={2 * tower.du * HX - 8} height="4" rx="2" fill={B2} />
+        <rect x="4" y="13" width={2 * tower.du * HX - 8} height="3" rx="1.5" fill={B2} />
+        <circle cx="8" cy="24" r="2.6" fill={B4} />
       </g>
     </g>
   );
@@ -831,8 +874,7 @@ export function WorldArt() {
       {/* the desk by the window, and somebody at it with their back to us */}
       <g>
         <Table u={0.25} v={0.02} du={0.16} dv={0.085} h={46} />
-        <Monitor u={0.19} v={0} lift={46} />
-        <Monitor u={0.31} v={0} lift={46} />
+        <DesktopPC u={0.22} v={-0.01} lift={46} />
         <Person u={0.4} v={0.28} s={0.72} top={B3} arms="type" face="away" className="breathe" />
       </g>
 
