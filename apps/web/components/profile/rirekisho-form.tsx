@@ -11,7 +11,14 @@ import {
   type PaperSize,
 } from "@/lib/api";
 
-import { Field, Section, Select, SubmitButton, toFieldErrors, type FieldErrors } from "./form-primitives";
+import {
+  Field,
+  Section,
+  Select,
+  SubmitButton,
+  toFieldErrors,
+  type FieldErrors,
+} from "./form-primitives";
 
 /**
  * Producing a 履歴書.
@@ -115,14 +122,15 @@ export function RirekishoForm() {
       {result && previewUrl && (
         <div className="mt-5 flex flex-col gap-3 border-t border-neutral-200 pt-4 dark:border-neutral-800">
           <div className="flex flex-wrap items-center gap-3">
-            <a
-              href={previewUrl}
-              download={result.filename}
-              className="rounded bg-neutral-900 px-4 py-2 text-sm text-white dark:bg-white dark:text-neutral-900"
-            >
+            <a href={previewUrl} download={result.filename} className="btn-form">
               {t("download")}
             </a>
-            <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="text-sm underline">
+            <a
+              href={previewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm underline"
+            >
               {t("preview")}
             </a>
           </div>

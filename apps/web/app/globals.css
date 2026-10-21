@@ -135,6 +135,27 @@
       hover:brightness-[1.06] active:translate-y-px;
   }
 
+  /* The button a form has. Flat, square-ish and quiet: btn-primary is a
+     poster button for the landing page, and a form full of gradient pills
+     with a glow under each one shouts. Same blue, nothing else.
+
+     The originals were near-black with a dead dark-mode variant — the page
+     has not had a dark mode since the landing page was rebuilt. */
+  .btn-form {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4
+      py-2 text-sm font-medium text-white transition hover:bg-brand-700
+      active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50
+      disabled:hover:bg-brand-600;
+  }
+
+  /* The destructive one: the deepest blue in the family rather than a red
+     from nowhere, so it reads as weightier without leaving the palette. */
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-800 px-4
+      py-2 text-sm font-medium text-white transition hover:bg-brand-900
+      active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-full border
       border-brand-200/80 bg-white/70 px-5 py-2.5 text-sm font-semibold text-brand-700
