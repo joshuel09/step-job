@@ -705,9 +705,16 @@ function BannerPlane({ y }: { y: number }) {
           <path d="M31 -32v-15" fill="none" {...nib} />
 
           <rect x="76" y="-2" width="16" height="42" rx="7" fill={B3} {...pen} />
-          <rect x="96" y="-28" width="8" height="26" rx="4" fill={B5} />
-          <rect x="96" y="28" width="8" height="26" rx="4" fill={B5} />
-          <circle cx="100" cy="19" r="7" fill={B5} />
+          {/* The propeller, from the side.
+              A blade seen edge-on is a thin sharp line; a moment later,
+              mid-sweep, it is a wide soft smear. So there are two of them
+              and they swap, hard, several times a second — which is how a
+              turning propeller actually looks from the side, and what a
+              blade that merely grows and shrinks never gets right. */}
+          <ellipse cx="96" cy="19" rx="14" ry="43" fill={B3} className="prop-blur" />
+          <rect x="93.5" y="-24" width="5" height="86" rx="2.5" fill={LINE} className="prop" />
+          <circle cx="96" cy="19" r="8" fill={B5} />
+          <circle cx="96" cy="19" r="3" fill={B2} />
 
           <path d="M-16 43v9M46 43v9" fill="none" {...nib} />
           <circle cx="-16" cy="59" r="10" fill={WHITE} {...pen} />
