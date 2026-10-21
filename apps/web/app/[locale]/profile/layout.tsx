@@ -1,10 +1,8 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import Link from "next/link";
+import { setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 
-import { Wordmark } from "@/components/brand/wordmark";
-import { LocaleSwitcher } from "@/components/locale-switcher";
-import { PROFILE_LINKS } from "@/lib/site";
+import { NavLinks } from "@/components/nav-links";
+import { SiteHeader } from "@/components/site-header";
 
 /**
  * One navigation bar for every page under /profile.
@@ -29,33 +27,16 @@ export default async function ProfileLayout({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("profile");
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-10 border-b border-white/50 bg-white/70 backdrop-blur-xl dark:border-white/10 dark:bg-[#081726]/70">
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-3">
-          <Link href={`/${locale}`} className="shrink-0" aria-label="Step Job">
-            <Wordmark compact />
-          </Link>
-
-          <nav className="-mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)] sm:[mask-image:none]">
-            {PROFILE_LINKS.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={`/${locale}/profile${href}`}
-                className="whitespace-nowrap rounded-full px-3 py-1.5 text-sm text-ink-soft transition hover:bg-brand-50 hover:text-brand-700 dark:text-brand-100/80 dark:hover:bg-white/10 dark:hover:text-brand-100"
-              >
-                {t(label)}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="shrink-0">
-            <LocaleSwitcher />
-          </div>
-        </div>
-      </header>
+      <SiteHeader locale={locale}>
+        {/* Scrolls sideways rather than wrapping when the window is narrow. */}
+        <NavLinks
+          locale={locale}
+          className="flex [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)] sm:[mask-image:none]"
+        />
+      </SiteHeader>
 
       {children}
     </div>

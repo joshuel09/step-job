@@ -81,13 +81,13 @@ export function ExperienceForm({
           {existing.map((entry) => (
             <li
               key={entry.id}
-              className="flex items-start justify-between gap-3 rounded border border-neutral-200 p-3 text-sm dark:border-neutral-800"
+              className="entry flex items-start justify-between gap-3"
             >
               <div>
                 <p className="font-medium">
                   {entry.job_title} — {entry.employer_name}
                 </p>
-                <p className="text-xs opacity-70">
+                <p className="hint">
                   {entry.started_on} – {entry.ended_on ?? t("present")}
                 </p>
                 {/* Accomplishments recorded against this role, so the link is
@@ -97,19 +97,19 @@ export function ExperienceForm({
                     {stories
                       .filter((s) => s.work_experience_id === entry.id)
                       .map((story) => (
-                        <li key={story.id} className="text-xs opacity-80">
+                        <li key={story.id} className="hint">
                           ★ {story.title}
                         </li>
                       ))}
                   </ul>
                 )}
                 {confirming === entry.id && (
-                  <p role="alert" className="mt-2 text-xs text-amber-700 dark:text-amber-400">
+                  <p role="alert" className="mt-2 text-xs font-medium text-brand-800">
                     {t("deleteWarning")}{" "}
                     <button
                       type="button"
                       onClick={() => onDelete(entry.id!, true)}
-                      className="underline"
+                      className="link"
                     >
                       {t("deleteAnyway")}
                     </button>
@@ -119,7 +119,7 @@ export function ExperienceForm({
               <button
                 type="button"
                 onClick={() => onDelete(entry.id!, false)}
-                className="text-xs underline opacity-70"
+                className="link text-xs"
               >
                 {t("delete")}
               </button>

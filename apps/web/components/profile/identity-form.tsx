@@ -86,7 +86,7 @@ export function IdentityForm({ initial }: { initial?: Identity | null }) {
 
         <div className="flex items-center gap-3">
           <SubmitButton pending={pending}>{t("save")}</SubmitButton>
-          {saved && <span className="text-xs opacity-70">{t("saved")}</span>}
+          {saved && <span className="text-xs font-medium text-brand-700">{t("saved")}</span>}
         </div>
       </form>
     </Section>
