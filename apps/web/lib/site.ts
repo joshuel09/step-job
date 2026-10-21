@@ -69,6 +69,20 @@ export type Solid = { u: number; v: number; du: number; dv: number; h: number; b
 export const BUILDING: Solid = { u: 0.3, v: -0.42, du: 0.3, dv: 0.26, h: 270 };
 export const ROOF_SIGN: Solid = { u: 0.3, v: -0.42, du: 0.17, dv: 0.14, h: 58, base: 270 };
 
+/** The laptop on the table, and the lid standing on its back edge. */
+export const LAPTOP: Solid = { u: 0.82, v: 0.52, du: 0.075, dv: 0.05, h: 4, base: 40 };
+export const LID = { w: 2 * LAPTOP.du * HX, lean: 7, h: 30 };
+
+/**
+ * The middle of the laptop's screen. The lid is a parallelogram standing on
+ * the base's back edge: along the edge, then up and a little back.
+ */
+export function lidCentre() {
+  const x = gx(LAPTOP.u - LAPTOP.du, LAPTOP.v - LAPTOP.dv);
+  const y = gy(LAPTOP.u - LAPTOP.du, LAPTOP.v - LAPTOP.dv) - (LAPTOP.base ?? 0) - LAPTOP.h;
+  return { x: x + LID.w / 2 + LID.lean / 2, y: y + (LID.w * SLOPE) / 2 - LID.h / 2 };
+}
+
 /**
  * A point on a solid's lower-left face, given in that face's own flat
  * coordinates: x across it from the top-left corner, y straight down it.
@@ -103,14 +117,7 @@ export const HOTSPOTS = [
     side: "left",
     up: true,
   },
-  {
-    key: "makers",
-    x: gx(0.7, 0.7) + 36,
-    y: gy(0.7, 0.7) - 34,
-    href: undefined,
-    side: "right",
-    up: true,
-  },
+  { key: "makers", ...lidCentre(), href: undefined, side: "left", up: true },
 ] as const;
 
 export type HotspotKey = (typeof HOTSPOTS)[number]["key"];

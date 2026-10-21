@@ -40,6 +40,23 @@ export function World({ locale }: { locale: string }) {
     };
   }, [open]);
 
+  /* The scene assembles itself on arrival, and again whenever it is scrolled
+     back to. The class is on from the first render, including on the server,
+     so the animation runs from the first paint rather than after a frame of
+     the finished picture. Taking it off once the drawing has left the
+     viewport is what arms it for next time. */
+  const [entering, setEntering] = useState(true);
+  useEffect(() => {
+    const el = frame.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+
+    const seen = new IntersectionObserver(([entry]) => setEntering(!!entry?.isIntersecting), {
+      threshold: 0.2,
+    });
+    seen.observe(el);
+    return () => seen.disconnect();
+  }, []);
+
   // The card sits a few pixels off the marker, so a pointer travelling from
   // one to the other crosses a gap. Closing on a short delay lets it arrive;
   // closing immediately would shut the card on the way to its link.
@@ -60,7 +77,7 @@ export function World({ locale }: { locale: string }) {
     <div ref={frame} className="relative w-full">
       <svg
         viewBox={`0 0 ${WORLD_W} ${WORLD_H}`}
-        className="block w-full"
+        className={`block w-full ${entering ? "world-enter" : ""}`}
         role="presentation"
         aria-hidden
       >
@@ -75,7 +92,22 @@ export function World({ locale }: { locale: string }) {
             // Below sm the drawing is a 200px band: a 32px marker covers the
             // thing it points at and the card it opens covers the drawing.
             // Everything a marker offers is also a card further down the page.
-            className="absolute hidden sm:block"
+            //
+            // The markers are page elements, not part of the drawing, so they
+            // do not arrive with it. They wait for it instead: without that
+            // they hang in empty space while the building is still sliding in.
+            // The open one is lifted above the rest: without an explicit
+            // order the markers that come later in the page paint over the
+            // card and sit on top of its text.
+            // No size of its own. The marker is centred on this point by its
+            // own transform, and the card is placed against it from whichever
+            // side it opens — so the box has to be the point itself. With the
+            // wrapper 32px wide, `left` measured from the dot's centre while
+            // `right` measured from 32px past it, and the cards that open
+            // leftwards or upwards missed their dot by exactly that.
+            className={`absolute h-0 w-0 ${showing ? "z-30" : "z-10"} hidden sm:block ${
+              entering ? "marker-in" : ""
+            }`}
             style={{ left: `${(x / WORLD_W) * 100}%`, top: `${(y / WORLD_H) * 100}%` }}
             onMouseEnter={() => show(key)}
             onMouseLeave={hide}
