@@ -73,12 +73,7 @@ export function DangerZone() {
         <p className="mt-2 text-sm opacity-70">
           {t("erasedNow", { fields: receipt.erased_immediately.join(", ") })}
         </p>
-        <button
-          type="button"
-          onClick={onRestore}
-          disabled={pending}
-          className="mt-4 rounded bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
-        >
+        <button type="button" onClick={onRestore} disabled={pending} className="btn-form mt-4">
           {t("restore")}
         </button>
       </Section>
@@ -122,12 +117,7 @@ export function DangerZone() {
               <li>{t("confirmPermanent")}</li>
             </ul>
             <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={onDelete}
-                disabled={pending}
-                className="rounded bg-red-600 px-4 py-2 text-sm text-white disabled:opacity-50"
-              >
+              <button type="button" onClick={onDelete} disabled={pending} className="btn-danger">
                 {t("confirmDelete")}
               </button>
               <button

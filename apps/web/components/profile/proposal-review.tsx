@@ -69,7 +69,7 @@ export function ProposalReview({
             {duplicate && (
               <p
                 role="status"
-                className="mb-3 rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                className="mb-3 rounded-lg border border-brand-200 bg-brand-50 p-2 text-xs text-brand-800"
               >
                 {t("possibleDuplicate", {
                   role: `${duplicate.job_title} — ${duplicate.employer_name}`,
@@ -80,7 +80,7 @@ export function ProposalReview({
             {conflicts.length > 0 && (
               <ul
                 role="alert"
-                className="mb-3 rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                className="mb-3 rounded-lg border border-brand-200 bg-brand-50 p-2 text-xs text-brand-800"
               >
                 {/* Flagged, not resolved. The document disagrees with itself and
                     the user knows which reading is right (FR-012a). */}
@@ -133,7 +133,7 @@ export function ProposalReview({
                     ),
                   )
                 }
-                className="rounded bg-neutral-900 px-3 py-1.5 text-sm text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+                className="btn-form py-1.5"
               >
                 {duplicate ? t("keepBoth") : t("accept")}
               </button>

@@ -110,15 +110,22 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           {/* --- how it works, as three stops on a path -------------------- */}
           <section className="flex flex-col gap-6">
             <SectionTitle>{t("howTitle")}</SectionTitle>
-            <ol className="relative grid gap-6 sm:grid-cols-3">
-              {/* the path between the stops, drawn behind them */}
-              <div
-                aria-hidden
-                className="absolute left-[16%] right-[16%] top-6 hidden border-t-2 border-dashed border-cream-300 sm:block"
-              />
+            <ol className="grid gap-6 sm:grid-cols-3">
               {STEPS.map((step, index) => (
                 <li key={step} className="relative flex flex-col items-start gap-3">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-cream-300 bg-cream-50 text-base font-semibold tabular-nums text-warm shadow-[0_6px_16px_-10px_rgba(95,106,115,0.6)]">
+                  {/* The path runs from this stop's centre to the next one's,
+                      so it is drawn per step rather than as one line across
+                      the row: a single line has to guess at the circles'
+                      positions and ends up starting and stopping nowhere.
+                      The column is 100% and the gap 1.5rem, which is exactly
+                      the distance between two centres. */}
+                  {index < STEPS.length - 1 ? (
+                    <span
+                      aria-hidden
+                      className="absolute left-6 top-6 hidden w-[calc(100%+1.5rem)] border-t-2 border-dashed border-cream-300 sm:block"
+                    />
+                  ) : null}
+                  <span className="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-cream-300 bg-cream-50 text-base font-semibold tabular-nums text-warm shadow-[0_6px_16px_-10px_rgba(95,106,115,0.6)]">
                     {index + 1}
                   </span>
                   <h3 className="text-base font-semibold">{t(`steps.${step}.title`)}</h3>

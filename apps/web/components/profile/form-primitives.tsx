@@ -121,11 +121,7 @@ export function Section({ title, children }: { title: string; children: ReactNod
 
 export function SubmitButton({ children, pending }: { children: ReactNode; pending?: boolean }) {
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
-    >
+    <button type="submit" disabled={pending} className="btn-form">
       {children}
     </button>
   );
