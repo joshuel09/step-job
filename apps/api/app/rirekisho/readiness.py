@@ -35,7 +35,22 @@ OPTIONAL_IDENTITY = ("furigana", "date_of_birth", "address", "phone", "email")
 OPTIONAL_SECTIONS = ("education", "experiences", "certifications")
 
 # Kana and kanji. An entry whose text has none will read as English on the page.
-_JAPANESE = re.compile(r"[぀-ヿ㐀-鿿豈-﫿]")
+#
+# Half-width katakana is in here because imported data is full of it: it is what
+# older Japanese systems emit, and #002 reads documents produced by exactly those
+# systems. Without it a name written only that way is reported as having no
+# Japanese version, while the same name carrying two kanji is not (#107).
+#
+# Written as escapes with the block each range covers: as literal characters the
+# pattern is a row of glyphs nobody can check against the standard.
+_JAPANESE = re.compile(
+    "["
+    "\u3040-\u30ff"  # hiragana and katakana
+    "\u3400-\u9fff"  # kanji, including extension A
+    "\uf900-\ufaff"  # compatibility ideographs
+    "\uff66-\uff9d"  # half-width katakana
+    "]"
+)
 
 
 def missing_required(identity: Any | None) -> list[str]:
