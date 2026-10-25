@@ -74,13 +74,13 @@ function ListSection({
           {entries.map((entry) => (
             <li
               key={String(entry.id)}
-              className="flex items-center justify-between gap-3 rounded border border-neutral-200 p-2 text-sm dark:border-neutral-800"
+              className="entry flex items-center justify-between gap-3 py-2"
             >
               <span>{label(entry)}</span>
               <button
                 type="button"
                 onClick={() => onDelete(String(entry.id))}
-                className="text-xs underline opacity-70"
+                className="link text-xs"
               >
                 {tc("delete")}
               </button>

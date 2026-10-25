@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 
 import { ImportForm } from "@/components/profile/import-form";
+import { PageHeading } from "@/components/profile/page-heading";
 import { api, type CareerImport } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -19,27 +20,25 @@ export default async function ImportPage({ params }: { params: Promise<{ locale:
   }
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
-      <header>
-        <Link href={`/${locale}/profile`} className="text-sm underline opacity-70">
-          {t("back")}
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold">{t("title")}</h1>
-        <p className="mt-1 text-sm opacity-70">{t("subtitle")}</p>
-      </header>
+    <main className="page">
+      <PageHeading
+        title={t("title")}
+        subtitle={t("subtitle")}
+        back={{ href: `/${locale}/profile`, label: t("back") }}
+      />
 
       <ImportForm />
 
       {history.length > 0 && (
-        <section className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-          <h2 className="mb-3 text-lg font-semibold">{t("historyTitle")}</h2>
+        <section className="surface">
+          <h2 className="surface-title">{t("historyTitle")}</h2>
           {/* Source kind and time only. The filename is never kept — a name can
               reveal where someone was applying (FR-019b). */}
           <ul className="flex flex-col gap-2 text-sm">
             {history.map((record) => (
               <li key={record.id} className="flex items-center justify-between gap-3">
                 <span>{t(`sources.${record.source_kind}`)}</span>
-                <span className="text-xs opacity-70">
+                <span className="hint">
                   {new Date(record.started_at).toLocaleString()} ·{" "}
                   {record.status === "completed"
                     ? t("found", { count: record.entry_count })
@@ -52,7 +51,7 @@ export default async function ImportPage({ params }: { params: Promise<{ locale:
       )}
 
       <p className="text-sm">
-        <Link href={`/${locale}/profile/review`} className="underline">
+        <Link href={`/${locale}/profile/review`} className="link">
           {t("goToReview")}
         </Link>
       </p>

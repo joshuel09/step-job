@@ -47,10 +47,10 @@ export function ImportForm({ onComplete }: { onComplete?: (result: CareerImport)
 
   return (
     <Section title={t("pasteTitle")}>
-      <p className="mb-3 text-sm opacity-80">{t("pasteExplanation")}</p>
+      <p className="explain mb-3">{t("pasteExplanation")}</p>
       {/* Said up front, because a user with a 職務経歴書 needs to know their
           document will be read rather than flattened into English. */}
-      <p className="mb-3 text-xs opacity-70">{t("japaneseNote")}</p>
+      <p className="hint mb-3">{t("japaneseNote")}</p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <TextArea
@@ -62,14 +62,14 @@ export function ImportForm({ onComplete }: { onComplete?: (result: CareerImport)
           aria-label={t("pasteTitle")}
         />
         {errors.text && (
-          <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+          <p role="alert" className="field-error">
             {errors.text}
           </p>
         )}
         <SubmitButton pending={pending}>{pending ? t("reading") : t("read")}</SubmitButton>
       </form>
 
-      <hr className="my-5 border-neutral-200 dark:border-neutral-800" />
+      <hr className="divider my-5" />
 
       <UploadField
         onResult={(imported) => {
@@ -120,7 +120,7 @@ function UploadField({ onResult }: { onResult: (result: CareerImport) => void })
     <div className="flex flex-col gap-2">
       <h3 className="text-sm font-medium">{t("uploadTitle")}</h3>
       {/* The accepted formats are stated before the user tries, per FR-003. */}
-      <p className="text-xs opacity-70">{t("uploadExplanation")}</p>
+      <p className="hint">{t("uploadExplanation")}</p>
 
       <label className="flex flex-col gap-1">
         <span className="sr-only">{t("uploadTitle")}</span>
@@ -129,13 +129,13 @@ function UploadField({ onResult }: { onResult: (result: CareerImport) => void })
           accept={ACCEPTED}
           disabled={pending}
           onChange={onChange}
-          className="text-sm file:mr-3 file:rounded file:border file:border-neutral-300 file:bg-transparent file:px-3 file:py-1.5 file:text-sm dark:file:border-neutral-700"
+          className="text-sm text-ink-soft file:mr-3 file:rounded-lg file:border file:border-cream-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-700 hover:file:border-brand-200"
         />
       </label>
 
-      {pending && <p className="text-xs opacity-70">{t("reading")}</p>}
+      {pending && <p className="hint">{t("reading")}</p>}
       {error && (
-        <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}
@@ -148,25 +148,25 @@ function ImportResult({ result }: { result: CareerImport }) {
 
   if (result.status === "failed") {
     return (
-      <div role="alert" className="mt-4 rounded border border-amber-400 p-3 text-sm">
+      <div role="alert" className="notice mt-4">
         {/* The reason matters: an unavailable service is worth returning to,
             an unreadable document never will be. */}
         <p className="font-medium">{t(`failures.${result.failure_reason ?? "extraction_failed"}`)}</p>
-        {result.outcome?.message && <p className="mt-1 opacity-80">{result.outcome.message}</p>}
+        {result.outcome?.message && <p className="mt-1 text-ink-soft">{result.outcome.message}</p>}
       </div>
     );
   }
 
   return (
-    <div className="mt-4 rounded border border-neutral-200 p-3 text-sm dark:border-neutral-800">
+    <div className="entry mt-4">
       <p className="font-medium">{t("found", { count: result.entry_count })}</p>
-      {result.outcome?.message && <p className="mt-1 text-xs opacity-80">{result.outcome.message}</p>}
+      {result.outcome?.message && <p className="hint mt-1">{result.outcome.message}</p>}
       {result.outcome?.not_found?.length ? (
-        <p className="mt-2 text-xs opacity-70">
+        <p className="hint mt-2">
           {t("notFound", { kinds: result.outcome.not_found.join(", ") })}
         </p>
       ) : null}
-      <p className="mt-2 text-xs opacity-70">{t("nothingAddedYet")}</p>
+      <p className="hint mt-2">{t("nothingAddedYet")}</p>
     </div>
   );
 }

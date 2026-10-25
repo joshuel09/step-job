@@ -6,9 +6,9 @@ import { BrandMark } from "@/components/brand/footsteps";
 import { GLYPHS } from "@/components/brand/icons";
 import { Cat, Josh, Mich } from "@/components/brand/people";
 import { DeskScene } from "@/components/brand/scene";
-import { Wordmark } from "@/components/brand/wordmark";
 import { World } from "@/components/landing/world";
-import { LocaleSwitcher } from "@/components/locale-switcher";
+import { NavLinks } from "@/components/nav-links";
+import { SiteHeader } from "@/components/site-header";
 import { AVAILABLE, PLANNED, PROFILE_LINKS, STEPS } from "@/lib/site";
 
 /**
@@ -40,32 +40,19 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   // requirement, so each page sets the locale explicitly.
   setRequestLocale(locale);
   const t = await getTranslations("home");
-  const nav = await getTranslations("profile");
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-20 border-b border-cream-200 bg-cream-50/90 backdrop-blur-xl dark:border-white/10 dark:bg-[#081726]/80">
-        <div className="mx-auto flex max-w-6xl items-center gap-5 px-6 py-3">
-          <Wordmark compact />
-          <nav className="-mx-1 hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 md:flex">
-            {PROFILE_LINKS.slice(0, 5).map(({ href, label }) => (
-              <Link
-                key={href}
-                href={`/${locale}/profile${href}`}
-                className="whitespace-nowrap rounded-full px-3 py-1.5 text-sm text-ink-soft transition hover:bg-cream-200 hover:text-warm-deep dark:text-brand-100/80 dark:hover:bg-white/10"
-              >
-                {nav(label)}
-              </Link>
-            ))}
-          </nav>
-          <div className="ml-auto flex items-center gap-3 md:ml-0">
-            <LocaleSwitcher />
-            <Link href={`/${locale}/profile`} className="btn-primary px-4 py-2 text-sm">
-              {t("start")}
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader
+        locale={locale}
+        action={
+          <Link href={`/${locale}/profile`} className="btn-primary px-4 py-2 text-sm">
+            {t("start")}
+          </Link>
+        }
+      >
+        <NavLinks locale={locale} links={PROFILE_LINKS.slice(0, 5)} className="hidden md:flex" />
+      </SiteHeader>
 
       <main>
         {/* --- the world --------------------------------------------------

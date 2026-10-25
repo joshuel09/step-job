@@ -70,7 +70,7 @@ export function DangerZone() {
         <p className="mt-2 text-sm">
           {t("recoverableUntil", { date: new Date(receipt.recoverable_until).toLocaleString() })}
         </p>
-        <p className="mt-2 text-sm opacity-70">
+        <p className="explain mt-2">
           {t("erasedNow", { fields: receipt.erased_immediately.join(", ") })}
         </p>
         <button type="button" onClick={onRestore} disabled={pending} className="btn-form mt-4">
@@ -83,12 +83,12 @@ export function DangerZone() {
   return (
     <>
       <Section title={t("exportTitle")}>
-        <p className="text-sm opacity-80">{t("exportExplanation")}</p>
+        <p className="explain">{t("exportExplanation")}</p>
         <button
           type="button"
           onClick={onExport}
           disabled={pending}
-          className="mt-3 rounded border border-neutral-300 px-4 py-2 text-sm disabled:opacity-50 dark:border-neutral-700"
+          className="btn-quiet mt-3"
         >
           {t("export")}
         </button>
@@ -97,11 +97,11 @@ export function DangerZone() {
       <Section title={t("deleteTitle")}>
         {!confirming ? (
           <>
-            <p className="text-sm opacity-80">{t("deleteExplanation")}</p>
+            <p className="explain">{t("deleteExplanation")}</p>
             <button
               type="button"
               onClick={() => setConfirming(true)}
-              className="mt-3 rounded border border-red-500 px-4 py-2 text-sm text-red-600 dark:text-red-400"
+              className="btn-quiet mt-3 text-brand-800"
             >
               {t("delete")}
             </button>
@@ -123,7 +123,7 @@ export function DangerZone() {
               <button
                 type="button"
                 onClick={() => setConfirming(false)}
-                className="rounded border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700"
+                className="btn-quiet"
               >
                 {t("cancel")}
               </button>

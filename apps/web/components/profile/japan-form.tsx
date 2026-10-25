@@ -65,7 +65,7 @@ export function JapanForm({ initial }: { initial?: JapanProfile | null }) {
 
   return (
     <Section title={t("title")}>
-      <p className="mb-3 text-xs opacity-70">{t("privacyNote")}</p>
+      <p className="hint mb-3">{t("privacyNote")}</p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         {FIELDS.map(({ name, disclose, type }) => (
@@ -78,7 +78,7 @@ export function JapanForm({ initial }: { initial?: JapanProfile | null }) {
                 defaultValue={(initial?.[name] as string | undefined) ?? ""}
               />
             </Field>
-            <label className="flex items-center gap-2 text-xs opacity-80">
+            <label className="flex items-center gap-2 text-xs text-ink-soft">
               <input
                 type="checkbox"
                 name={disclose}
@@ -97,7 +97,7 @@ export function JapanForm({ initial }: { initial?: JapanProfile | null }) {
           />
           {t("work_authorisation")}
         </label>
-        <label className="flex items-center gap-2 text-xs opacity-80">
+        <label className="flex items-center gap-2 text-xs text-ink-soft">
           <input
             type="checkbox"
             name="disclose_work_authorisation"
@@ -108,7 +108,7 @@ export function JapanForm({ initial }: { initial?: JapanProfile | null }) {
 
         <div className="flex items-center gap-3">
           <SubmitButton pending={pending}>{t("save")}</SubmitButton>
-          {saved && <span className="text-xs opacity-70">{t("saved")}</span>}
+          {saved && <span className="text-xs font-medium text-brand-700">{t("saved")}</span>}
         </div>
       </form>
     </Section>

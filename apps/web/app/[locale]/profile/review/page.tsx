@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import Link from "next/link";
 
+import { PageHeading } from "@/components/profile/page-heading";
 import { ProposalReview } from "@/components/profile/proposal-review";
 import { api, type ProposedEntry, type WorkExperience } from "@/lib/api";
 
@@ -23,14 +23,12 @@ export default async function ReviewPage({ params }: { params: Promise<{ locale:
   }
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
-      <header>
-        <Link href={`/${locale}/profile`} className="text-sm underline opacity-70">
-          {t("back")}
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold">{t("title")}</h1>
-        <p className="mt-1 text-sm opacity-70">{t("explanation")}</p>
-      </header>
+    <main className="page">
+      <PageHeading
+        title={t("title")}
+        subtitle={t("explanation")}
+        back={{ href: `/${locale}/profile`, label: t("back") }}
+      />
 
       <ProposalReview proposals={proposals} experiences={experiences} />
     </main>

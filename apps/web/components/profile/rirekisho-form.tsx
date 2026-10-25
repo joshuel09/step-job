@@ -11,14 +11,9 @@ import {
   type PaperSize,
 } from "@/lib/api";
 
-import {
-  Field,
-  Section,
-  Select,
-  SubmitButton,
-  toFieldErrors,
-  type FieldErrors,
-} from "./form-primitives";
+import { GLYPHS } from "@/components/brand/icons";
+
+import { Field, Select, toFieldErrors, type FieldErrors } from "./form-primitives";
 
 /**
  * Producing a 履歴書.
@@ -31,6 +26,8 @@ import {
  */
 /** The fields this form renders, which show their own errors inline. */
 const CHOICES = ["date_convention", "paper_size"];
+
+const RirekishoGlyph = GLYPHS.rirekisho;
 
 export function RirekishoForm() {
   const t = useTranslations("profile.rirekisho");
@@ -77,12 +74,25 @@ export function RirekishoForm() {
   }
 
   return (
-    <Section title={t("title")}>
-      <p className="mb-3 text-sm opacity-80">{t("explanation")}</p>
+    <section className="surface flex flex-col gap-5">
+      {/* The one page that produces what the product is for, so it opens with
+          the same mark the landing page gives it. */}
+      <div className="flex items-start gap-4">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-cream-300 bg-cream-100 text-warm-deep">
+          <RirekishoGlyph className="h-6 w-6" />
+        </span>
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold text-ink">{t("title")}</h2>
+          <p className="explain">{t("explanation")}</p>
+        </div>
+      </div>
+
       {/* Said before generating, not discovered after printing. */}
-      <p className="mb-2 text-xs opacity-70">{t("photoNote")}</p>
-      <p className="mb-2 text-xs opacity-70">{t("englishNote")}</p>
-      <p className="mb-4 text-xs opacity-70">{t("privateNote")}</p>
+      <ul className="notice flex list-disc flex-col gap-1.5 pl-8 text-xs leading-relaxed">
+        <li>{t("photoNote")}</li>
+        <li>{t("englishNote")}</li>
+        <li>{t("privateNote")}</li>
+      </ul>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -107,7 +117,7 @@ export function RirekishoForm() {
         {Object.entries(errors)
           .filter(([field]) => !CHOICES.includes(field))
           .map(([field, reason]) => (
-            <p key={field} role="alert" className="text-xs text-red-600 dark:text-red-400">
+            <p key={field} role="alert" className="field-error">
               {/* The server's reason is English. A missing name is the refusal a
                   user will actually meet, so it is said in their language. */}
               {field === "identity" || field.startsWith("identity.") ? t("nameRequired") : reason}
@@ -115,12 +125,16 @@ export function RirekishoForm() {
           ))}
 
         <div>
-          <SubmitButton pending={pending}>{pending ? t("generating") : t("generate")}</SubmitButton>
+          {/* The landing page's own button: this is the action the product
+              exists for, and the one place a form earns it. */}
+          <button type="submit" disabled={pending} className="btn-primary disabled:opacity-60">
+            {pending ? t("generating") : t("generate")}
+          </button>
         </div>
       </form>
 
       {result && previewUrl && (
-        <div className="mt-5 flex flex-col gap-3 border-t border-neutral-200 pt-4 dark:border-neutral-800">
+        <div className="entry flex animate-rise flex-col gap-3 border-brand-200 bg-brand-50/60 p-4">
           <div className="flex flex-wrap items-center gap-3">
             <a href={previewUrl} download={result.filename} className="btn-form">
               {t("download")}
@@ -129,7 +143,7 @@ export function RirekishoForm() {
               href={previewUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm underline"
+              className="link text-sm"
             >
               {t("preview")}
             </a>
@@ -139,18 +153,20 @@ export function RirekishoForm() {
               more pages rather than losing entries, so the user is told
               instead of finding out at the printer (FR-018a). */}
           {result.pages > 2 && (
-            <p className="text-xs opacity-80">{t("longDocument", { count: result.pages })}</p>
+            <p className="text-xs font-medium text-brand-800">
+              {t("longDocument", { count: result.pages })}
+            </p>
           )}
 
-          <p className="text-xs opacity-70">{t("notStored")}</p>
+          <p className="hint">{t("notStored")}</p>
 
           {result.snapshotId && (
-            <p className="text-xs opacity-60">
+            <p className="hint">
               {t("snapshot", { id: result.snapshotId.slice(0, 8) })}
             </p>
           )}
         </div>
       )}
-    </Section>
+    </section>
   );
 }

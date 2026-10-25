@@ -71,7 +71,7 @@ export function ImportStatus({ initial }: { initial: CareerImport }) {
 
   if (record.status === "failed") {
     return (
-      <div role="alert" className="mt-4 rounded border border-amber-400 p-3 text-sm">
+      <div role="alert" className="notice mt-4">
         <p className="font-medium">
           {t(`failures.${record.failure_reason ?? "extraction_failed"}`)}
         </p>
@@ -91,7 +91,7 @@ export function ImportStatus({ initial }: { initial: CareerImport }) {
     <div className="mt-4 flex items-center gap-3 text-sm" aria-live="polite">
       <span>{gaveUp ? t("stillRunning") : t("reading")}</span>
       {!gaveUp && (
-        <button type="button" onClick={onCancel} className="text-xs underline opacity-70">
+        <button type="button" onClick={onCancel} className="link text-xs">
           {t("cancel")}
         </button>
       )}
