@@ -3,7 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
-import { api, type CareerStory } from "@/lib/api";
+import { ApiError, api, type CareerStory } from "@/lib/api";
+
+import { Problem, problemMessage } from "./form-primitives";
 
 /**
  * Finding an accomplishment recorded months ago (SC-006, under a minute).
@@ -13,21 +15,29 @@ import { api, type CareerStory } from "@/lib/api";
  */
 export function StorySearch({ initial }: { initial: CareerStory[] }) {
   const t = useTranslations("profile.stories");
+  const tc = useTranslations("common");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(initial);
   const [searching, setSearching] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(async () => {
       setSearching(true);
       try {
         setResults(await api.listStories(query || undefined));
+        setProblem(null);
+      } catch (error) {
+        // A user who has recorded nothing has no profile yet, and nothing to
+        // find. That is this page's opening state, not a failure (#154).
+        if (error instanceof ApiError && error.status === 404) setResults([]);
+        else setProblem(problemMessage(error, tc));
       } finally {
         setSearching(false);
       }
     }, 250);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, tc]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -42,6 +52,8 @@ export function StorySearch({ initial }: { initial: CareerStory[] }) {
         />
       </label>
 
+      <Problem message={problem} />
+
       <p className="hint" aria-live="polite">
         {searching ? t("searching") : t("resultCount", { count: results.length })}
       </p>
@@ -51,10 +63,7 @@ export function StorySearch({ initial }: { initial: CareerStory[] }) {
       ) : (
         <ul className="flex flex-col gap-3">
           {results.map((story) => (
-            <li
-              key={story.id}
-              className="entry"
-            >
+            <li key={story.id} className="entry">
               <p className="font-medium">{story.title}</p>
               <p className="hint mt-1">
                 <span className="font-medium">{t("challenge")}:</span> {story.challenge}

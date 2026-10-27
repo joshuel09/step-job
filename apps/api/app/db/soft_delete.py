@@ -7,7 +7,9 @@ one forgetful route would leak deleted career data. Applying it here, at the
 data-access layer, makes it structural instead (constitution gate G6).
 
 `with_deleted()` exists for the purge job and for restore, which are the only two
-operations that legitimately need to see a deleted profile.
+operations that legitimately read a deleted profile. One more asks only whether
+one is there: a user id is unique, so creating a profile has to know that a
+deleted row holds it (#154). That answers yes or no and reads nothing.
 """
 
 from collections.abc import Iterator

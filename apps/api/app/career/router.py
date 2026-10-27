@@ -22,7 +22,18 @@ Db = Annotated[Session, Depends(get_session)]
 
 
 def _profile(session: Session, caller: CallerIdentity) -> models.CareerProfile:
+    """The caller's profile, which has to exist already: what reads use."""
     return service.require_profile(session, caller.user_id)
+
+
+def _recording(session: Session, caller: CallerIdentity) -> models.CareerProfile:
+    """The caller's profile, made by the first thing they record.
+
+    Recording is where a profile comes from. A user who has just arrived has
+    nothing to GET, which is why reads still answer 404, but there is always
+    somewhere to put what they type (#154).
+    """
+    return service.get_or_create_profile(session, caller.user_id)
 
 
 def _assemble(session: Session, profile: models.CareerProfile) -> dict[str, Any]:
@@ -53,8 +64,13 @@ def patch_profile(session: Db, caller: Caller, body: schemas.ProfilePatch):
 
     Changing it never alters stored content (FR-023): the entries keep the
     language their author wrote them in.
+
+    Choosing a language is itself something to record. The switch sits in the
+    header of every page, so for most users it is the first thing they touch,
+    and R-003 asks that the choice reach their other devices rather than this
+    browser alone.
     """
-    profile = _profile(session, caller)
+    profile = _recording(session, caller)
     profile.interface_locale = body.interface_locale
     session.flush()
     return _assemble(session, profile)
@@ -108,7 +124,7 @@ def list_stories(session: Db, caller: Caller, q: str | None = Query(default=None
     status_code=status.HTTP_201_CREATED,
 )
 def create_story(session: Db, caller: Caller, body: schemas.CareerStoryIn):
-    profile = _profile(session, caller)
+    profile = _recording(session, caller)
     return stories.create(session, profile, body.model_dump())
 
 
@@ -216,19 +232,19 @@ def get_snapshot(session: Db, caller: Caller, snapshot_id: uuid.UUID):
 
 @router.put("/profile/identity", response_model=schemas.IdentityOut)
 def put_identity(session: Db, caller: Caller, body: schemas.IdentityIn):
-    profile = _profile(session, caller)
+    profile = _recording(session, caller)
     return service.put_singleton(session, profile, models.Identity, body.model_dump())
 
 
 @router.put("/profile/japan", response_model=schemas.JapanProfileOut)
 def put_japan(session: Db, caller: Caller, body: schemas.JapanProfileIn):
-    profile = _profile(session, caller)
+    profile = _recording(session, caller)
     return service.put_singleton(session, profile, models.JapanProfile, body.model_dump())
 
 
 @router.put("/profile/preferences", response_model=schemas.CareerPreferenceOut)
 def put_preferences(session: Db, caller: Caller, body: schemas.CareerPreferenceIn):
-    profile = _profile(session, caller)
+    profile = _recording(session, caller)
     return service.put_singleton(session, profile, models.CareerPreference, body.model_dump())
 
 
@@ -246,7 +262,7 @@ def list_experiences(session: Db, caller: Caller):
     status_code=status.HTTP_201_CREATED,
 )
 def create_experience(session: Db, caller: Caller, body: schemas.WorkExperienceIn):
-    profile = _profile(session, caller)
+    profile = _recording(session, caller)
     return service.create_experience(session, profile, body.model_dump())
 
 
@@ -314,7 +330,7 @@ def _register_section(section: str, schema_in: type, schema_out: type) -> None:
         name=f"create_{section}",
     )
     def _create(session: Db, caller: Caller, body: schema_in):  # type: ignore[valid-type]
-        profile = _profile(session, caller)
+        profile = _recording(session, caller)
         return service.create_entry(session, profile, section, body.model_dump())
 
     @router.patch(

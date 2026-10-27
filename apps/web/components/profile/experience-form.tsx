@@ -8,11 +8,13 @@ import { api, ApiError, ValidationError, type CareerStory, type WorkExperience }
 
 import {
   Field,
+  Problem,
   Section,
   Select,
   SubmitButton,
   TextArea,
   TextInput,
+  problemMessage,
   toFieldErrors,
   type FieldErrors,
 } from "./form-primitives";
@@ -27,8 +29,10 @@ export function ExperienceForm({
   stories?: CareerStory[];
 }) {
   const t = useTranslations("profile.experience");
+  const tc = useTranslations("common");
   const router = useRouter();
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [confirming, setConfirming] = useState<string | null>(null);
 
@@ -36,6 +40,7 @@ export function ExperienceForm({
     event.preventDefault();
     setPending(true);
     setErrors({});
+    setProblem(null);
 
     const form = new FormData(event.currentTarget);
     const body = {
@@ -55,7 +60,7 @@ export function ExperienceForm({
       router.refresh();
     } catch (error) {
       if (error instanceof ValidationError) setErrors(toFieldErrors(error.failures));
-      else throw error;
+      else setProblem(problemMessage(error, tc));
     } finally {
       setPending(false);
     }
@@ -70,7 +75,7 @@ export function ExperienceForm({
       // FR-013: a conflict means other records reference this entry, and the
       // user must be told before it is removed.
       if (error instanceof ApiError && error.status === 409) setConfirming(id);
-      else throw error;
+      else setProblem(problemMessage(error, tc));
     }
   }
 
@@ -79,10 +84,7 @@ export function ExperienceForm({
       {existing.length > 0 && (
         <ul className="mb-4 flex flex-col gap-2">
           {existing.map((entry) => (
-            <li
-              key={entry.id}
-              className="entry flex items-start justify-between gap-3"
-            >
+            <li key={entry.id} className="entry flex items-start justify-between gap-3">
               <div>
                 <p className="font-medium">
                   {entry.job_title} — {entry.employer_name}
@@ -161,12 +163,19 @@ export function ExperienceForm({
           <TextArea name="description" errors={errors} />
         </Field>
 
-        <Field label={t("sourceLanguage")} name="source_language" errors={errors} hint={t("sourceLanguageHint")}>
+        <Field
+          label={t("sourceLanguage")}
+          name="source_language"
+          errors={errors}
+          hint={t("sourceLanguageHint")}
+        >
           <Select name="source_language" errors={errors} defaultValue="en">
             <option value="en">English</option>
             <option value="ja">日本語</option>
           </Select>
         </Field>
+
+        <Problem message={problem} />
 
         <SubmitButton pending={pending}>{t("add")}</SubmitButton>
       </form>

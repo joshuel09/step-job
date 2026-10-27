@@ -8,11 +8,13 @@ import { api, ValidationError, type CareerStory, type WorkExperience } from "@/l
 
 import {
   Field,
+  Problem,
   Section,
   Select,
   SubmitButton,
   TextArea,
   TextInput,
+  problemMessage,
   toFieldErrors,
   type FieldErrors,
 } from "./form-primitives";
@@ -35,12 +37,14 @@ export function StoryForm({
   const tc = useTranslations("common");
   const router = useRouter();
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
     setErrors({});
+    setProblem(null);
 
     const form = new FormData(event.currentTarget);
     const body = {
@@ -58,7 +62,7 @@ export function StoryForm({
       router.refresh();
     } catch (error) {
       if (error instanceof ValidationError) setErrors(toFieldErrors(error.failures));
-      else throw error;
+      else setProblem(problemMessage(error, tc));
     } finally {
       setPending(false);
     }
@@ -76,17 +80,10 @@ export function StoryForm({
       {existing.length > 0 && (
         <ul className="mb-4 flex flex-col gap-2">
           {existing.map((story) => (
-            <li
-              key={story.id}
-              className="entry"
-            >
+            <li key={story.id} className="entry">
               <div className="flex items-start justify-between gap-3">
                 <p className="font-medium">{story.title}</p>
-                <button
-                  type="button"
-                  onClick={() => onDelete(story.id!)}
-                  className="link text-xs"
-                >
+                <button type="button" onClick={() => onDelete(story.id!)} className="link text-xs">
                   {tc("delete")}
                 </button>
               </div>
@@ -114,7 +111,12 @@ export function StoryForm({
           <TextInput name="title" errors={errors} required />
         </Field>
 
-        <Field label={t("linkedRole")} name="work_experience_id" errors={errors} hint={t("linkedRoleHint")}>
+        <Field
+          label={t("linkedRole")}
+          name="work_experience_id"
+          errors={errors}
+          hint={t("linkedRoleHint")}
+        >
           <Select name="work_experience_id" errors={errors} defaultValue="">
             <option value="">{t("noRole")}</option>
             {experiences.map((experience) => (
@@ -143,6 +145,8 @@ export function StoryForm({
             <option value="ja">日本語</option>
           </Select>
         </Field>
+
+        <Problem message={problem} />
 
         <SubmitButton pending={pending}>{t("add")}</SubmitButton>
       </form>

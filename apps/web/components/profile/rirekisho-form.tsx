@@ -13,7 +13,14 @@ import {
 
 import { GLYPHS } from "@/components/brand/icons";
 
-import { Field, Select, toFieldErrors, type FieldErrors } from "./form-primitives";
+import {
+  Field,
+  Problem,
+  problemMessage,
+  Select,
+  toFieldErrors,
+  type FieldErrors,
+} from "./form-primitives";
 
 /**
  * Producing a 履歴書.
@@ -31,7 +38,9 @@ const RirekishoGlyph = GLYPHS.rirekisho;
 
 export function RirekishoForm() {
   const t = useTranslations("profile.rirekisho");
+  const tc = useTranslations("common");
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<GeneratedDocument | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -52,6 +61,7 @@ export function RirekishoForm() {
     event.preventDefault();
     setPending(true);
     setErrors({});
+    setProblem(null);
     setResult(null);
 
     const data = new FormData(event.currentTarget);
@@ -67,7 +77,7 @@ export function RirekishoForm() {
       // A profile without a name names the field rather than failing
       // generically, so the user knows what to go and fix (FR-015).
       if (error instanceof ValidationError) setErrors(toFieldErrors(error.failures));
-      else throw error;
+      else setProblem(problemMessage(error, tc));
     } finally {
       setPending(false);
     }
@@ -124,6 +134,8 @@ export function RirekishoForm() {
             </p>
           ))}
 
+        <Problem message={problem} />
+
         <div>
           {/* The landing page's own button: this is the action the product
               exists for, and the one place a form earns it. */}
@@ -139,12 +151,7 @@ export function RirekishoForm() {
             <a href={previewUrl} download={result.filename} className="btn-form">
               {t("download")}
             </a>
-            <a
-              href={previewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="link text-sm"
-            >
+            <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="link text-sm">
               {t("preview")}
             </a>
           </div>
@@ -161,9 +168,7 @@ export function RirekishoForm() {
           <p className="hint">{t("notStored")}</p>
 
           {result.snapshotId && (
-            <p className="hint">
-              {t("snapshot", { id: result.snapshotId.slice(0, 8) })}
-            </p>
+            <p className="hint">{t("snapshot", { id: result.snapshotId.slice(0, 8) })}</p>
           )}
         </div>
       )}

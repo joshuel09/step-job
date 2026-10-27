@@ -47,7 +47,7 @@ def create_paste_import(session: Db, caller: Caller, body: schemas.PasteImportIn
     response. A source that takes longer is handed to the worker and the client
     follows this import until it settles.
     """
-    profile = career_service.require_profile(session, caller.user_id)
+    profile = career_service.get_or_create_profile(session, caller.user_id)
 
     record = service.create(session, profile, SourceKind.pasted_text)
     service.start(session, profile, record, body.text)
@@ -73,7 +73,7 @@ async def create_upload_import(
     is never stored: a name such as the company someone was applying to reveals
     their job search (FR-019b).
     """
-    profile = career_service.require_profile(session, caller.user_id)
+    profile = career_service.get_or_create_profile(session, caller.user_id)
 
     data = await file.read()
 

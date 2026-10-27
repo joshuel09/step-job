@@ -611,6 +611,19 @@
     @apply rounded-xl border border-brand-200 bg-brand-50 p-3 text-sm text-brand-800;
   }
 
+  /* A failure the form cannot pin on one field. Marked like a field error
+     rather than coloured like one, so it is not told by colour alone. */
+  .problem {
+    @apply flex items-start gap-2 rounded-xl border border-brand-800 bg-brand-50 p-3 text-sm
+      font-medium text-brand-800;
+  }
+
+  .problem::before {
+    content: "!";
+    @apply mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-800
+      text-[0.65rem] font-bold leading-none text-white;
+  }
+
   /* The alternative to a form's button: export, cancel, reject. */
   .btn-quiet {
     @apply inline-flex items-center justify-center gap-2 rounded-lg border border-cream-300

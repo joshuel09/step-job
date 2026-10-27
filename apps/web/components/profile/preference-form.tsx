@@ -7,10 +7,12 @@ import { api, ValidationError, type CareerPreference } from "@/lib/api";
 
 import {
   Field,
+  Problem,
   Section,
   Select,
   SubmitButton,
   TextInput,
+  problemMessage,
   toFieldErrors,
   type FieldErrors,
 } from "./form-primitives";
@@ -26,7 +28,9 @@ const ARRANGEMENTS = ["onsite", "hybrid", "remote"] as const;
  */
 export function PreferenceForm({ initial }: { initial?: CareerPreference | null }) {
   const t = useTranslations("profile.preferences");
+  const tc = useTranslations("common");
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -34,6 +38,7 @@ export function PreferenceForm({ initial }: { initial?: CareerPreference | null 
     event.preventDefault();
     setPending(true);
     setErrors({});
+    setProblem(null);
     setSaved(false);
 
     const form = new FormData(event.currentTarget);
@@ -58,7 +63,7 @@ export function PreferenceForm({ initial }: { initial?: CareerPreference | null 
       setSaved(true);
     } catch (error) {
       if (error instanceof ValidationError) setErrors(toFieldErrors(error.failures));
-      else throw error;
+      else setProblem(problemMessage(error, tc));
     } finally {
       setPending(false);
     }
@@ -136,6 +141,8 @@ export function PreferenceForm({ initial }: { initial?: CareerPreference | null 
             />
           </Field>
         </div>
+
+        <Problem message={problem} />
 
         <div className="flex items-center gap-3">
           <SubmitButton pending={pending}>{t("save")}</SubmitButton>
