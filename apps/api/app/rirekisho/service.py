@@ -38,32 +38,55 @@ def _identity(session: Session, profile: career_models.CareerProfile):
     ).first()
 
 
-def _require_identity(identity) -> None:
+def _require_identity(identity, profile_id) -> None:
     """Refuse rather than produce a 履歴書 with a blank where a name belongs (FR-015).
 
     The rule lives in readiness.py, so the report a user reads before generating
     and the refusal they would meet cannot disagree.
     """
     missing = readiness.missing_required(identity)
+    if not missing:
+        return
+
+    # How many fields stood in the way, never which: a field name says which
+    # part of someone's identity they have not filled in, and the log outlives
+    # the document the way the document itself deliberately does not.
+    logger.info(
+        "rirekisho refused",
+        extra={"profile_id": profile_id, "outcome": "missing_required", "count": len(missing)},
+    )
+
     if missing == ["identity"]:
         raise ValidationFailed(
             [("identity", "add your name before generating a 履歴書")],
             "A 履歴書 cannot be produced without a name.",
         )
 
-    if missing:
-        reason = "is required before a 履歴書 can be produced"
-        raise ValidationFailed([(field, reason) for field in missing])
+    reason = "is required before a 履歴書 can be produced"
+    raise ValidationFailed([(field, reason) for field in missing])
 
 
 def readiness_report(session: Session, profile: career_models.CareerProfile):
     """What a document would lack, from the same entries generation would use."""
-    return readiness.build_report(
+    report = readiness.build_report(
         _identity(session, profile),
         education=_section(session, profile, career_models.Education),
         experiences=_section(session, profile, career_models.WorkExperience),
         certifications=_section(session, profile, career_models.Certification),
     )
+
+    # Whether the user could generate, and how many gaps they were shown. The
+    # report also names entries by their own text, which is the document's
+    # content and never reaches a log.
+    logger.info(
+        "readiness reported",
+        extra={
+            "profile_id": profile.id,
+            "outcome": "ready" if report.can_generate else "incomplete",
+            "count": len(report.missing_required) + len(report.missing_optional),
+        },
+    )
+    return report
 
 
 def generate(
@@ -79,7 +102,7 @@ def generate(
     what persists (FR-005, FR-016).
     """
     identity = _identity(session, profile)
-    _require_identity(identity)
+    _require_identity(identity, profile.id)
 
     education = _section(session, profile, career_models.Education)
     experiences = _section(session, profile, career_models.WorkExperience)
@@ -108,6 +131,13 @@ def generate(
     if disclosed:
         used.append(japan.id)
         shown[japan.id] = list(disclosed)
+        # A document went out carrying Japan-specific fields. How many, not
+        # which: the snapshot records the field names under the same id, where
+        # the user can read them and a deletion can remove them.
+        logger.info(
+            "japan fields included",
+            extra={"profile_id": profile.id, "outcome": "disclosed", "count": len(disclosed)},
+        )
 
     snapshot = snapshots.capture(
         session,

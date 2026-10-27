@@ -346,7 +346,37 @@
       "leftToYou": "The reason for applying (志望の動機) and personal requests (本人希望記入欄) change with every employer, so they are left blank for you to write by hand or fill in before printing.",
       "englishNote": "Entries you wrote in English appear in English. They are never translated, because a translated job title or school name would say something you did not write. If you want Japanese, add a Japanese version in your profile.",
       "privateNote": "Nationality, residence status, visa and work authorisation appear only if you chose to include them in your profile. Anything you have kept private stays out.",
-      "nameRequired": "Add your name to your profile before generating a 履歴書."
+      "nameRequired": "Add your name to your profile before generating a 履歴書.",
+      "readiness": {
+        "title": "Before you generate",
+        "explanation": "What your 履歴書 would be missing, checked against your profile as it is now.",
+        "ready": "Everything a 履歴書 needs is in your profile.",
+        "blockedTitle": "This cannot be generated yet",
+        "blankTitle": "These boxes will be blank",
+        "blankExplanation": "The document is still produced. Nothing is invented to fill a box, so these stay empty until you add them.",
+        "englishTitle": "These will appear in English",
+        "englishExplanation": "They are printed exactly as you wrote them and are never translated. Add a Japanese version to your profile if you want Japanese on the page.",
+        "nothingRecorded": "You have not recorded anything yet. Add your name to your profile, and this page will tell you what else your 履歴書 needs.",
+        "unchecked": "We could not check what your 履歴書 is missing. You can still generate it.",
+        "fix": "Go to your profile",
+        "fields": {
+          "identity": "Your name and contact details",
+          "fullNameLatin": "Your name in Latin letters",
+          "furigana": "Furigana",
+          "dateOfBirth": "Date of birth",
+          "address": "Address",
+          "phone": "Phone number",
+          "email": "Email address",
+          "education": "Education",
+          "experiences": "Work history",
+          "certifications": "Certifications"
+        },
+        "entryTypes": {
+          "work_experience": "Work history",
+          "education": "Education",
+          "certification": "Certification"
+        }
+      }
     },
     "rirekishoNav": "履歴書"
   }

@@ -20,6 +20,8 @@ export type ProposedEntry = Schemas["ProposedEntry"];
 export type CareerImport = ImportSchemas["ImportDetail"];
 export type DateConvention = DocumentSchemas["DateConvention"];
 export type PaperSize = DocumentSchemas["PaperSize"];
+export type ReadinessReport = DocumentSchemas["ReadinessReport"];
+export type EnglishEntry = DocumentSchemas["EnglishEntry"];
 
 /** A generated document, with what the interface needs to say about it. */
 export type GeneratedDocument = {
@@ -82,7 +84,11 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     if (response.status === 422 && body?.failures) {
       throw new ValidationError(body.failures, body.message);
     }
-    throw new ApiError(response.status, body?.code ?? "error", body?.message ?? response.statusText);
+    throw new ApiError(
+      response.status,
+      body?.code ?? "error",
+      body?.message ?? response.statusText,
+    );
   }
 
   return body as T;
@@ -204,6 +210,14 @@ export const api = {
       snapshotId: response.headers.get("X-Snapshot-Id") ?? "",
     };
   },
+
+  /**
+   * What a 履歴書 would lack, asked before it is generated rather than after.
+   *
+   * Read-only: nothing is produced and no snapshot is recorded, so this is
+   * safe to call on every visit to the document page (FR-022c).
+   */
+  rirekishoReadiness: () => request<ReadinessReport>("/profile/documents/rirekisho/readiness"),
 
   listImports: () => request<CareerImport[]>("/profile/imports"),
   getImport: (id: string) => request<CareerImport>(`/profile/imports/${id}`),
