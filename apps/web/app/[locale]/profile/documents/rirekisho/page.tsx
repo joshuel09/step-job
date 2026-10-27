@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PageHeading } from "@/components/profile/page-heading";
 import { RirekishoForm } from "@/components/profile/rirekisho-form";
+import { RirekishoReadiness } from "@/components/profile/rirekisho-readiness";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,10 @@ export default async function RirekishoPage({ params }: { params: Promise<{ loca
         subtitle={t("pageSubtitle")}
         back={{ href: `/${locale}/profile`, label: t("back") }}
       />
+
+      {/* Above the button on purpose: what the document will be missing is
+          worth knowing before it is generated, not after it is printed. */}
+      <RirekishoReadiness locale={locale} />
 
       <RirekishoForm />
 
