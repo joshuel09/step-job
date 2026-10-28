@@ -6,7 +6,11 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
-    "language": "Language"
+    "language": "Language",
+    "problems": {
+      "unreachable": "Could not reach Step Job. Nothing was changed — check your connection and try again.",
+      "unknown": "Something went wrong, and nothing was changed. Please try again."
+    }
   },
   "world": {
     "visit": "Take me there",

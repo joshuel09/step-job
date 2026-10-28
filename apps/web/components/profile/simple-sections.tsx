@@ -8,10 +8,12 @@ import { api, ValidationError } from "@/lib/api";
 
 import {
   Field,
+  Problem,
   Section,
   Select,
   SubmitButton,
   TextInput,
+  problemMessage,
   toFieldErrors,
   type FieldErrors,
 } from "./form-primitives";
@@ -38,17 +40,17 @@ function ListSection({
   const tc = useTranslations("common");
   const router = useRouter();
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
     setErrors({});
+    setProblem(null);
 
     const form = new FormData(event.currentTarget);
-    const body = Object.fromEntries(
-      [...form.entries()].map(([k, v]) => [k, v === "" ? null : v]),
-    );
+    const body = Object.fromEntries([...form.entries()].map(([k, v]) => [k, v === "" ? null : v]));
 
     try {
       await api.createEntry(section, body);
@@ -56,7 +58,7 @@ function ListSection({
       router.refresh();
     } catch (error) {
       if (error instanceof ValidationError) setErrors(toFieldErrors(error.failures));
-      else throw error;
+      else setProblem(problemMessage(error, tc));
     } finally {
       setPending(false);
     }
@@ -106,6 +108,8 @@ function ListSection({
             )}
           </Field>
         ))}
+        <Problem message={problem} />
+
         <SubmitButton pending={pending}>{tc("save")}</SubmitButton>
       </form>
     </Section>

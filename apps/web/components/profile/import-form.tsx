@@ -8,7 +8,15 @@ import { api, ApiError, ValidationError, type CareerImport } from "@/lib/api";
 
 import { ImportStatus } from "./import-status";
 
-import { Section, SubmitButton, TextArea, toFieldErrors, type FieldErrors } from "./form-primitives";
+import {
+  Problem,
+  Section,
+  SubmitButton,
+  TextArea,
+  problemMessage,
+  toFieldErrors,
+  type FieldErrors,
+} from "./form-primitives";
 
 /**
  * Starting an import from pasted text.
@@ -19,8 +27,10 @@ import { Section, SubmitButton, TextArea, toFieldErrors, type FieldErrors } from
  */
 export function ImportForm({ onComplete }: { onComplete?: (result: CareerImport) => void }) {
   const t = useTranslations("profile.import");
+  const tc = useTranslations("common");
   const router = useRouter();
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<CareerImport | null>(null);
 
@@ -28,6 +38,7 @@ export function ImportForm({ onComplete }: { onComplete?: (result: CareerImport)
     event.preventDefault();
     setPending(true);
     setErrors({});
+    setProblem(null);
     setResult(null);
 
     const text = String(new FormData(event.currentTarget).get("text") ?? "");
@@ -39,7 +50,7 @@ export function ImportForm({ onComplete }: { onComplete?: (result: CareerImport)
       router.refresh();
     } catch (error) {
       if (error instanceof ValidationError) setErrors(toFieldErrors(error.failures));
-      else throw error;
+      else setProblem(problemMessage(error, tc));
     } finally {
       setPending(false);
     }
@@ -66,6 +77,8 @@ export function ImportForm({ onComplete }: { onComplete?: (result: CareerImport)
             {errors.text}
           </p>
         )}
+        <Problem message={problem} />
+
         <SubmitButton pending={pending}>{pending ? t("reading") : t("read")}</SubmitButton>
       </form>
 
@@ -95,6 +108,7 @@ const ACCEPTED = ".pdf,.docx";
 
 function UploadField({ onResult }: { onResult: (result: CareerImport) => void }) {
   const t = useTranslations("profile.import");
+  const tc = useTranslations("common");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -109,7 +123,7 @@ function UploadField({ onResult }: { onResult: (result: CareerImport) => void })
     } catch (caught) {
       // 413 and 415 are refusals with a reason the user can act on, not faults.
       if (caught instanceof ApiError) setError(caught.message);
-      else throw caught;
+      else setError(problemMessage(caught, tc));
     } finally {
       setPending(false);
       event.target.value = "";
@@ -151,7 +165,9 @@ function ImportResult({ result }: { result: CareerImport }) {
       <div role="alert" className="notice mt-4">
         {/* The reason matters: an unavailable service is worth returning to,
             an unreadable document never will be. */}
-        <p className="font-medium">{t(`failures.${result.failure_reason ?? "extraction_failed"}`)}</p>
+        <p className="font-medium">
+          {t(`failures.${result.failure_reason ?? "extraction_failed"}`)}
+        </p>
         {result.outcome?.message && <p className="mt-1 text-ink-soft">{result.outcome.message}</p>}
       </div>
     );
@@ -162,9 +178,7 @@ function ImportResult({ result }: { result: CareerImport }) {
       <p className="font-medium">{t("found", { count: result.entry_count })}</p>
       {result.outcome?.message && <p className="hint mt-1">{result.outcome.message}</p>}
       {result.outcome?.not_found?.length ? (
-        <p className="hint mt-2">
-          {t("notFound", { kinds: result.outcome.not_found.join(", ") })}
-        </p>
+        <p className="hint mt-2">{t("notFound", { kinds: result.outcome.not_found.join(", ") })}</p>
       ) : null}
       <p className="hint mt-2">{t("nothingAddedYet")}</p>
     </div>

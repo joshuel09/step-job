@@ -5,11 +5,22 @@ import { useState } from "react";
 
 import { api, ValidationError, type Identity } from "@/lib/api";
 
-import { Field, Section, SubmitButton, TextInput, toFieldErrors, type FieldErrors } from "./form-primitives";
+import {
+  Field,
+  Problem,
+  Section,
+  SubmitButton,
+  TextInput,
+  problemMessage,
+  toFieldErrors,
+  type FieldErrors,
+} from "./form-primitives";
 
 export function IdentityForm({ initial }: { initial?: Identity | null }) {
   const t = useTranslations("profile.identity");
+  const tc = useTranslations("common");
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -17,6 +28,7 @@ export function IdentityForm({ initial }: { initial?: Identity | null }) {
     event.preventDefault();
     setPending(true);
     setErrors({});
+    setProblem(null);
     setSaved(false);
 
     const form = new FormData(event.currentTarget);
@@ -29,7 +41,7 @@ export function IdentityForm({ initial }: { initial?: Identity | null }) {
       setSaved(true);
     } catch (error) {
       if (error instanceof ValidationError) setErrors(toFieldErrors(error.failures));
-      else throw error;
+      else setProblem(problemMessage(error, tc));
     } finally {
       setPending(false);
     }
@@ -77,12 +89,19 @@ export function IdentityForm({ initial }: { initial?: Identity | null }) {
         </Field>
 
         <Field label={t("email")} name="email" errors={errors}>
-          <TextInput name="email" type="email" errors={errors} defaultValue={initial?.email ?? ""} />
+          <TextInput
+            name="email"
+            type="email"
+            errors={errors}
+            defaultValue={initial?.email ?? ""}
+          />
         </Field>
 
         <Field label={t("phone")} name="phone" errors={errors}>
           <TextInput name="phone" errors={errors} defaultValue={initial?.phone ?? ""} />
         </Field>
+
+        <Problem message={problem} />
 
         <div className="flex items-center gap-3">
           <SubmitButton pending={pending}>{t("save")}</SubmitButton>

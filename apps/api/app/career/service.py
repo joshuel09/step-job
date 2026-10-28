@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.career import models
 from app.career.validation import check_date_range, check_salary_range, normalise_employer
 from app.core.errors import NotFoundError, ValidationFailed
+from app.db.soft_delete import with_deleted
 
 logger = logging.getLogger(__name__)
 
@@ -28,23 +29,52 @@ SECTION_MODELS: dict[str, type] = {
 
 
 def get_or_create_profile(session: Session, user_id: uuid.UUID) -> models.CareerProfile:
-    profile = session.scalars(
-        select(models.CareerProfile).where(models.CareerProfile.user_id == user_id)
-    ).first()
-    if profile is None:
-        profile = models.CareerProfile(user_id=user_id)
-        session.add(profile)
-        session.flush()
+    """The caller's profile, made now if they have never recorded anything.
+
+    A profile is not something a user fills in a form to create: it is the
+    container their own entries go in, so the first thing they record makes it
+    (FR-001). Before this, the first save on a new account answered 404 and the
+    interface had no way forward (#154).
+    """
+    profile = _find(session, user_id)
+    if profile is not None:
+        return profile
+
+    # A deleted profile keeps the user_id, which is unique, so a second row
+    # cannot be written; and reviving it silently would undo a deletion the
+    # user asked for. Inside the recovery window a deleted profile is absent
+    # (FR-027) and restore is the only way back, so this answers as it would
+    # for a stranger.
+    if _find(session, user_id, deleted=True) is not None:
+        raise NotFoundError("No profile found for this user.")
+
+    profile = models.CareerProfile(user_id=user_id)
+    session.add(profile)
+    session.flush()
     return profile
 
 
 def require_profile(session: Session, user_id: uuid.UUID) -> models.CareerProfile:
-    profile = session.scalars(
-        select(models.CareerProfile).where(models.CareerProfile.user_id == user_id)
-    ).first()
+    """The caller's profile, which has to be there already.
+
+    What reads and what generates a document use: there is nothing to show or
+    to build a document from until the user has recorded something.
+    """
+    profile = _find(session, user_id)
     if profile is None:
         raise NotFoundError("No profile found for this user.")
     return profile
+
+
+def _find(
+    session: Session, user_id: uuid.UUID, *, deleted: bool = False
+) -> models.CareerProfile | None:
+    """The profile belonging to a user, optionally looking past a deletion."""
+    statement = select(models.CareerProfile).where(models.CareerProfile.user_id == user_id)
+    if not deleted:
+        return session.scalars(statement).first()
+    with with_deleted(session):
+        return session.scalars(statement).first()
 
 
 def _owned(session: Session, profile: models.CareerProfile, model: type, entry_id: uuid.UUID):

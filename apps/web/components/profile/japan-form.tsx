@@ -5,7 +5,16 @@ import { useState } from "react";
 
 import { api, ValidationError, type JapanProfile } from "@/lib/api";
 
-import { Field, Section, SubmitButton, TextInput, toFieldErrors, type FieldErrors } from "./form-primitives";
+import {
+  Field,
+  Problem,
+  Section,
+  SubmitButton,
+  TextInput,
+  problemMessage,
+  toFieldErrors,
+  type FieldErrors,
+} from "./form-primitives";
 
 /**
  * Japan-specific circumstances.
@@ -25,7 +34,9 @@ const FIELDS = [
 
 export function JapanForm({ initial }: { initial?: JapanProfile | null }) {
   const t = useTranslations("profile.japan");
+  const tc = useTranslations("common");
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -33,6 +44,7 @@ export function JapanForm({ initial }: { initial?: JapanProfile | null }) {
     event.preventDefault();
     setPending(true);
     setErrors({});
+    setProblem(null);
     setSaved(false);
 
     const form = new FormData(event.currentTarget);
@@ -57,7 +69,7 @@ export function JapanForm({ initial }: { initial?: JapanProfile | null }) {
       setSaved(true);
     } catch (error) {
       if (error instanceof ValidationError) setErrors(toFieldErrors(error.failures));
-      else throw error;
+      else setProblem(problemMessage(error, tc));
     } finally {
       setPending(false);
     }
@@ -105,6 +117,8 @@ export function JapanForm({ initial }: { initial?: JapanProfile | null }) {
           />
           {t("includeInDocuments")}
         </label>
+
+        <Problem message={problem} />
 
         <div className="flex items-center gap-3">
           <SubmitButton pending={pending}>{t("save")}</SubmitButton>

@@ -123,3 +123,29 @@ export function SubmitButton({ children, pending }: { children: ReactNode; pendi
     </button>
   );
 }
+
+/**
+ * A failure that belongs to no particular field.
+ *
+ * A form whose button does nothing is the worst of both worlds: the user
+ * cannot tell whether their work was saved. Every rejection the API names a
+ * field for goes to that field; everything else — the server unreachable, a
+ * profile that is being erased, a fault we did not foresee — says so here,
+ * and says plainly that nothing was stored (Principle IV).
+ *
+ * The API's own message is not shown. It is written in English, and FR-022
+ * requires a Japanese user meet no untranslated interface text.
+ */
+export function problemMessage(error: unknown, t: (key: string) => string): string {
+  // `fetch` rejects with a TypeError when it cannot reach the host at all.
+  return error instanceof TypeError ? t("problems.unreachable") : t("problems.unknown");
+}
+
+export function Problem({ message }: { message?: string | null }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className="problem">
+      {message}
+    </p>
+  );
+}
