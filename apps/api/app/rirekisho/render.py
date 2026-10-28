@@ -93,6 +93,14 @@ LINE_HEIGHT = 18
 # Marks a section that carries on from the previous page.
 CONTINUED = "（続き）"
 
+# The photograph frame, drawn empty at the top right of page 1 where
+# convention places it. Text beside it has to stop short of its left edge: a
+# line that runs under the frame survives in the file and is covered by the
+# photograph on the page that gets handed over (#106).
+PHOTO_WIDTH = 90
+PHOTO_HEIGHT = 120
+PHOTO_GAP = 10
+
 # How each Japan-specific field is labelled in 本人希望記入欄. Keyed by the
 # profile field, as the disclosure filter returns them. A field missing here is
 # refused rather than drawn under its raw name.
@@ -178,6 +186,19 @@ class _Page:
         self.pages = 1
         self.section: str | None = None
         self._pending: str | None = None
+        # The height above which the photograph frame stands in the way, or
+        # None where nothing does.
+        self.keep_clear: float | None = None
+
+    def reserve_photo(self) -> None:
+        """Keep text clear of the photograph frame while it is beside it."""
+        self.keep_clear = self.height - MARGIN - PHOTO_HEIGHT
+
+    def _right(self) -> float:
+        """How far right text may reach at the height it is about to be drawn."""
+        if self.keep_clear is not None and self.y > self.keep_clear:
+            return self.width - MARGIN - PHOTO_WIDTH - PHOTO_GAP
+        return self.width - MARGIN
 
     def space_for(self, lines: int = 1) -> None:
         """Make room for `lines` lines, and for a heading still waiting to be drawn.
@@ -191,6 +212,8 @@ class _Page:
             self.canvas.setFont(FONT_NAME, BODY_SIZE)
             self.y = self.height - MARGIN
             self.pages += 1
+            # The frame is on page 1 only; later pages have their full width.
+            self.keep_clear = None
             if self.section and not self._pending:
                 self._draw(f"{self.section}{CONTINUED}", MARGIN, HEADING_SIZE)
 
@@ -220,7 +243,7 @@ class _Page:
         or a label — so a wrapped name still reads as one entry.
         """
         indent = stringWidth(hang, FONT_NAME, size)
-        available = self.width - MARGIN - x
+        available = self._right() - x
         lines = _wrap(text, available, available - indent, size, keep=len(hang))
 
         self.space_for(len(lines))
@@ -262,6 +285,11 @@ def render_rirekisho(
     page.line("履歴書", size=TITLE_SIZE)
     page.gap()
 
+    # The frame below is drawn after the identity block, but the block has to
+    # know about it before it is wrapped, or a long line runs underneath it
+    # and the photograph covers it (#106).
+    page.reserve_photo()
+
     # Identity. Each label is drawn whether or not it has a value, so a user can
     # see what is blank rather than discovering it after printing (FR-022c).
     page.line(f"ふりがな　{identity.get('furigana') or ''}", hang="ふりがな　")
@@ -278,9 +306,18 @@ def render_rirekisho(
 
     # The photograph frame, drawn where convention places it and left empty.
     # The product stores no photograph (FR-022a).
-    canvas.rect(page.width - MARGIN - 90, page.height - MARGIN - 120, 90, 120)
+    canvas.rect(
+        page.width - MARGIN - PHOTO_WIDTH,
+        page.height - MARGIN - PHOTO_HEIGHT,
+        PHOTO_WIDTH,
+        PHOTO_HEIGHT,
+    )
     canvas.setFont(FONT_NAME, 8)
-    canvas.drawString(page.width - MARGIN - 86, page.height - MARGIN - 134, "写真貼付欄")
+    canvas.drawString(
+        page.width - MARGIN - PHOTO_WIDTH + 4,
+        page.height - MARGIN - PHOTO_HEIGHT - 14,
+        "写真貼付欄",
+    )
 
     page.heading("学歴・職歴")
     for row in rows:
