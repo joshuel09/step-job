@@ -150,6 +150,74 @@ class TestEntriesWithoutJapanese:
             ("work_experience", "Example Corp"),
         ]
 
+    def test_half_width_katakana_is_japanese(self, client, auth_headers, session, name_only):
+        """#107: a name written only in half-width katakana is still Japanese.
+
+        Typed input rarely looks like this. Imported data does — it is what
+        older Japanese systems emit, and #002 reads documents from exactly
+        those systems. Reporting it as having no Japanese version tells the
+        user to add a translation of a name that is already in their language.
+        """
+        from app.career import models
+
+        session.add_all(
+            [
+                models.Education(profile_id=name_only.id, institution="ｻﾝﾌﾟﾙﾀﾞｲｶﾞｸ"),
+                models.WorkExperience(
+                    profile_id=name_only.id,
+                    employer_name="ｶﾌﾞｼｷｶﾞｲｼｬｻﾝﾌﾟﾙ",
+                    employer_name_normalised="sample",
+                    job_title="Engineer",
+                    started_on=date(2020, 4, 1),
+                ),
+                models.Certification(profile_id=name_only.id, name="ﾆﾎﾝｺﾞﾉｳﾘｮｸｼｹﾝ"),
+            ]
+        )
+        session.flush()
+
+        assert _report(client, auth_headers)["entries_without_japanese"] == []
+
+    def test_latin_is_still_reported_alongside_it(self, client, auth_headers, session, name_only):
+        """The distinguishing case: the fix must not make everything Japanese.
+
+        Without this, widening the pattern until nothing is ever reported
+        would pass the test above.
+        """
+        from app.career import models
+
+        session.add_all(
+            [
+                models.Education(profile_id=name_only.id, institution="ｻﾝﾌﾟﾙﾀﾞｲｶﾞｸ"),
+                models.Education(profile_id=name_only.id, institution="Example University"),
+            ]
+        )
+        session.flush()
+
+        english = _report(client, auth_headers)["entries_without_japanese"]
+        assert [e["label"] for e in english] == ["Example University"]
+
+    def test_the_prolonged_sound_mark_and_voiced_marks_do_not_stand_alone(
+        self, client, auth_headers, session, name_only
+    ):
+        """ｰ, ﾞ and ﾟ attach to katakana; they are not Japanese text by themselves.
+
+        A label of punctuation alone has no Japanese in it to find, so it is
+        reported — which is the honest answer, not a bug.
+        """
+        from app.career import models
+
+        session.add_all(
+            [
+                models.Certification(profile_id=name_only.id, name="ｺﾝﾋﾟｭｰﾀｰ"),
+                models.Certification(profile_id=name_only.id, name="A-B-C"),
+            ]
+        )
+        session.flush()
+
+        labels = [e["label"] for e in _report(client, auth_headers)["entries_without_japanese"]]
+        assert "ｺﾝﾋﾟｭｰﾀｰ" not in labels
+        assert "A-B-C" in labels
+
     def test_reporting_writes_no_japanese_version(
         self, client, auth_headers, session, rirekisho_profile
     ):
