@@ -77,11 +77,13 @@ def test_a_missing_font_would_be_refused_loudly(monkeypatch):
     """The failure that must not be silent."""
     from pathlib import Path
 
-    import app.rirekisho.render as render
+    # Patched where register_font reads it, which is the module the font now
+    # lives in rather than the one that re-exports it.
+    import app.documents.typography as typography
 
-    monkeypatch.setattr(render, "FONT_PATH", Path("/nonexistent/font.ttf"))
+    monkeypatch.setattr(typography, "FONT_PATH", Path("/nonexistent/font.ttf"))
     monkeypatch.setattr(pdfmetrics, "getRegisteredFontNames", lambda: [])
 
     with pytest.raises(FontUnavailable) as raised:
-        render.register_font()
+        typography.register_font()
     assert "empty box" in str(raised.value)

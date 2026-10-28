@@ -36,8 +36,8 @@ refactor went wrong.
 
 **Purpose**: Nothing to install. This feature reuses what feature 003 brought in.
 
-- [ ] T001 Confirm the PDF library and the font are already runtime dependencies in `apps/api/pyproject.toml`, and record that no dependency is added
-- [ ] T002 Create `apps/api/app/shokumu/__init__.py` and `apps/api/tests/unit/`, `tests/integration/`, `tests/contract/` placements for this feature's tests
+- [X] T001 Confirm the PDF library and the font are already runtime dependencies in `apps/api/pyproject.toml`, and record that no dependency is added
+- [X] T002 Create `apps/api/app/shokumu/__init__.py` and `apps/api/tests/unit/`, `tests/integration/`, `tests/contract/` placements for this feature's tests
 
 ---
 
@@ -50,12 +50,12 @@ implementations agreeing by luck (research.md R-001).
 **⚠️ CRITICAL**: No user story work begins until this phase is complete and the
 履歴書 suite passes unchanged.
 
-- [ ] T003 Create `apps/api/app/documents/` and move the font directory there from `apps/api/app/rirekisho/fonts/`, keeping the licence file beside it
-- [ ] T004 Move font registration, `FontUnavailable`, `PAGE_SIZES` and `page_size()` into `apps/api/app/documents/typography.py`, still registering at import so a missing font stops the application rather than one request
-- [ ] T005 Move the `_Page` class, which knows when a page is full, into `apps/api/app/documents/typography.py` as a public `Page`
-- [ ] T006 Point `apps/api/app/rirekisho/render.py` at `app/documents/typography.py` and delete the moved code, changing imports only
-- [ ] T007 Run the full 履歴書 suite in `apps/api/tests/` and confirm it passes with no test edited except for import paths — the refactor's only acceptance criterion
-- [ ] T008 Add a unit test in `apps/api/tests/unit/test_documents_typography.py` asserting the font registers once and `page_size` rejects an unknown name
+- [X] T003 Create `apps/api/app/documents/` and move the font directory there from `apps/api/app/rirekisho/fonts/`, keeping the licence file beside it
+- [X] T004 Move font registration, `FontUnavailable`, `PAGE_SIZES` and `page_size()` into `apps/api/app/documents/typography.py`, still registering at import so a missing font stops the application rather than one request
+- [X] T005 Move the `_Page` class, which knows when a page is full, into `apps/api/app/documents/typography.py` as a public `Page`
+- [X] T006 Point `apps/api/app/rirekisho/render.py` at `app/documents/typography.py` and delete the moved code, changing imports only
+- [X] T007 Run the full 履歴書 suite in `apps/api/tests/` and confirm it passes with no test edited except for import paths — the refactor's only acceptance criterion
+- [X] T008 Add a unit test in `apps/api/tests/unit/test_documents_typography.py` asserting the font registers once and `page_size` rejects an unknown name
 
 **Checkpoint**: both documents can draw from one typographic base.
 
