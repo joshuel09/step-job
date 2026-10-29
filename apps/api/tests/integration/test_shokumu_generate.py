@@ -79,6 +79,11 @@ class TestEveryAchievementAppears:
         """FR-021: nothing recorded is dropped from the document."""
         assert "社外勉強会の運営" in document
 
+    def test_the_closing_section_is_not_called_what_the_employer_sections_are(self, document):
+        """A reader has to be able to tell that these belong to no employer.
+        Two identical headings would say nothing."""
+        assert "その他の実績" in document
+
     def test_it_is_not_filed_under_an_employer_it_was_never_recorded_against(
         self, client, auth_headers, session, shokumu_profile
     ):
@@ -256,6 +261,7 @@ VOCABULARY = (
     "語学",
     "免許・資格",
     "自己PR",
+    "その他の実績",
     "実績",
     "以上",
     # Labels inside a section.

@@ -38,7 +38,10 @@ from app.shokumu.summary import ONGOING, Summary
 # than a defect (FR-013, FR-014).
 SUMMARY = "職務要約"
 HISTORY = "職務経歴"
-UNATTACHED = "実績"
+# Distinct from the 実績 label inside an employer section. Two identical
+# headings meaning different things would leave a reader unable to tell that
+# these belong to no employer, which is the one thing this section says.
+UNATTACHED = "その他の実績"
 SKILLS = "活かせる経験・知識・技術"
 LANGUAGES = "語学"
 CERTIFICATIONS = "免許・資格"
