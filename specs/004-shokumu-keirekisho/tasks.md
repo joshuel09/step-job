@@ -71,25 +71,25 @@ nothing appears the profile does not hold.
 
 ### Tests for User Story 1
 
-- [ ] T009 [P] [US1] Unit tests for the section projection in `apps/api/tests/unit/test_shokumu_sections.py` — one section per employer, achievements under the employer they belong to, undated entries last rather than dropped, overlapping employment unreconciled
-- [ ] T010 [P] [US1] Unit tests for 職務要約 in `apps/api/tests/unit/test_shokumu_summary.py` — span, employer count and latest role are computed from entries; a thin profile yields a shorter summary; **no adjective characterising the applicant appears in any case**
-- [ ] T011 [P] [US1] Integration test for quickstart Scenario 0 in `apps/api/tests/integration/test_shokumu_font.py`, extracting 職務経歴書 as text and asserting `/FontFile2` is present
-- [ ] T012 [P] [US1] Integration test for quickstart Scenario 1 in `apps/api/tests/integration/test_shokumu_generate.py`, asserting employers, periods, titles, descriptions and achievements appear and a snapshot id is returned. Also assert the document is not retained (FR-005) — feature 003's `test_nothing_in_the_schema_can_hold_a_generated_document` iterates every table in `Base.metadata` and so already covers this feature, but reference it here so the guarantee is stated rather than accidental
-- [ ] T013 [P] [US1] Integration test for quickstart Scenario 10 in `apps/api/tests/integration/test_shokumu_generate.py`, asserting a profile with no name and a profile with no work history are each refused with the missing thing named
-- [ ] T014 [P] [US1] Contract tests for the document route in `apps/api/tests/contract/test_shokumu.py`, including that the documented response headers are exposed to a cross-origin caller
+- [X] T009 [P] [US1] Unit tests for the section projection in `apps/api/tests/unit/test_shokumu_sections.py` — one section per employer, achievements under the employer they belong to, undated entries last rather than dropped, overlapping employment unreconciled
+- [X] T010 [P] [US1] Unit tests for 職務要約 in `apps/api/tests/unit/test_shokumu_summary.py` — span, employer count and latest role are computed from entries; a thin profile yields a shorter summary; **no adjective characterising the applicant appears in any case**
+- [X] T011 [P] [US1] Integration test for quickstart Scenario 0 in `apps/api/tests/integration/test_shokumu_font.py`, extracting 職務経歴書 as text and asserting `/FontFile2` is present
+- [X] T012 [P] [US1] Integration test for quickstart Scenario 1 in `apps/api/tests/integration/test_shokumu_generate.py`, asserting employers, periods, titles, descriptions and achievements appear and a snapshot id is returned. Also assert the document is not retained (FR-005) — feature 003's `test_nothing_in_the_schema_can_hold_a_generated_document` iterates every table in `Base.metadata` and so already covers this feature, but reference it here so the guarantee is stated rather than accidental
+- [X] T013 [P] [US1] Integration test for quickstart Scenario 10 in `apps/api/tests/integration/test_shokumu_generate.py`, asserting a profile with no name and a profile with no work history are each refused with the missing thing named
+- [X] T014 [P] [US1] Contract tests for the document route in `apps/api/tests/contract/test_shokumu.py`, including that the documented response headers are exposed to a cross-origin caller
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Implement the section projection in `apps/api/app/shokumu/sections.py` as a pure function from entries to `CareerHistory`, with no knowledge of documents, per data-model.md
-- [ ] T016 [US1] Carry `source_entry_id` through every section and achievement in `apps/api/app/shokumu/sections.py`, so any statement traces to the entry behind it (FR-016)
-- [ ] T017 [US1] Implement 職務要約 in `apps/api/app/shokumu/summary.py` from countable facts only — span, employer count, latest role and employer — per research.md R-003
-- [ ] T018 [US1] Define the request and report shapes in `apps/api/app/shokumu/schemas.py` as enums, matching the contract
-- [ ] T019 [US1] Implement the layout in `apps/api/app/shokumu/render.py`, drawing the summary, the employer sections and their achievements at A4
-- [ ] T020 [US1] Implement generation and snapshot capture in `apps/api/app/shokumu/service.py`, capturing in the render's transaction with the identity leading the captured ids, per research.md R-006
-- [ ] T021 [US1] Implement the generate route in `apps/api/app/shokumu/router.py`, streaming the document and returning the snapshot id and page count as headers
-- [ ] T022 [US1] Register the router in `apps/api/app/main.py` and add the document headers to the CORS allow-list if they are not already there
-- [ ] T023 [US1] Remove `/profile/documents/shokumu-keirekisho` from `DEFERRED` in `apps/api/tests/contract/test_contracts.py`, now that it is implemented
-- [ ] T024 [US1] Regenerate the typed clients into `packages/api-client/src/`
+- [X] T015 [US1] Implement the section projection in `apps/api/app/shokumu/sections.py` as a pure function from entries to `CareerHistory`, with no knowledge of documents, per data-model.md
+- [X] T016 [US1] Carry `source_entry_id` through every section and achievement in `apps/api/app/shokumu/sections.py`, so any statement traces to the entry behind it (FR-016)
+- [X] T017 [US1] Implement 職務要約 in `apps/api/app/shokumu/summary.py` from countable facts only — span, employer count, latest role and employer — per research.md R-003
+- [X] T018 [US1] Define the request and report shapes in `apps/api/app/shokumu/schemas.py` as enums, matching the contract
+- [X] T019 [US1] Implement the layout in `apps/api/app/shokumu/render.py`, drawing the summary, the employer sections and their achievements at A4
+- [X] T020 [US1] Implement generation and snapshot capture in `apps/api/app/shokumu/service.py`, capturing in the render's transaction with the identity leading the captured ids, per research.md R-006
+- [X] T021 [US1] Implement the generate route in `apps/api/app/shokumu/router.py`, streaming the document and returning the snapshot id and page count as headers
+- [X] T022 [US1] Register the router in `apps/api/app/main.py` and add the document headers to the CORS allow-list if they are not already there
+- [X] T023 [US1] Remove `/profile/documents/shokumu-keirekisho` from `DEFERRED` in `apps/api/tests/contract/test_contracts.py`, now that it is implemented
+- [X] T024 [US1] Regenerate the typed clients into `packages/api-client/src/`
 
 **Checkpoint**: a profile produces a readable career history.
 
