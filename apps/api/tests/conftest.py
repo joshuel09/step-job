@@ -177,3 +177,93 @@ def rirekisho_profile(session, user_id):
     )
     session.flush()
     return profile
+
+
+@pytest.fixture
+def shokumu_profile(session, user_id):
+    """A profile with a career to describe, in invented content.
+
+    Two employers — one finished, one ongoing — so a section exercises both a
+    closed period and 現在. One achievement recorded against an employer and
+    one against none, so the closing section has something in it. Skills,
+    a language and a certification, so every section of the document has a
+    line to draw.
+    """
+    from datetime import date
+
+    from app.career import models, service
+
+    profile = service.get_or_create_profile(session, user_id)
+
+    session.add(
+        models.Identity(
+            profile_id=profile.id,
+            full_name_latin="Taro Yamada",
+            full_name_japanese="山田太郎",
+            furigana="ヤマダタロウ",
+            date_of_birth=date(1990, 5, 15),
+        )
+    )
+
+    older = models.WorkExperience(
+        profile_id=profile.id,
+        employer_name="株式会社サンプル",
+        employer_name_normalised="サンプル",
+        job_title="エンジニア",
+        employment_type=models.EmploymentType.permanent,
+        started_on=date(2013, 4, 1),
+        ended_on=date(2021, 3, 31),
+        description="社内システムの開発と保守を担当。",
+        source_language=models.Locale.ja,
+    )
+    newer = models.WorkExperience(
+        profile_id=profile.id,
+        employer_name="Example Corp",
+        employer_name_normalised="example",
+        job_title="Software Engineer",
+        employment_type=models.EmploymentType.contract,
+        started_on=date(2021, 4, 1),
+        ended_on=None,
+        description="Platform work on the billing service.",
+        source_language=models.Locale.en,
+    )
+    session.add_all([older, newer])
+    session.flush()
+
+    session.add_all(
+        [
+            models.CareerStory(
+                profile_id=profile.id,
+                work_experience_id=older.id,
+                title="ビルド時間を半分にした",
+                challenge="ビルドに四十分かかっていた。",
+                action="分割して遅い工程をキャッシュした。",
+                result="二十分になった。",
+                source_language=models.Locale.ja,
+            ),
+            models.CareerStory(
+                profile_id=profile.id,
+                work_experience_id=None,
+                title="社外勉強会の運営",
+                challenge="参加者が集まらなかった。",
+                action="告知の方法を変えた。",
+                result="毎回三十名が参加した。",
+                source_language=models.Locale.ja,
+            ),
+            models.Skill(profile_id=profile.id, name="SQL", level=models.SkillLevel.advanced),
+            models.Language(
+                profile_id=profile.id,
+                language="日本語",
+                proficiency=models.LanguageProficiency.native,
+                qualification=None,
+            ),
+            models.Certification(
+                profile_id=profile.id,
+                name="基本情報技術者",
+                issuer="情報処理推進機構",
+                issued_on=date(2019, 4, 1),
+            ),
+        ]
+    )
+    session.flush()
+    return profile

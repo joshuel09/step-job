@@ -31,10 +31,9 @@ DEFERRED: dict[str, set[str]] = {
     "001-master-career-profile": set(),
     "002-ai-resume-import": set(),
     "003-rirekisho-generator": set(),
-    # Planned, not yet built. Both paths land with the implementation; this list
-    # shrinks as they do, rather than all at the end.
+    # The generator is built; the readiness report is Phase 6 (T041-T044).
+    # The list shrinks as paths land, rather than all at the end.
     "004-shokumu-keirekisho": {
-        "/profile/documents/shokumu-keirekisho",
         "/profile/documents/shokumu-keirekisho/readiness",
     },
     # Planned, not yet built. The generator waits on the shared typography
