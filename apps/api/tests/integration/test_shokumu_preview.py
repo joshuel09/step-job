@@ -67,10 +67,16 @@ class TestTheSameDocument:
     def test_the_comparison_sees_the_paper_as_well_as_the_drawing(
         self, client, auth_headers, shokumu_profile
     ):
-        """The part a content-stream comparison on its own would miss."""
+        """The part a content-stream comparison on its own would miss.
+
+        Compared page to page rather than list to list: a smaller page can
+        need more pages, and two lists of different lengths differ whatever
+        is in them — so the assertion would hold on two documents with
+        identical geometry.
+        """
         a4 = _drawn(client.post(PATH, headers=auth_headers, json={"paper_size": "a4"}).content)
         b5 = _drawn(client.post(PATH, headers=auth_headers, json={"paper_size": "b5"}).content)
-        assert [page[1] for page in a4] != [page[1] for page in b5]
+        assert a4[0][1] != b5[0][1], "both came out on the same paper"
 
     def test_both_carry_the_same_embedded_typeface(self, both):
         """A different font behind the same resource key is the other way two
