@@ -19,14 +19,28 @@ from pypdf import PdfReader
 PATH = "/api/v1/profile/documents/shokumu-keirekisho"
 
 
-def _drawn(pdf: bytes) -> list[bytes]:
-    """What each page actually draws.
+def _drawn(pdf: bytes) -> list[tuple]:
+    """What each page draws, on what, and with which fonts.
 
     The creation timestamp and the document id differ between two renders a
     moment apart, so comparing whole files proves nothing. They live in the
-    trailer, not in the page content, which is why this compares the latter.
+    trailer rather than on the page, which is why this compares the page.
+
+    The content stream alone is not enough: it is a sequence of operators
+    with no page size in it, and it names fonts by a key the resources
+    resolve. Two pages could draw identical operators onto different paper,
+    or with a different typeface behind the same key — clipped text or the
+    wrong glyphs, with the streams matching. So all three are compared.
     """
-    return [page.get_contents().get_data() for page in PdfReader(io.BytesIO(pdf)).pages]
+    read = []
+    for page in PdfReader(io.BytesIO(pdf)).pages:
+        fonts = {
+            key: str(font.get("/BaseFont", ""))
+            for key, font in (page["/Resources"].get("/Font") or {}).items()
+        }
+        box = (float(page.mediabox.width), float(page.mediabox.height))
+        read.append((page.get_contents().get_data(), box, tuple(sorted(fonts.items()))))
+    return read
 
 
 @pytest.fixture
@@ -49,6 +63,22 @@ class TestTheSameDocument:
         a4 = client.post(PATH, headers=auth_headers, json={"paper_size": "a4"})
         b5 = client.post(PATH, headers=auth_headers, json={"paper_size": "b5"})
         assert _drawn(a4.content) != _drawn(b5.content)
+
+    def test_the_comparison_sees_the_paper_as_well_as_the_drawing(
+        self, client, auth_headers, shokumu_profile
+    ):
+        """The part a content-stream comparison on its own would miss."""
+        a4 = _drawn(client.post(PATH, headers=auth_headers, json={"paper_size": "a4"}).content)
+        b5 = _drawn(client.post(PATH, headers=auth_headers, json={"paper_size": "b5"}).content)
+        assert [page[1] for page in a4] != [page[1] for page in b5]
+
+    def test_both_carry_the_same_embedded_typeface(self, both):
+        """A different font behind the same resource key is the other way two
+        identical drawings can reach the reader differently."""
+        preview, download = both
+        assert [page[2] for page in _drawn(preview.content)] == [
+            page[2] for page in _drawn(download.content)
+        ]
 
     def test_they_run_to_the_same_length(self, both):
         preview, download = both

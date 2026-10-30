@@ -14,15 +14,22 @@ import io
 import re
 
 import pytest
-from app.documents.typography import CONTINUED
 from pypdf import PdfReader
 
 PATH = "/api/v1/profile/documents/shokumu-keirekisho"
 
 ERAS = ("令和", "平成", "昭和", "大正", "明治")
 
-# CONTINUED marks a section carried over to another page, which B5 may need
-# where A4 does not. It is the page's own word, not content.
+# Marks a section carried over to another page, which B5 may need where A4
+# does not. It is the page's own word rather than content, so it is subtracted
+# before the two sizes are compared — written out here rather than imported,
+# because the renderer's own constant cannot be the oracle for a test about
+# what the renderer draws.
+CONTINUED = "（続き）"
+
+# The paper itself, in points: ISO A4 is 210x297mm and B5 is 176x250mm. A
+# standard, not a product choice, so the numbers belong to the test.
+PAPERS = {"a4": (595.28, 841.89), "b5": (498.90, 708.66)}
 
 
 def _generate(client, auth_headers, **body) -> bytes:
@@ -82,12 +89,42 @@ class TestEitherPaperSize:
     def papers(self, client, auth_headers, shokumu_profile):
         return {paper: _generate(client, auth_headers, paper_size=paper) for paper in ("a4", "b5")}
 
+    def test_each_size_is_actually_the_size_that_was_asked_for(self, papers):
+        """Everything else in this class compares the two documents to each
+        other, and would pass on two A4 documents. This is what says the
+        paper size reached the page at all."""
+        for paper, pdf in papers.items():
+            wanted = PAPERS[paper]
+            for page in PdfReader(io.BytesIO(pdf)).pages:
+                got = (float(page.mediabox.width), float(page.mediabox.height))
+                assert got == pytest.approx(wanted, abs=0.5), f"{paper} came out {got}"
+
     def test_both_sizes_carry_the_same_content(self, papers):
         """Compared on characters, not on lines: a narrower page wraps
         differently, and wrapping changes where a line breaks rather than what
         the document says."""
         a4, b5 = (_squashed(pdf).replace(CONTINUED, "") for pdf in papers.values())
         assert a4 == b5
+
+    def test_and_the_spaces_inside_a_value_survive_both(self, papers):
+        """Squashing the whitespace is what makes the comparison above
+        wrap-tolerant, and it would also hide an employer's name losing the
+        space the user typed. So the spaces are asserted separately.
+
+        On the lines themselves, not on the document: 職務要約 names the most
+        recent employer too, so a search over the whole text would find the
+        summary's spelling and pass while the section heading had lost its
+        space.
+        """
+        for paper, pdf in papers.items():
+            lines = [line.strip() for line in _text(pdf).splitlines() if line.strip()]
+
+            assert "Example Corp" in lines, (
+                f"{paper}: the employer's own heading is not spelled as recorded"
+            )
+            assert any(line == "職種　Software Engineer" for line in lines), (
+                f"{paper}: the job title is not spelled as recorded"
+            )
 
     def test_a_smaller_page_produces_pages_rather_than_losing_entries(
         self, client, auth_headers, shokumu_profile

@@ -113,6 +113,25 @@ class TestOnlyTheOrderDiffers:
             assert "社内システムの開発と保守を担当。" in document
             assert "Platformworkonthebillingservice." in document
 
+    def test_an_achievement_stays_with_the_employer_it_belongs_to(self, both):
+        """The comparisons above would pass if reordering moved an
+        achievement to the other employer: the same lines in the same counts,
+        and the applicant's work credited to a company they did not do it at.
+        """
+        for pdf in both:
+            lines = _lines(pdf)
+            sample = _line_with(pdf, "株式会社サンプル")
+            example = _line_with(pdf, "ExampleCorp")
+            achievement = _line_with(pdf, "ビルド時間を半分にした")
+
+            # Between its own employer's heading and whatever follows that
+            # section, whichever of the two employers comes first.
+            assert achievement > sample
+            if example > sample:
+                assert achievement < example, "credited to the wrong employer"
+            assert achievement < _line_with(pdf, "その他の実績")
+            assert lines[sample].strip() == "株式会社サンプル"
+
     def test_the_closing_section_stays_closing_in_both(self, both):
         """An unattached achievement follows the employers whichever way they
         run — it belongs to none of them, so it cannot lead (R-005)."""
