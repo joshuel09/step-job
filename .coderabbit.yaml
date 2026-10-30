@@ -1,0 +1,104 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+# How CodeRabbit reviews this repository.
+#
+# The project has a constitution (.specify/memory/constitution.md) and a spec
+# per feature under specs/. Most of what matters here is not style — it is
+# whether a change can still say only what the user's profile holds. The
+# instructions below point a reviewer at that rather than at line length,
+# which ruff already settles.
+language: en-GB
+
+tone_instructions: >
+  Be direct and specific. Say what is wrong and why it matters to the person
+  whose career this product describes. Do not suggest adding attribution,
+  generated-by notices or co-author lines to commits or pull requests.
+
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+
+  path_filters:
+    # Generated from specs/*/contracts/openapi.yaml; review the contract, not
+    # the output.
+    - "!packages/api-client/src/**"
+    - "!**/*.lock"
+    - "!pnpm-lock.yaml"
+    - "!uv.lock"
+    - "!apps/api/app/documents/fonts/**"
+
+  path_instructions:
+    - path: "apps/api/app/**/*.py"
+      instructions: >
+        Principle IV, in the constitution's own words: rewriting, translating
+        and reformatting verified facts is permitted; introducing scope,
+        seniority, duration, headcount or outcomes that the profile does not
+        support is not. So do not flag a faithful rewording or an approved
+        translation — feature 005 exists to produce one.
+
+        Flag a value that is invented or inferred, a rewording that changes
+        what an entry says, and any characterising adjective about the
+        applicant. Flag a claim that cannot be traced to an entry and reaches
+        a document without being surfaced for the user to confirm.
+
+        A section with nothing to show is labelled and left empty, never
+        filled with a placeholder or a plausible sample.
+
+        Generated documents are never retained: a new column or table that
+        could hold one is a defect. Snapshots are insert-only and must name at
+        least one entry.
+
+        Logs record outcomes, counts and identifiers only, through the
+        allow-list formatter in app/core/logging.py. A log line carrying a
+        name, an address, an employer, a document's text or a Japan-specific
+        field is a leak that outlives the data it describes.
+
+    - path: "apps/api/app/{rirekisho,shokumu,documents}/**/*.py"
+      instructions: >
+        Japanese documents. One date convention throughout a document — 和暦
+        and 西暦 never appear together. Entries recorded in English appear in
+        English as written. Every entry is produced across as many pages as
+        needed rather than dropped or shortened to reach a conventional
+        length. A value stored as an enumeration must reach the page in
+        Japanese, never under its stored English name.
+
+    - path: "apps/api/tests/**/*.py"
+      instructions: >
+        Ask what each test would fail for. A test that passes whether or not
+        the behaviour is right is worse than none. Prefer assertions on text
+        read back out of a produced document over assertions on the call that
+        produced it. Where a test uses the module's own constants as its
+        oracle, say so — changing the module then changes the test.
+
+    - path: "apps/web/**/*.tsx"
+      instructions: >
+        FR-022: a user who selects Japanese must be able to complete every
+        task with no untranslated text. Flag any user-visible string that is
+        not a message key, and any key asked for with a computed path that no
+        test enumerates.
+
+        A failure must reach the user. Flag a catch that swallows an error, or
+        rethrows one the form does not show, leaving a button that does
+        nothing and says nothing.
+
+    - path: "apps/web/messages/*.json"
+      instructions: >
+        en.json and ja.json must hold the same keys. Copy about a failure must
+        say plainly whether anything was saved.
+
+    - path: "specs/**/*.md"
+      instructions: >
+        Specification and task documents. Check that a task ticked as done
+        matches what the change actually did, and that a requirement number
+        cited in code exists.
+
+chat:
+  auto_reply: true
