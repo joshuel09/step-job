@@ -38,9 +38,17 @@ reviews:
   path_instructions:
     - path: "apps/api/app/**/*.py"
       instructions: >
-        Principle IV: the product may state only what the profile holds. Flag
-        any value that is invented, inferred, rephrased or translated on the
-        user's behalf, and any characterising adjective about the applicant.
+        Principle IV, in the constitution's own words: rewriting, translating
+        and reformatting verified facts is permitted; introducing scope,
+        seniority, duration, headcount or outcomes that the profile does not
+        support is not. So do not flag a faithful rewording or an approved
+        translation — feature 005 exists to produce one.
+
+        Flag a value that is invented or inferred, a rewording that changes
+        what an entry says, and any characterising adjective about the
+        applicant. Flag a claim that cannot be traced to an entry and reaches
+        a document without being surfaced for the user to confirm.
+
         A section with nothing to show is labelled and left empty, never
         filled with a placeholder or a plausible sample.
 
