@@ -146,6 +146,12 @@ class Page:
         self.pages = 1
         self.section: str | None = None
         self._pending: str | None = None
+        # Whether the current section has had anything drawn under it. A
+        # section that is deliberately empty must not be announced as
+        # carrying on over a page break: 自己PR（続き） above a page holding
+        # only 以上 continues nothing, and says the opposite of what an
+        # empty labelled section is for.
+        self._filled = False
         # A box in the top-right corner that text must keep out of, as
         # (width, height), or None where nothing is in the way. The 履歴書 has
         # a photograph frame there; the 職務経歴書 has nothing.
@@ -179,12 +185,13 @@ class Page:
             self.pages += 1
             # Whatever was in the way was on that page, not this one.
             self._reserved = None
-            if self.section and not self._pending:
+            if self.section and self._filled and not self._pending:
                 self._draw(f"{self.section}{CONTINUED}", MARGIN, HEADING_SIZE)
 
         if self._pending:
             self._draw(self._pending, MARGIN, HEADING_SIZE)
             self.section, self._pending = self._pending, None
+            self._filled = False
 
     def heading(self, text: str) -> None:
         """A section title, kept on the same page as its first row.
@@ -214,6 +221,7 @@ class Page:
         self.space_for(len(lines))
         for number, part in enumerate(lines):
             self._draw(part, x if number == 0 else x + indent, size)
+        self._filled = True
 
     def gap(self, lines: float = 0.5) -> None:
         self.finish()

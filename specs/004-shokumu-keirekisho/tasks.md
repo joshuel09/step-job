@@ -130,19 +130,19 @@ generate, and confirm the document says exactly that much about it.
 
 ### Tests for User Story 3
 
-- [ ] T032 [P] [US3] Integration test for quickstart Scenario 5 in `apps/api/tests/integration/test_shokumu_blanks.py` — an employer with no description gets no invented narrative, and an empty section has no placeholder. Assert the whole document against an expected set of lines rather than searching for known placeholders, which only catches the ones someone thought of
-- [ ] T033 [P] [US3] Integration test asserting 自己PR is present, labelled and empty in every document whatever the profile holds, in `apps/api/tests/integration/test_shokumu_blanks.py`
-- [ ] T034 [P] [US3] Integration test for quickstart Scenario 6 in `apps/api/tests/integration/test_shokumu_unattached.py` — count the recorded stories going in and out; a story with no employer appears in the closing section; a profile whose stories are all unattached has empty employer sections and a full closing one
-- [ ] T035 [P] [US3] Integration test for quickstart Scenario 7 in `apps/api/tests/integration/test_shokumu_traceability.py`, asserting a snapshot still shows what a document used after its entries are edited
-- [ ] T036 [P] [US3] Integration test asserting no Japan-specific field appears in the document regardless of its disclosure flag, in `apps/api/tests/integration/test_shokumu_blanks.py` — gate G5 holds here by exclusion, and this is what proves it
+- [X] T032 [P] [US3] Integration test for quickstart Scenario 5 in `apps/api/tests/integration/test_shokumu_blanks.py` — an employer with no description gets no invented narrative, and an empty section has no placeholder. Assert the whole document against an expected set of lines rather than searching for known placeholders, which only catches the ones someone thought of
+- [X] T033 [P] [US3] Integration test asserting 自己PR is present, labelled and empty in every document whatever the profile holds, in `apps/api/tests/integration/test_shokumu_blanks.py`
+- [X] T034 [P] [US3] Integration test for quickstart Scenario 6 in `apps/api/tests/integration/test_shokumu_unattached.py` — count the recorded stories going in and out; a story with no employer appears in the closing section; a profile whose stories are all unattached has empty employer sections and a full closing one
+- [X] T035 [P] [US3] Integration test for quickstart Scenario 7 in `apps/api/tests/integration/test_shokumu_traceability.py`, asserting a snapshot still shows what a document used after its entries are edited
+- [X] T036 [P] [US3] Integration test asserting no Japan-specific field appears in the document regardless of its disclosure flag, in `apps/api/tests/integration/test_shokumu_blanks.py` — gate G5 holds here by exclusion, and this is what proves it
 
 ### Implementation for User Story 3
 
-- [ ] T037 [US3] Produce empty sections empty in `apps/api/app/shokumu/render.py` — no placeholder, no sample, no inferred content (FR-013)
-- [ ] T038 [US3] Render 自己PR as a labelled, empty section in `apps/api/app/shokumu/render.py`, per research.md R-007
-- [ ] T039 [US3] Render the closing achievements section for stories attached to no employer in `apps/api/app/shokumu/render.py`, per research.md R-005
+- [X] T037 [US3] Produce empty sections empty in `apps/api/app/shokumu/render.py` — no placeholder, no sample, no inferred content (FR-013)
+- [X] T038 [US3] Render 自己PR as a labelled, empty section in `apps/api/app/shokumu/render.py`, per research.md R-007
+- [X] T039 [US3] Render the closing achievements section for stories attached to no employer in `apps/api/app/shokumu/render.py`, per research.md R-005
 - [ ] T040 [P] [US3] Add the English and Japanese strings for this feature to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
-- [ ] T054 [P] [US3] Integration test for quickstart Scenario 11 in `apps/api/tests/integration/test_shokumu_english.py`, asserting entries recorded in English appear in English exactly as written and that nothing in the document is Japanese the user did not write (FR-015). Subtract the user's own values, the document's fixed vocabulary and the dates, then assert no Japanese remains — a blocklist of known translations only catches the ones someone thought of. Include a guard case confirming the subtraction does see a planted translation
+- [X] T054 [P] [US3] Integration test for quickstart Scenario 11 in `apps/api/tests/integration/test_shokumu_english.py`, asserting entries recorded in English appear in English exactly as written and that nothing in the document is Japanese the user did not write (FR-015). Subtract the user's own values, the document's fixed vocabulary and the dates, then assert no Japanese remains — a blocklist of known translations only catches the ones someone thought of. Include a guard case confirming the subtraction does see a planted translation
 
 **Checkpoint**: the document says what the profile says, and no more.
 
