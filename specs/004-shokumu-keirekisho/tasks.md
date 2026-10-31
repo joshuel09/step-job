@@ -105,16 +105,16 @@ contains the identical set of entries in a different order.
 
 ### Tests for User Story 2
 
-- [ ] T025 [P] [US2] Integration test for quickstart Scenario 2 in `apps/api/tests/integration/test_shokumu_arrangement.py`, asserting the two orders carry **the identical set of entries** with none gained, lost, merged or shortened, and that an unknown arrangement is refused
-- [ ] T026 [P] [US2] Integration test for quickstart Scenario 3 in `apps/api/tests/integration/test_shokumu_conventions.py`, asserting a 和暦 document has **no four-digit Western year anywhere** and a 西暦 document has no era name, and that both paper sizes carry the same content
+- [X] T025 [P] [US2] Integration test for quickstart Scenario 2 in `apps/api/tests/integration/test_shokumu_arrangement.py`, asserting the two orders carry **the identical set of entries** with none gained, lost, merged or shortened, and that an unknown arrangement is refused
+- [X] T026 [P] [US2] Integration test for quickstart Scenario 3 in `apps/api/tests/integration/test_shokumu_conventions.py`, asserting a 和暦 document has **no four-digit Western year anywhere** and a 西暦 document has no era name, and that both paper sizes carry the same content
 
 ### Implementation for User Story 2
 
-- [ ] T027 [US2] Apply the chosen arrangement in `apps/api/app/shokumu/sections.py`, with undated entries last in both directions
-- [ ] T028 [US2] Apply the date convention throughout `apps/api/app/shokumu/render.py` using the shared era rendering, never mixing the two in one document
-- [ ] T029 [US2] Support B5 alongside A4 in `apps/api/app/shokumu/render.py`, with the same content at either size
-- [ ] T030 [US2] Support preview in `apps/api/app/shokumu/router.py`, returning the identical document with a different disposition
-- [ ] T031 [P] [US2] Integration test asserting a preview and a download are the same document in `apps/api/tests/integration/test_shokumu_preview.py`, comparing what is drawn rather than only the extracted text
+- [X] T027 [US2] Apply the chosen arrangement in `apps/api/app/shokumu/sections.py`, with undated entries last in both directions
+- [X] T028 [US2] Apply the date convention throughout `apps/api/app/shokumu/render.py` using the shared era rendering, never mixing the two in one document
+- [X] T029 [US2] Support B5 alongside A4 in `apps/api/app/shokumu/render.py`, with the same content at either size
+- [X] T030 [US2] Support preview in `apps/api/app/shokumu/router.py`, returning the identical document with a different disposition
+- [X] T031 [P] [US2] Integration test asserting a preview and a download are the same document in `apps/api/tests/integration/test_shokumu_preview.py`, comparing what is drawn rather than only the extracted text
 
 **Checkpoint**: the conventions are the user's to choose, and the preview is honest.
 
