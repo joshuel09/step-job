@@ -7,6 +7,7 @@ must not change because the other's enum moved.
 """
 
 import enum
+import uuid
 
 from pydantic import BaseModel
 
@@ -48,3 +49,27 @@ class ShokumuKeirekishoRequest(BaseModel):
     arrangement: Arrangement = Arrangement.reverse_chronological
     date_convention: DateConvention = DateConvention.seireki
     paper_size: PaperSize = PaperSize.a4
+
+
+class UnattachedAchievement(BaseModel):
+    """An achievement recorded against no employer.
+
+    Named so the user can recognise it and attach it to one if that is what
+    they meant. It is in the document either way, in the closing section.
+    """
+
+    entry_id: uuid.UUID
+    title: str
+
+
+class ReadinessReport(BaseModel):
+    """What a document would lack.
+
+    Separates what cannot be left out from what will simply be blank, because
+    the two need different responses from the user.
+    """
+
+    can_generate: bool
+    missing_required: list[str] = []
+    missing_optional: list[str] = []
+    unattached_achievements: list[UnattachedAchievement] = []

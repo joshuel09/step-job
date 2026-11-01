@@ -334,6 +334,42 @@ class TestDocuments:
         check(DOCUMENTS, "/profile/documents/rirekisho/readiness", "get", 404, response.json())
 
 
+SHOKUMU_READINESS = "/profile/documents/shokumu-keirekisho/readiness"
+
+
+class TestShokumuKeirekisho:
+    def test_the_readiness_report(self, client, auth_headers, shokumu_profile):
+        """The shared fixture on purpose: it records an achievement against
+        no employer, and `unattached_achievements` is the only part of this
+        response with a shape of its own. An empty array validates against
+        any item schema, so a fixture without one would check that shape by
+        never reaching it."""
+        response = client.get(f"/api/v1{SHOKUMU_READINESS}", headers=auth_headers)
+        assert response.status_code == 200, response.text
+        assert response.json()["unattached_achievements"], "the fixture must have one"
+        check(SHOKUMU, SHOKUMU_READINESS, "get", 200, response.json())
+
+    def test_the_readiness_report_without_a_profile(self, client, auth_headers):
+        response = client.get(f"/api/v1{SHOKUMU_READINESS}", headers=auth_headers)
+        assert response.status_code == 404
+        check(SHOKUMU, SHOKUMU_READINESS, "get", 404, response.json())
+
+    def test_refusing_a_profile_with_nothing_to_describe(self, client, auth_headers, profile):
+        """The 422 a generated client must be able to read field by field."""
+        response = client.post(
+            "/api/v1/profile/documents/shokumu-keirekisho", headers=auth_headers, json={}
+        )
+        assert response.status_code == 422, response.text
+        check(SHOKUMU, "/profile/documents/shokumu-keirekisho", "post", 422, response.json())
+
+    def test_generating_without_a_profile(self, client, auth_headers):
+        response = client.post(
+            "/api/v1/profile/documents/shokumu-keirekisho", headers=auth_headers, json={}
+        )
+        assert response.status_code == 404
+        check(SHOKUMU, "/profile/documents/shokumu-keirekisho", "post", 404, response.json())
+
+
 # --- the shared unauthorised shape -------------------------------------------
 
 
@@ -372,9 +408,6 @@ UNVALIDATED: set[tuple[str, str, str, str]] = {
     (IMPORTS, "/profile/imports/upload", "post", "201"),
     # Needs an import still running, which is a timing setup rather than a shape.
     (IMPORTS, "/profile/imports/{import_id}/cancel", "post", "200"),
-    # Feature 004 is planned, not built. Its contract exists so the client and
-    # the contract tests see it; these come off this list as the routes land.
-    (SHOKUMU, "/profile/documents/shokumu-keirekisho/readiness", "get", "200"),
     # Feature 005, likewise planned and not built.
     (ENGLISH, "/profile/documents/resume/readiness", "get", "200"),
     (ENGLISH, "/profile/translations", "get", "200"),
