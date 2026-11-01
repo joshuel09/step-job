@@ -153,6 +153,12 @@ class TestNoJapanSpecificField:
 
     LABELS = ("在留資格", "国籍", "ビザ", "在留期限", "就労資格", "日本語能力")
 
+    # What a disclosed value looks like once written. Mostly the stored text,
+    # but `work_authorisation` is a boolean the 履歴書 writes as あり — so
+    # checking the stored value would check the string "True", which no
+    # document would ever contain, and the flag would go uncovered.
+    WRITTEN = ("永住者", "Philippines", "技術・人文知識・国際業務", "JLPT N2", "あり")
+
     @pytest.fixture
     def disclosed(self, session, shokumu_profile):
         from app.career import models
@@ -172,9 +178,13 @@ class TestNoJapanSpecificField:
 
     def test_no_disclosed_value_reaches_the_document(self, client, auth_headers, disclosed):
         document = "".join(_lines(client, auth_headers))
-        for field, value in self.VALUES.items():
-            if isinstance(value, str):
-                assert value not in document, f"{field} reached a 職務経歴書"
+        for value in self.WRITTEN:
+            assert value not in document, f"{value} reached a 職務経歴書"
+
+    def test_the_written_forms_cover_every_field_the_profile_holds(self):
+        """Otherwise a field added to VALUES is silently never checked, which
+        is how the boolean one went uncovered to begin with."""
+        assert len(self.WRITTEN) == len(self.VALUES) - 1, "every field but the date"
 
     def test_no_label_reaches_it_either(self, client, auth_headers, disclosed):
         """A blank 国籍 line still tells a reader there is one being withheld."""

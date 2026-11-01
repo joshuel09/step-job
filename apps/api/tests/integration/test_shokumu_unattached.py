@@ -104,7 +104,10 @@ class TestCountInCountOut:
 
         document = "".join(_lines(client, auth_headers))
         for title in _titles(session, shokumu_profile.id):
-            assert title in document, f"{title} was dropped"
+            # Counted, not looked for: a document that repeats an achievement
+            # satisfies "it is in there" and tells an employer the user did
+            # the same thing twice.
+            assert document.count(title) == 1, f"{title} appears {document.count(title)} times"
 
 
 class TestWhereAnUnattachedStoryGoes:

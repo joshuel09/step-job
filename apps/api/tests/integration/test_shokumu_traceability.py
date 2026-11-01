@@ -57,6 +57,28 @@ class TestWhatWasSentIsRecorded:
         assert snapshot is not None
         assert snapshot.profile_id == shokumu_profile.id
 
+    def test_the_record_holds_the_name_the_document_carried(
+        self, client, auth_headers, session, shokumu_profile
+    ):
+        """Not just the identity's id: the name as it read on the day.
+
+        A captured id proves which entry was used. It does not prove the
+        record kept what that entry said, which is the question a snapshot
+        exists to answer.
+        """
+        from app.career import models
+
+        response = _generate(client, auth_headers)
+        assert "山田太郎" in _text(response.content)
+
+        identity = session.scalars(
+            select(models.Identity).where(models.Identity.profile_id == shokumu_profile.id)
+        ).one()
+        snapshot = _snapshot(session, response.headers["X-Snapshot-Id"])
+
+        assert identity.id in snapshot.captured_entry_ids
+        assert "山田太郎" in str(snapshot.payload)
+
     def test_the_snapshot_names_the_achievements_too(
         self, client, auth_headers, session, shokumu_profile
     ):
@@ -117,7 +139,12 @@ class TestTheRecordDoesNotMoveWithTheProfile:
         so nothing before this feature put one in a snapshot."""
         from app.career import models
 
-        snapshot_id = _generate(client, auth_headers).headers["X-Snapshot-Id"]
+        first = _generate(client, auth_headers)
+        snapshot_id = first.headers["X-Snapshot-Id"]
+        # Read the document before the edit. Without this the test holds the
+        # snapshot to a sentence the document may never have carried, which
+        # is a record of something nobody received.
+        assert "二十分になった。" in _text(first.content)
 
         story = session.scalars(
             select(models.CareerStory).where(models.CareerStory.title == "ビルド時間を半分にした")
@@ -138,7 +165,9 @@ class TestTheRecordDoesNotMoveWithTheProfile:
         What an employer holds cannot be unsent."""
         from app.career import models
 
-        snapshot_id = _generate(client, auth_headers).headers["X-Snapshot-Id"]
+        first = _generate(client, auth_headers)
+        snapshot_id = first.headers["X-Snapshot-Id"]
+        assert "社外勉強会の運営" in _text(first.content)
 
         story = session.scalars(
             select(models.CareerStory).where(models.CareerStory.title == "社外勉強会の運営")
