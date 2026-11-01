@@ -158,3 +158,96 @@ class TestKeepingClearOfSomething:
                 break
         assert page.pages > 1, "the page never filled"
         assert page._right() == page.width - MARGIN
+
+
+class TestAContinuationHasSomethingToContinue:
+    """A heading repeated over a page break says "this carries on".
+
+    For a section with rows that is true and useful: an employer may hold
+    page two on its own, and it has to say what it is. For a section the
+    product deliberately leaves empty it is false — 自己PR（続き） above a
+    page holding nothing continues nothing, and contradicts the one thing an
+    empty labelled section exists to say.
+    """
+
+    def _page(self):
+        from io import BytesIO
+
+        from app.documents.typography import PAGE_SIZES, Page
+        from reportlab.pdfgen.canvas import Canvas
+
+        size = PAGE_SIZES["a4"]
+        buffer = BytesIO()
+        return Page(Canvas(buffer, pagesize=size), size), buffer
+
+    def _read(self, page, buffer) -> list[str]:
+        """What each page of the finished file says."""
+        from io import BytesIO
+
+        from pypdf import PdfReader
+
+        page.canvas.save()
+        return [p.extract_text() or "" for p in PdfReader(BytesIO(buffer.getvalue())).pages]
+
+    def _fill_leaving(self, page, room: int = 0) -> None:
+        """Draw until there is room for exactly `room` more lines."""
+        from app.documents.typography import LINE_HEIGHT, MARGIN
+
+        while page.y - (room + 1) * LINE_HEIGHT >= MARGIN:
+            page.line("本文")
+
+    def test_a_section_with_rows_carries_on_by_name(self):
+        """The case the continuation exists for: an employer may hold page
+        two on its own, and it has to say which employer it is."""
+        from app.documents.typography import CONTINUED
+
+        page, buffer = self._page()
+        page.heading("職務経歴")
+        self._fill_leaving(page)
+        page.line("次のページの一行")
+
+        assert page.pages == 2, "the page did not actually break"
+        pages = self._read(page, buffer)
+        assert f"職務経歴{CONTINUED}" in pages[1]
+
+    def test_an_empty_section_leaves_no_continuation_on_the_next_page(self):
+        from app.documents.typography import CONTINUED
+
+        page, buffer = self._page()
+        page.heading("職務経歴")
+        # Room for exactly one more line, which the empty section's own
+        # heading takes. Whatever comes next starts a page, and the section
+        # that reaches it has had nothing under it.
+        self._fill_leaving(page, room=1)
+        page.heading("自己PR")
+        page.finish()
+        assert page.pages == 1, "the heading should still be on the first page"
+
+        page.line("以上")
+
+        pages = self._read(page, buffer)
+        assert page.pages == 2, "the page did not actually break"
+        assert CONTINUED not in pages[1], f"continued nothing: {pages[1]!r}"
+        assert "自己PR" in pages[0]
+
+    def test_an_empty_section_is_not_announced_as_carrying_on(self):
+        """The case 自己PR reaches: a heading, nothing under it, then a page
+        break for whatever comes next."""
+        page, _ = self._page()
+        page.heading("職務経歴")
+        self._fill_leaving(page)
+        page.heading("自己PR")
+        page.finish()
+
+        marked = page._filled
+        assert marked is False, "an empty section must not count as filled"
+
+    def test_a_section_starts_empty_again_after_its_heading(self):
+        page, _ = self._page()
+        page.heading("職務経歴")
+        page.line("一行")
+        assert page._filled is True
+
+        page.heading("自己PR")
+        page.finish()
+        assert page._filled is False
