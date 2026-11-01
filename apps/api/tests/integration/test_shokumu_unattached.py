@@ -31,6 +31,18 @@ def _lines(client, auth_headers, **body) -> list[str]:
     return [line.strip() for line in text.splitlines() if line.strip()]
 
 
+def _achievements(lines: list[str]) -> list[str]:
+    """Every achievement drawn, wherever it sits.
+
+    Achievements are the only bulleted lines between the career history and
+    the sections that follow it — skills and the rest are bulleted too, which
+    is why this stops at their heading.
+    """
+    start = lines.index("職務経歴")
+    end = lines.index(AFTER_CLOSING)
+    return [line for line in lines[start:end] if line.startswith("・")]
+
+
 def _titles(session, profile_id) -> list[str]:
     from app.career import models
 
@@ -102,12 +114,21 @@ class TestCountInCountOut:
         )
         session.flush()
 
-        document = "".join(_lines(client, auth_headers))
-        for title in _titles(session, shokumu_profile.id):
+        lines = _lines(client, auth_headers)
+        document = "".join(lines)
+        recorded = _titles(session, shokumu_profile.id)
+
+        for title in recorded:
             # Counted, not looked for: a document that repeats an achievement
             # satisfies "it is in there" and tells an employer the user did
             # the same thing twice.
             assert document.count(title) == 1, f"{title} appears {document.count(title)} times"
+
+        # And the other direction. Every assertion above names an achievement
+        # the profile holds, so an achievement the profile does not hold
+        # passes all of them — a claim about the candidate that nobody made.
+        drawn = _achievements(lines)
+        assert len(drawn) == len(recorded), f"{len(recorded)} recorded, {len(drawn)} drawn: {drawn}"
 
 
 class TestWhereAnUnattachedStoryGoes:
