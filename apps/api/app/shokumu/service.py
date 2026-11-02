@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 from app.career import models as career_models
 from app.career import snapshots
 from app.core.errors import ValidationFailed
-from app.shokumu import render, sections, summary
+from app.shokumu import readiness, render, sections, summary
 from app.shokumu.schemas import Arrangement, DateConvention, PaperSize
 
 logger = logging.getLogger(__name__)
@@ -36,26 +36,27 @@ def _identity(session: Session, profile: career_models.CareerProfile):
     ).first()
 
 
-def _require(identity, experiences: list[Any], profile_id) -> None:
-    """Refuse rather than produce a document that is not the document (FR-006).
-
-    Two things a 職務経歴書 cannot be meaningful without: a name to put at the
-    top, and some career history to describe. Both are named rather than
-    reported generically, so the user knows what to go and record.
-    """
-    failures: list[tuple[str, str]] = []
-
-    if identity is None or not (identity.full_name_latin or "").strip():
-        failures.append(("identity", "add your name before generating a 職務経歴書"))
-
+# Why each missing thing stops a document, in the words the user reads.
+REASONS = {
+    "identity": "add your name before generating a 職務経歴書",
     # A 職務経歴書 with no work history is not a sparse document; it is a
     # different document. Producing an empty one would be a blank page with
     # headings on it.
-    if not experiences:
-        failures.append(("experiences", "a 職務経歴書 needs at least one employer"))
+    "experiences": "a 職務経歴書 needs at least one employer",
+}
 
-    if not failures:
+
+def _require(identity, experiences: list[Any], profile_id) -> None:
+    """Refuse rather than produce a document that is not the document (FR-006).
+
+    The rule lives in readiness.py, so the report a user reads before
+    generating and the refusal they would meet cannot disagree.
+    """
+    missing = readiness.missing_required(identity, experiences)
+    if not missing:
         return
+
+    failures = [(field, REASONS[field]) for field in missing]
 
     # How many things stood in the way, never which: a field name says what
     # part of someone's history they have not recorded yet.
@@ -66,6 +67,34 @@ def _require(identity, experiences: list[Any], profile_id) -> None:
     raise ValidationFailed(
         failures, "A 職務経歴書 cannot be produced from what this profile holds."
     )
+
+
+def readiness_report(session: Session, profile: career_models.CareerProfile):
+    """What a document would lack, from the same entries generation would use.
+
+    Read-only: nothing is produced and no snapshot is recorded.
+    """
+    report = readiness.build_report(
+        _identity(session, profile),
+        experiences=_section(session, profile, career_models.WorkExperience),
+        stories=_section(session, profile, career_models.CareerStory),
+        skills=_section(session, profile, career_models.Skill),
+        languages=_section(session, profile, career_models.Language),
+        certifications=_section(session, profile, career_models.Certification),
+    )
+
+    # Whether the user could generate, and how many gaps they were shown. The
+    # report also names achievements by the user's own title, which is the
+    # document's content and never reaches a log.
+    logger.info(
+        "shokumu-keirekisho readiness reported",
+        extra={
+            "profile_id": profile.id,
+            "outcome": "ready" if report.can_generate else "incomplete",
+            "count": len(report.missing_required) + len(report.missing_optional),
+        },
+    )
+    return report
 
 
 def build(
