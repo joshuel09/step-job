@@ -66,7 +66,7 @@ paper sizes carry the same content.
 ## Scenario 4 — 職務要約 says only what can be counted (FR-019, SC-009)
 
 ```bash
-uv run pytest tests/integration/test_shokumu_summary.py -q
+uv run pytest tests/unit/test_shokumu_summary.py -q
 ```
 
 **Expect**: the summary states the career span, the number of employers and the
@@ -162,3 +162,41 @@ cd ../.. && corepack pnpm --filter web build
 
 **Expect**: the whole suite passes, the generated client is current, and the
 contract tests show no documented path left unimplemented for this feature.
+
+---
+
+## Walkthrough result
+
+Run on 2026-11-01 against a fresh database, `uv run alembic upgrade head`,
+on the commit that closed #173.
+
+| Scenario | What it covers | Result |
+|---|---|---|
+| 0 | the Japanese is readable | 3 passed |
+| 1 | a profile becomes a career history | 27 passed |
+| 2 | the arrangement changes the order, nothing else | 10 passed |
+| 3 | one convention throughout | 15 passed |
+| 4 | 職務要約 says only what can be counted | 21 passed |
+| 5 | 自己PR is labelled and empty | 17 passed |
+| 6 | nothing recorded is lost | 10 passed |
+| 7 | the document stays traceable after an edit | 10 passed |
+| 8 | the two documents agree | 15 passed |
+| 9 | a long career keeps every entry | 22 passed |
+| 10 | refused rather than empty | 6 passed |
+| 11 | English entries stay English | 5 passed |
+
+Full run, both halves of it:
+
+- `uv run pytest -m "not live" -q` — **953 passed, 3 deselected**.
+- the web build — **compiled successfully**, with `check-messages` reporting
+  283 keys complete. Run as `node scripts/check-messages.mjs && next build`
+  from `apps/web`, which is what `pnpm --filter web build` resolves to;
+  `pnpm` is not on the PATH on this machine.
+
+One correction to this file rather than to the code: Scenario 4 named
+`tests/integration/test_shokumu_summary.py`, and 職務要約 is assembled by a
+pure function, so its tests are unit tests. The path above is now the one
+that exists.
+
+Scenarios 0 to 11 are the API. The document page is #167 and is not part of
+this walkthrough.
