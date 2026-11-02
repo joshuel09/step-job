@@ -65,10 +65,16 @@ class WorkExperienceIn(BaseModel):
     ended_on: date | None = None
     description: str = ""
     source_language: Locale = Locale.en
+    # The organisation's own English name, as the user supplies it. Set
+    # through this route rather than one of feature 005's own: it is a
+    # profile field, and a second way to edit an entry is what Principle I
+    # rules out. Absent means they have not given one, never a guess.
+    employer_name_english: str | None = None
 
 
 class WorkExperiencePatch(BaseModel):
     employer_name: str | None = None
+    employer_name_english: str | None = None
     job_title: str | None = None
     employment_type: EmploymentType | None = None
     started_on: date | None = None
@@ -80,6 +86,7 @@ class WorkExperiencePatch(BaseModel):
 class WorkExperienceOut(ORMModel):
     id: uuid.UUID
     employer_name: str
+    employer_name_english: str | None = None
     job_title: str
     employment_type: EmploymentType | None = None
     started_on: date
@@ -90,6 +97,7 @@ class WorkExperienceOut(ORMModel):
 
 class EducationIn(BaseModel):
     institution: str
+    institution_english: str | None = None
     qualification: str | None = None
     field_of_study: str | None = None
     started_on: date | None = None
@@ -103,7 +111,12 @@ class EducationOut(EducationIn, ORMModel):
 
 class CertificationIn(BaseModel):
     name: str
+    # A certification is in no translation at all: a name, an issuer and two
+    # dates means the first two are proper nouns and the last two are not
+    # words. Both English forms are the user's to state (R-002).
+    name_english: str | None = None
     issuer: str | None = None
+    issuer_english: str | None = None
     issued_on: date | None = None
     expires_on: date | None = None
     source_language: Locale = Locale.en

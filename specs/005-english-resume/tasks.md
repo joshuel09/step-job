@@ -53,8 +53,8 @@ task that cannot start**, and the table above is why.
 **Purpose**: Nothing to install. This feature reuses what features 003 and 004
 brought in.
 
-- [ ] T001 Confirm reportlab, pypdf and the embedded font are already runtime dependencies in `apps/api/pyproject.toml`, and record in the PR that this feature adds none
-- [ ] T002 Create `apps/api/app/translations/__init__.py` and `apps/api/app/resume/__init__.py`
+- [X] T001 Confirm reportlab, pypdf and the embedded font are already runtime dependencies in `apps/api/pyproject.toml`, and record in the PR that this feature adds none
+- [X] T002 Create `apps/api/app/translations/__init__.py` and `apps/api/app/resume/__init__.py`
 
 ---
 
@@ -65,17 +65,17 @@ puts it on the profile. One migration (constitution gate G11).
 
 **No external dependency.** This phase can be built immediately.
 
-- [ ] T003 Create `apps/api/app/translations/models.py` with `EntryTranslation` (`Entity`, `ProfileOwned`) carrying `entry_type`, `entry_id`, `field`, `language`, `approved_text`, `approved_at`, `source_fingerprint`, per data-model.md
-- [ ] T004 [P] Add the `TranslatableEntry` enum (`work_experience`, `education`, `career_story`, `skill`) to `apps/api/app/translations/models.py` — **not** `certification`, which has only proper nouns (research.md R-002)
-- [ ] T005 [P] Add the `NamedEntry` enum (`work_experience`, `education`, `certification`) to `apps/api/app/translations/models.py`, separate from `TranslatableEntry` because a supplied name and an approved rendering are different kinds of fact
-- [ ] T006 Add `employer_name_english` to `WorkExperience`, `institution_english` to `Education`, and `name_english` and `issuer_english` to `Certification` in `apps/api/app/career/models.py`, all nullable with no default
-- [ ] T007 Generate one Alembic migration in `apps/api/migrations/versions/` creating `entry_translation` with its unique constraint on `(profile_id, entry_type, entry_id, field, language)` and its `(profile_id, language)` index, plus the four columns from T006. No backfill — a guessed English name is the transliteration FR-021 forbids
-- [ ] T008 Run `alembic upgrade head`, then `downgrade -1`, then `upgrade head` again against a real database for the migration in `apps/api/migrations/versions/`, confirming the schema returns to the same state each time — a downgrade nobody runs is a downgrade that does not work
-- [ ] T009 [P] Create `apps/api/app/translations/fingerprint.py` with a digest of a source string, stable across processes — a salted or address-based hash would mark every approval stale on restart (FR-023)
-- [ ] T010 [P] Unit tests in `apps/api/tests/unit/test_fingerprint.py` — the same text digests the same twice, different text differs, and whitespace-only changes are **not** treated as equal, since a user may have fixed spacing deliberately (FR-023)
-- [ ] T011 Add `employer_name_english`, `institution_english`, `name_english` and `issuer_english` to `WorkExperienceIn/Out`, `EducationIn/Out` and `CertificationIn/Out` in `apps/api/app/career/schemas.py`, all optional
-- [ ] T012 Document the same four properties on `specs/001-master-career-profile/contracts/openapi.yaml`. They are profile fields set through the existing section routes — a route of this feature's own would be a second way to edit an entry, which Principle I rules out
-- [ ] T013 Regenerate the typed client (`pnpm gen:api`) and commit `packages/api-client/src/`; CI fails on a stale client
+- [X] T003 Create `apps/api/app/translations/models.py` with `EntryTranslation` (`Entity`, `ProfileOwned`) carrying `entry_type`, `entry_id`, `field`, `language`, `approved_text`, `approved_at`, `source_fingerprint`, per data-model.md
+- [X] T004 [P] Add the `TranslatableEntry` enum (`work_experience`, `education`, `career_story`, `skill`) to `apps/api/app/translations/models.py` — **not** `certification`, which has only proper nouns (research.md R-002)
+- [X] T005 [P] Add the `NamedEntry` enum (`work_experience`, `education`, `certification`) to `apps/api/app/translations/models.py`, separate from `TranslatableEntry` because a supplied name and an approved rendering are different kinds of fact
+- [X] T006 Add `employer_name_english` to `WorkExperience`, `institution_english` to `Education`, and `name_english` and `issuer_english` to `Certification` in `apps/api/app/career/models.py`, all nullable with no default
+- [X] T007 Generate one Alembic migration in `apps/api/migrations/versions/` creating `entry_translation` with its unique constraint on `(profile_id, entry_type, entry_id, field, language)` and its `(profile_id, language)` index, plus the four columns from T006. No backfill — a guessed English name is the transliteration FR-021 forbids
+- [X] T008 Run `alembic upgrade head`, then `downgrade -1`, then `upgrade head` again against a real database for the migration in `apps/api/migrations/versions/`, confirming the schema returns to the same state each time — a downgrade nobody runs is a downgrade that does not work
+- [X] T009 [P] Create `apps/api/app/translations/fingerprint.py` with a digest of a source string, stable across processes — a salted or address-based hash would mark every approval stale on restart (FR-023)
+- [X] T010 [P] Unit tests in `apps/api/tests/unit/test_fingerprint.py` — the same text digests the same twice, different text differs, and whitespace-only changes are **not** treated as equal, since a user may have fixed spacing deliberately (FR-023)
+- [X] T011 Add `employer_name_english`, `institution_english`, `name_english` and `issuer_english` to `WorkExperienceIn/Out`, `EducationIn/Out` and `CertificationIn/Out` in `apps/api/app/career/schemas.py`, all optional
+- [X] T012 Document the same four properties on `specs/001-master-career-profile/contracts/openapi.yaml`. They are profile fields set through the existing section routes — a route of this feature's own would be a second way to edit an entry, which Principle I rules out
+- [X] T013 Regenerate the typed client (`pnpm gen:api`) and commit `packages/api-client/src/`; CI fails on a stale client
 
 **Checkpoint**: an approved English version has somewhere to live, and an
 organisation has somewhere to carry its English name.

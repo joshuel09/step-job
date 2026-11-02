@@ -920,6 +920,15 @@ components:
       required: [employer_name, job_title, started_on, source_language]
       properties:
         employer_name: { type: string }
+        employer_name_english:
+          type: [string, "null"]
+          description: >
+            The organisation's own English name, as the user supplies it.
+            Added by feature 005. Not a rendering of the Japanese one and
+            never drafted: a company's English name is whatever that company
+            calls itself. Null means the user has not supplied one, and a
+            document then prints the name as recorded rather than
+            transliterating it.
         job_title: { type: string }
         employment_type:
           type: [string, "null"]
@@ -955,6 +964,15 @@ components:
       properties:
         id: { type: string, format: uuid, readOnly: true }
         institution: { type: string }
+        institution_english:
+          type: [string, "null"]
+          description: >
+            The organisation's own English name, as the user supplies it.
+            Added by feature 005. Not a rendering of the Japanese one and
+            never drafted: a university's English name is the one it
+            uses. Null means the user has not supplied one, and a
+            document then prints the name as recorded rather than
+            transliterating it.
         qualification: { type: [string, "null"] }
         field_of_study: { type: [string, "null"] }
         started_on: { type: [string, "null"], format: date }
@@ -967,7 +985,21 @@ components:
       properties:
         id: { type: string, format: uuid, readOnly: true }
         name: { type: string }
+        name_english:
+          type: [string, "null"]
+          description: >
+            The certification's own English name, as the user supplies it.
+            Added by feature 005. A certification carries a name, an issuer
+            and two dates, so the first two are proper nouns and the last
+            two are not words — there is nothing here the product drafts.
         issuer: { type: [string, "null"] }
+        issuer_english:
+          type: [string, "null"]
+          description: >
+            The awarding body's own English name, as the user supplies it.
+            Added by feature 005, and the one most easily guessed at: an
+            invented awarding body on a resume is a claim the applicant has
+            to answer for.
         issued_on: { type: [string, "null"], format: date }
         expires_on: { type: [string, "null"], format: date }
         source_language: { $ref: "#/components/schemas/Locale" }

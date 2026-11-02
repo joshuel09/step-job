@@ -1605,6 +1605,8 @@ export interface components {
         };
         WorkExperienceInput: {
             employer_name: string;
+            /** @description The organisation's own English name, as the user supplies it. Added by feature 005. Not a rendering of the Japanese one and never drafted: a company's English name is whatever that company calls itself. Null means the user has not supplied one, and a document then prints the name as recorded rather than transliterating it. */
+            employer_name_english?: string | null;
             job_title: string;
             /** @enum {string|null} */
             employment_type?: "permanent" | "contract" | "part_time" | "internship" | "freelance" | null;
@@ -1629,6 +1631,8 @@ export interface components {
             /** Format: uuid */
             readonly id?: string;
             institution: string;
+            /** @description The organisation's own English name, as the user supplies it. Added by feature 005. Not a rendering of the Japanese one and never drafted: a university's English name is the one it uses. Null means the user has not supplied one, and a document then prints the name as recorded rather than transliterating it. */
+            institution_english?: string | null;
             qualification?: string | null;
             field_of_study?: string | null;
             /** Format: date */
@@ -1641,7 +1645,11 @@ export interface components {
             /** Format: uuid */
             readonly id?: string;
             name: string;
+            /** @description The certification's own English name, as the user supplies it. Added by feature 005. A certification carries a name, an issuer and two dates, so the first two are proper nouns and the last two are not words — there is nothing here the product drafts. */
+            name_english?: string | null;
             issuer?: string | null;
+            /** @description The awarding body's own English name, as the user supplies it. Added by feature 005, and the one most easily guessed at: an invented awarding body on a resume is a claim the applicant has to answer for. */
+            issuer_english?: string | null;
             /** Format: date */
             issued_on?: string | null;
             /** Format: date */
