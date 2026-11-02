@@ -185,7 +185,13 @@ on the commit that closed #173.
 | 10 | refused rather than empty | 6 passed |
 | 11 | English entries stay English | 5 passed |
 
-Full run: `uv run pytest -m "not live" -q` — **953 passed, 3 deselected**.
+Full run, both halves of it:
+
+- `uv run pytest -m "not live" -q` — **953 passed, 3 deselected**.
+- the web build — **compiled successfully**, with `check-messages` reporting
+  283 keys complete. Run as `node scripts/check-messages.mjs && next build`
+  from `apps/web`, which is what `pnpm --filter web build` resolves to;
+  `pnpm` is not on the PATH on this machine.
 
 One correction to this file rather than to the code: Scenario 4 named
 `tests/integration/test_shokumu_summary.py`, and 職務要約 is assembled by a

@@ -117,6 +117,27 @@ def _content(pdf: bytes) -> str:
     return re.sub(r"[\s　]+", "", "".join(lines))
 
 
+def _history(pdf: bytes) -> str:
+    """Just the 職務経歴 section, where the employers are ordered.
+
+    職務要約 names the most recent employer, so searching the whole document
+    for it finds the summary's mention first — and an employer moved to the
+    end of its own career history would still look like it came first.
+    """
+    from app.documents.typography import CONTINUED
+
+    lines = [
+        line.strip()
+        for page in PdfReader(io.BytesIO(pdf)).pages
+        for line in (page.extract_text() or "").splitlines()
+        if line.strip() and not line.strip().endswith(CONTINUED)
+    ]
+    start = lines.index("職務経歴") + 1
+    after = {"その他の実績", "活かせる経験・知識・技術"}
+    end = next((i for i, line in enumerate(lines[start:], start) if line in after), len(lines))
+    return re.sub(r"[\s　]+", "", "".join(lines[start:end]))
+
+
 def _overflowing(pdf: bytes) -> list[str]:
     """Every drawn string whose right edge passes the page's right margin."""
     from app.documents.typography import FONT_NAME, MARGIN
@@ -175,6 +196,31 @@ class TestNothingIsLost:
         assert len(titles) == EMPLOYERS * STORIES_PER_EMPLOYER
         assert [t for t in titles if t not in text] == []
 
+    def test_every_achievement_keeps_its_three_parts(
+        self, client, auth_headers, long_career, paper
+    ):
+        """A title with nothing under it is an achievement in name only.
+
+        Counted, because the titles are all distinct and the parts are not:
+        a renderer that dropped every 課題 would keep every title and pass
+        the test above.
+        """
+        text = _squashed(_generate(client, auth_headers, paper).content)
+        expected = EMPLOYERS * STORIES_PER_EMPLOYER
+
+        assert text.count("課題があった。") == expected
+        assert text.count("対応した。") == expected
+        assert text.count("解決した。") == expected
+
+    def test_every_ordinary_description_survives_too(
+        self, client, auth_headers, long_career, paper
+    ):
+        """The separate check below covers only the long one. Eleven
+        employers carry the short description, and losing those would be
+        losing recorded work while the entry count still agreed."""
+        text = _squashed(_generate(client, auth_headers, paper).content)
+        assert text.count("担当業務を行いました。") == EMPLOYERS - 1
+
     def test_the_long_description_survives_whole(self, client, auth_headers, long_career, paper):
         text = _squashed(_generate(client, auth_headers, paper).content)
         assert re.sub(r"[\s　]+", "", LONG_DESCRIPTION) in text
@@ -182,10 +228,19 @@ class TestNothingIsLost:
     def test_the_employers_keep_their_order_across_the_breaks(
         self, client, auth_headers, long_career, paper
     ):
-        """Newest first by default, and a page break does not reshuffle them."""
-        text = _squashed(_generate(client, auth_headers, paper).content)
-        positions = [text.index(_employer(i)) for i in range(EMPLOYERS - 1)]
-        assert positions == sorted(positions, reverse=True)
+        """Newest first by default, and a page break does not reshuffle them.
+
+        The newest role is included. It is the ongoing one, and leaving it
+        out would let the applicant's current job move quietly to the end of
+        their own career history.
+        """
+        history = _history(_generate(client, auth_headers, paper).content)
+        # Newest first, so the list runs from the ongoing role backwards.
+        names = [LONG_EMPLOYER] + [_employer(i) for i in reversed(range(EMPLOYERS - 1))]
+        positions = [history.index(name) for name in names]
+
+        assert positions == sorted(positions), "the employers are not newest first"
+        assert history.index(LONG_EMPLOYER) < history.index(_employer(EMPLOYERS - 2))
 
     def test_the_document_still_ends_where_it_should(
         self, client, auth_headers, long_career, paper
@@ -203,9 +258,47 @@ class TestNothingRunsOffThePaper:
     def test_no_line_falls_below_the_bottom_margin(self, client, auth_headers, long_career, paper):
         assert _below_the_margin(_generate(client, auth_headers, paper).content) == []
 
-    def test_the_overflow_check_can_see_an_overflow(self, client, auth_headers, long_career, paper):
-        """Otherwise the two tests above pass on a check of nothing."""
-        from app.documents.typography import MARGIN
+    def test_the_overflow_check_reports_a_line_that_does_run_off(
+        self, client, auth_headers, long_career, paper
+    ):
+        """The positive control.
+
+        Measuring a line that fits proves the visitor ran. It does not prove
+        the detector can report anything: one that always returned nothing
+        would pass the two tests above and this would not notice. So a page
+        is drawn with a line deliberately past the margin and fed to the
+        same function.
+        """
+        from io import BytesIO
+
+        from app.documents.typography import (
+            BODY_SIZE,
+            FONT_NAME,
+            MARGIN,
+            PAGE_SIZES,
+            register_font,
+        )
+        from reportlab.pdfgen.canvas import Canvas
+
+        register_font()
+        size = PAGE_SIZES[paper]
+        buffer = BytesIO()
+        canvas = Canvas(buffer, pagesize=size)
+        canvas.setFont(FONT_NAME, BODY_SIZE)
+        canvas.drawString(MARGIN, size[1] - MARGIN, "これは収まる行です")
+        # Started so far right that it cannot help but pass the margin.
+        off = "この行は紙からはみ出します"
+        canvas.drawString(size[0] - MARGIN - 10, size[1] - MARGIN - 20, off)
+        canvas.save()
+
+        reported = _overflowing(buffer.getvalue())
+        assert reported == [off], reported
+
+    def test_the_overflow_check_measured_the_real_document(
+        self, client, auth_headers, long_career, paper
+    ):
+        """And it ran over something, rather than over an empty page."""
+        from app.documents.typography import FONT_NAME, MARGIN
 
         pdf = _generate(client, auth_headers, paper).content
         page = PdfReader(io.BytesIO(pdf)).pages[0]
@@ -216,7 +309,7 @@ class TestNothingRunsOffThePaper:
         def visit(text, cm, tm, font, size):
             nonlocal widest
             if text.strip():
-                widest = max(widest, tm[4] + stringWidth(text.rstrip("\n"), "IPAexGothic", size))
+                widest = max(widest, tm[4] + stringWidth(text.rstrip("\n"), FONT_NAME, size))
 
         page.extract_text(visitor_text=visit)
         assert 0 < widest <= limit + 0.5, "nothing was measured"

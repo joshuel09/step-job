@@ -74,16 +74,61 @@ def shared_profile(session, user_id):
     return profile
 
 
+def _pdf(client, auth_headers, path: str, **body) -> bytes:
+    response = client.post(path, headers=auth_headers, json=body)
+    assert response.status_code == 200, f"{path}: {response.text}"
+    return response.content
+
+
+def _squash(text: str) -> str:
+    return re.sub(r"[\s　]+", "", text)
+
+
+def _lines(pdf: bytes) -> list[str]:
+    return [
+        line.strip()
+        for page in PdfReader(io.BytesIO(pdf)).pages
+        for line in (page.extract_text() or "").splitlines()
+        if line.strip()
+    ]
+
+
 def _both(client, auth_headers, **body) -> tuple[str, str]:
-    pair = []
-    for path in (RIREKISHO, SHOKUMU):
-        response = client.post(path, headers=auth_headers, json=body)
-        assert response.status_code == 200, f"{path}: {response.text}"
-        text = "".join(
-            p.extract_text() or "" for p in PdfReader(io.BytesIO(response.content)).pages
+    return tuple(
+        _squash("".join(p.extract_text() or "" for p in PdfReader(io.BytesIO(pdf)).pages))
+        for pdf in (
+            _pdf(client, auth_headers, RIREKISHO, **body),
+            _pdf(client, auth_headers, SHOKUMU, **body),
         )
-        pair.append(re.sub(r"[\s　]+", "", text))
-    return pair[0], pair[1]
+    )
+
+
+def _rirekisho_dates(pdf: bytes, employer: str) -> str:
+    """Every row of the 学歴・職歴 table that names this employer, joined.
+
+    The table draws one row per event — joining and leaving — each beginning
+    with its own date, so the dates belonging to an employer are the ones on
+    that employer's own rows and nowhere else.
+    """
+    wanted = _squash(employer)
+    return "".join(_squash(line) for line in _lines(pdf) if wanted in _squash(line))
+
+
+def _shokumu_period(pdf: bytes, employer: str) -> str:
+    """The 期間 line of this employer's own section.
+
+    The heading is the employer's name on a line of its own, and the period
+    is the line under it. Reading it this way is what makes a period swapped
+    between two employers visible.
+    """
+    lines = _lines(pdf)
+    wanted = _squash(employer)
+    for number, line in enumerate(lines):
+        if _squash(line) == wanted:
+            following = _squash(lines[number + 1]) if number + 1 < len(lines) else ""
+            assert following.startswith("期間"), f"{employer} has no period under it: {following}"
+            return following
+    raise AssertionError(f"{employer} has no section of its own")
 
 
 CONVENTIONS = pytest.mark.parametrize("convention", ["seireki", "wareki"])
@@ -108,19 +153,44 @@ class TestTheyAgreeOnEveryFactBothCarry:
     ):
         """The sharpest of these. Both write a period for each employer, and
         both get it from `format_year_month`. A change to the era table in
-        one renderer and not the other shows up here and nowhere else."""
+        one renderer and not the other shows up here and nowhere else.
+
+        Checked against the employer it belongs to, not against the document
+        as a whole: two employers with their periods swapped carry every one
+        of these dates somewhere, and contradict each other anyway.
+        """
         from app.imports.dates import format_year_month
 
-        rirekisho, shokumu = _both(client, auth_headers, date_convention=convention)
         era = convention == "wareki"
+        rirekisho = _pdf(client, auth_headers, RIREKISHO, date_convention=convention)
+        shokumu = _pdf(client, auth_headers, SHOKUMU, date_convention=convention)
 
-        for _, _, started, ended in EMPLOYERS:
+        for name, _, started, ended in EMPLOYERS:
+            rows = _rirekisho_dates(rirekisho, name)
+            period = _shokumu_period(shokumu, name)
+
             for when in (started, ended):
                 if when is None:
                     continue
                 written = format_year_month(when, era=era)
-                assert written in rirekisho, f"{written} is missing from the 履歴書"
-                assert written in shokumu, f"{written} is missing from the 職務経歴書"
+                assert written in rows, f"{name}: {written} is not on its 履歴書 rows"
+                assert written in period, f"{name}: {written} is not in its 職務経歴書 period"
+
+    def test_a_date_belonging_to_another_employer_is_not_on_this_one(
+        self, client, auth_headers, shared_profile, convention
+    ):
+        """What the assertion above is for. Every date in this profile
+        appears in both documents; only the pairing can be wrong."""
+        from app.imports.dates import format_year_month
+
+        era = convention == "wareki"
+        shokumu = _pdf(client, auth_headers, SHOKUMU, date_convention=convention)
+
+        first, second = EMPLOYERS[0], EMPLOYERS[1]
+        theirs = format_year_month(second[2], era=era)
+        assert theirs not in _shokumu_period(shokumu, first[0]), (
+            f"{first[0]} carries {second[0]}'s start date"
+        )
 
     def test_on_an_ongoing_role(self, client, auth_headers, shared_profile, convention):
         """Both say the role continues. They say it in their own words — a
