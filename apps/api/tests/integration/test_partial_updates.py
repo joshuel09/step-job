@@ -302,6 +302,7 @@ class TestTheReadPathIsNotTheWritePath:
 
         skills = client.get("/api/v1/profile/skills", headers=auth_headers)
         assert skills.status_code == 200, skills.text
+        assert [s["name"] for s in skills.json()] == [""], "the blank entry itself comes back"
 
     def test_and_can_then_be_corrected(self, client, auth_headers, session, profile):
         """The point of still serving it: the user can see it and fix it."""
@@ -318,3 +319,44 @@ class TestTheReadPathIsNotTheWritePath:
         )
         assert fixed.status_code == 200, fixed.text
         assert fixed.json()["institution"] == "サンプル大学"
+
+
+class TestWhatIsTooLong:
+    """A value wider than its column is a 422, not a 500.
+
+    Postgres answers an over-length VARCHAR with StringDataRightTruncation,
+    which reaches the client as a server error naming nothing it can act
+    on. The user pasted something too long; that is worth saying.
+    """
+
+    @pytest.mark.parametrize(
+        ("section", "field", "limit"),
+        [
+            ("experiences", "employer_name", 255),
+            ("experiences", "employer_name_english", 255),
+            ("education", "institution", 255),
+            ("education", "institution_english", 255),
+            ("certifications", "name", 255),
+            ("certifications", "issuer_english", 255),
+            ("skills", "name", 255),
+            ("languages", "language", 100),
+        ],
+    )
+    def test_it_is_refused_rather_than_truncated(
+        self, client, auth_headers, profile, section, field, limit
+    ):
+        body = dict(TestWhatCannotBeBlanked.CREATE[section])
+        body[field] = "a" * (limit + 1)
+
+        refused = client.post(f"/api/v1/profile/{section}", headers=auth_headers, json=body)
+        assert refused.status_code == 422, refused.text
+        assert refused.json()["failures"][0]["field"] == field
+
+    def test_the_limit_itself_is_accepted(self, client, auth_headers, profile):
+        """Off by one here would reject a name the column can hold."""
+        created = client.post(
+            "/api/v1/profile/education",
+            headers=auth_headers,
+            json={"institution": "a" * 255},
+        )
+        assert created.status_code == 201, created.text

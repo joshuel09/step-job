@@ -922,9 +922,10 @@ components:
       type: object
       required: [employer_name, job_title, started_on, source_language]
       properties:
-        employer_name: { type: string }
+        employer_name: { type: string, maxLength: 255 }
         employer_name_english:
           type: [string, "null"]
+          maxLength: 255
           description: >
             The organisation's own English name, as the user supplies it.
             Added by feature 005. Not a rendering of the Japanese one and
@@ -932,7 +933,7 @@ components:
             calls itself. Null means the user has not supplied one, and a
             document then prints the name as recorded rather than
             transliterating it.
-        job_title: { type: string }
+        job_title: { type: string, maxLength: 255 }
         employment_type:
           type: [string, "null"]
           enum: [permanent, contract, part_time, internship, freelance, null]
@@ -966,9 +967,10 @@ components:
       required: [institution]
       properties:
         id: { type: string, format: uuid, readOnly: true }
-        institution: { type: string }
+        institution: { type: string, maxLength: 255 }
         institution_english:
           type: [string, "null"]
+          maxLength: 255
           description: >
             The organisation's own English name, as the user supplies it.
             Added by feature 005. Not a rendering of the Japanese one and
@@ -976,8 +978,8 @@ components:
             uses. Null means the user has not supplied one, and a
             document then prints the name as recorded rather than
             transliterating it.
-        qualification: { type: [string, "null"] }
-        field_of_study: { type: [string, "null"] }
+        qualification: { type: [string, "null"], maxLength: 255 }
+        field_of_study: { type: [string, "null"], maxLength: 255 }
         started_on: { type: [string, "null"], format: date }
         ended_on: { type: [string, "null"], format: date }
         source_language: { $ref: "#/components/schemas/Locale" }
@@ -987,17 +989,19 @@ components:
       required: [name]
       properties:
         id: { type: string, format: uuid, readOnly: true }
-        name: { type: string }
+        name: { type: string, maxLength: 255 }
         name_english:
           type: [string, "null"]
+          maxLength: 255
           description: >
             The certification's own English name, as the user supplies it.
             Added by feature 005. A certification carries a name, an issuer
             and two dates, so the first two are proper nouns and the last
             two are not words — there is nothing here the product drafts.
-        issuer: { type: [string, "null"] }
+        issuer: { type: [string, "null"], maxLength: 255 }
         issuer_english:
           type: [string, "null"]
+          maxLength: 255
           description: >
             The awarding body's own English name, as the user supplies it.
             Added by feature 005, and the one most easily guessed at: an
@@ -1012,7 +1016,7 @@ components:
       required: [name]
       properties:
         id: { type: string, format: uuid, readOnly: true }
-        name: { type: string }
+        name: { type: string, maxLength: 255 }
         level:
           type: [string, "null"]
           enum: [beginner, intermediate, advanced, expert, null]
@@ -1025,11 +1029,11 @@ components:
       required: [language, proficiency]
       properties:
         id: { type: string, format: uuid, readOnly: true }
-        language: { type: string }
+        language: { type: string, maxLength: 100 }
         proficiency:
           type: string
           enum: [native, business, conversational, basic]
-        qualification: { type: [string, "null"] }
+        qualification: { type: [string, "null"], maxLength: 255 }
 
     # Patch bodies. Every field optional, so one of them can be changed
     # without resending the rest — a PATCH that required an entry's main
@@ -1048,9 +1052,9 @@ components:
         WorkExperienceInput with nothing required. `ended_on` is the only
         field here that means something as null — the job is ongoing.
       properties:
-        employer_name: { type: string }
-        employer_name_english: { type: [string, "null"] }
-        job_title: { type: string }
+        employer_name: { type: string, maxLength: 255 }
+        employer_name_english: { type: [string, "null"], maxLength: 255 }
+        job_title: { type: string, maxLength: 255 }
         employment_type:
           type: [string, "null"]
           enum: [permanent, contract, part_time, internship, freelance, null]
@@ -1063,10 +1067,10 @@ components:
       type: object
       description: Education with nothing required.
       properties:
-        institution: { type: string }
-        institution_english: { type: [string, "null"] }
-        qualification: { type: [string, "null"] }
-        field_of_study: { type: [string, "null"] }
+        institution: { type: string, maxLength: 255 }
+        institution_english: { type: [string, "null"], maxLength: 255 }
+        qualification: { type: [string, "null"], maxLength: 255 }
+        field_of_study: { type: [string, "null"], maxLength: 255 }
         started_on: { type: [string, "null"], format: date }
         ended_on: { type: [string, "null"], format: date }
         source_language: { $ref: "#/components/schemas/Locale" }
@@ -1075,10 +1079,10 @@ components:
       type: object
       description: Certification with nothing required.
       properties:
-        name: { type: string }
-        name_english: { type: [string, "null"] }
-        issuer: { type: [string, "null"] }
-        issuer_english: { type: [string, "null"] }
+        name: { type: string, maxLength: 255 }
+        name_english: { type: [string, "null"], maxLength: 255 }
+        issuer: { type: [string, "null"], maxLength: 255 }
+        issuer_english: { type: [string, "null"], maxLength: 255 }
         issued_on: { type: [string, "null"], format: date }
         expires_on: { type: [string, "null"], format: date }
         source_language: { $ref: "#/components/schemas/Locale" }
@@ -1087,7 +1091,7 @@ components:
       type: object
       description: Skill with nothing required.
       properties:
-        name: { type: string }
+        name: { type: string, maxLength: 255 }
         level:
           type: [string, "null"]
           enum: [beginner, intermediate, advanced, expert, null]
@@ -1096,11 +1100,11 @@ components:
       type: object
       description: Language with nothing required.
       properties:
-        language: { type: string }
+        language: { type: string, maxLength: 100 }
         proficiency:
           type: string
           enum: [native, business, conversational, basic]
-        qualification: { type: [string, "null"] }
+        qualification: { type: [string, "null"], maxLength: 255 }
 
     CareerPreference:
       type: object

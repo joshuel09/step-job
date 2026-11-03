@@ -4,7 +4,7 @@ import uuid
 from datetime import date, datetime
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, ConfigDict
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
 from app.career.models import (
     EmploymentType,
@@ -80,6 +80,17 @@ def _supplied_or_absent(value: str | None) -> str | None:
 #: is not a way of saying so.
 SuppliedName = AfterValidator(_supplied_or_absent)
 
+#: Bounded to the width of the column behind it. Without this, over-length
+#: text reaches a VARCHAR(255) as a database error — a 500, where what the
+#: user needed was to be told the value is too long. The bound is on the
+#: string rather than on the field, so `Line | None` still accepts null.
+#: Stated against the five section schemas only; the rest of feature 001
+#: has the same gap and it is not this change's to close.
+Line = Annotated[str, Field(max_length=255)]
+
+#: The language column is narrower than the rest.
+ShortLine = Annotated[str, Field(max_length=100)]
+
 
 class IdentityIn(BaseModel):
     full_name_latin: str
@@ -119,8 +130,8 @@ class JapanProfileOut(JapanProfileIn, ORMModel):
 
 
 class WorkExperienceIn(BaseModel):
-    employer_name: Annotated[str, Stated]
-    job_title: Annotated[str, Stated]
+    employer_name: Annotated[Line, Stated]
+    job_title: Annotated[Line, Stated]
     employment_type: EmploymentType | None = None
     started_on: date
     ended_on: date | None = None
@@ -130,7 +141,7 @@ class WorkExperienceIn(BaseModel):
     # through this route rather than one of feature 005's own: it is a
     # profile field, and a second way to edit an entry is what Principle I
     # rules out. Absent means they have not given one, never a guess.
-    employer_name_english: Annotated[str | None, SuppliedName] = None
+    employer_name_english: Annotated[Line | None, SuppliedName] = None
 
 
 class WorkExperiencePatch(BaseModel):
@@ -140,9 +151,9 @@ class WorkExperiencePatch(BaseModel):
     job is ongoing. The rest the entry cannot be without.
     """
 
-    employer_name: Annotated[str | None, Stated] = None
-    employer_name_english: Annotated[str | None, SuppliedName] = None
-    job_title: Annotated[str | None, Stated] = None
+    employer_name: Annotated[Line | None, Stated] = None
+    employer_name_english: Annotated[Line | None, SuppliedName] = None
+    job_title: Annotated[Line | None, Stated] = None
     employment_type: EmploymentType | None = None
     started_on: Annotated[date | None, Stated] = None
     ended_on: date | None = None
@@ -163,20 +174,20 @@ class WorkExperienceOut(ORMModel):
 
 
 class EducationIn(BaseModel):
-    institution: Annotated[str, Stated]
-    institution_english: Annotated[str | None, SuppliedName] = None
-    qualification: str | None = None
-    field_of_study: str | None = None
+    institution: Annotated[Line, Stated]
+    institution_english: Annotated[Line | None, SuppliedName] = None
+    qualification: Line | None = None
+    field_of_study: Line | None = None
     started_on: date | None = None
     ended_on: date | None = None
     source_language: Locale = Locale.en
 
 
 class EducationPatch(BaseModel):
-    institution: Annotated[str | None, Stated] = None
-    institution_english: Annotated[str | None, SuppliedName] = None
-    qualification: str | None = None
-    field_of_study: str | None = None
+    institution: Annotated[Line | None, Stated] = None
+    institution_english: Annotated[Line | None, SuppliedName] = None
+    qualification: Line | None = None
+    field_of_study: Line | None = None
     started_on: date | None = None
     ended_on: date | None = None
     source_language: Annotated[Locale | None, Stated] = None
@@ -200,23 +211,23 @@ class EducationOut(ORMModel):
 
 
 class CertificationIn(BaseModel):
-    name: Annotated[str, Stated]
+    name: Annotated[Line, Stated]
     # A certification is in no translation at all: a name, an issuer and two
     # dates means the first two are proper nouns and the last two are not
     # words. Both English forms are the user's to state (R-002).
-    name_english: Annotated[str | None, SuppliedName] = None
-    issuer: str | None = None
-    issuer_english: Annotated[str | None, SuppliedName] = None
+    name_english: Annotated[Line | None, SuppliedName] = None
+    issuer: Line | None = None
+    issuer_english: Annotated[Line | None, SuppliedName] = None
     issued_on: date | None = None
     expires_on: date | None = None
     source_language: Locale = Locale.en
 
 
 class CertificationPatch(BaseModel):
-    name: Annotated[str | None, Stated] = None
-    name_english: Annotated[str | None, SuppliedName] = None
-    issuer: str | None = None
-    issuer_english: Annotated[str | None, SuppliedName] = None
+    name: Annotated[Line | None, Stated] = None
+    name_english: Annotated[Line | None, SuppliedName] = None
+    issuer: Line | None = None
+    issuer_english: Annotated[Line | None, SuppliedName] = None
     issued_on: date | None = None
     expires_on: date | None = None
     source_language: Annotated[Locale | None, Stated] = None
@@ -234,12 +245,12 @@ class CertificationOut(ORMModel):
 
 
 class SkillIn(BaseModel):
-    name: Annotated[str, Stated]
+    name: Annotated[Line, Stated]
     level: SkillLevel | None = None
 
 
 class SkillPatch(BaseModel):
-    name: Annotated[str | None, Stated] = None
+    name: Annotated[Line | None, Stated] = None
     level: SkillLevel | None = None
 
 
@@ -250,15 +261,15 @@ class SkillOut(ORMModel):
 
 
 class LanguageIn(BaseModel):
-    language: Annotated[str, Stated]
+    language: Annotated[ShortLine, Stated]
     proficiency: LanguageProficiency
-    qualification: str | None = None
+    qualification: Line | None = None
 
 
 class LanguagePatch(BaseModel):
-    language: Annotated[str | None, Stated] = None
+    language: Annotated[ShortLine | None, Stated] = None
     proficiency: Annotated[LanguageProficiency | None, Stated] = None
-    qualification: str | None = None
+    qualification: Line | None = None
 
 
 class LanguageOut(ORMModel):
