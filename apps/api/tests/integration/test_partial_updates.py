@@ -329,19 +329,26 @@ class TestWhatIsTooLong:
     on. The user pasted something too long; that is worth saying.
     """
 
-    @pytest.mark.parametrize(
-        ("section", "field", "limit"),
-        [
-            ("experiences", "employer_name", 255),
-            ("experiences", "employer_name_english", 255),
-            ("education", "institution", 255),
-            ("education", "institution_english", 255),
-            ("certifications", "name", 255),
-            ("certifications", "issuer_english", 255),
-            ("skills", "name", 255),
-            ("languages", "language", 100),
-        ],
-    )
+    #: Every bounded field, at the width of the column behind it. The
+    #: language column is 100 rather than 255, which one shared limit
+    #: would have got wrong in the direction nobody notices.
+    BOUNDED = [
+        ("experiences", "employer_name", 255),
+        ("experiences", "employer_name_english", 255),
+        ("experiences", "job_title", 255),
+        ("education", "institution", 255),
+        ("education", "institution_english", 255),
+        ("education", "qualification", 255),
+        ("certifications", "name", 255),
+        ("certifications", "name_english", 255),
+        ("certifications", "issuer", 255),
+        ("certifications", "issuer_english", 255),
+        ("skills", "name", 255),
+        ("languages", "language", 100),
+        ("languages", "qualification", 255),
+    ]
+
+    @pytest.mark.parametrize(("section", "field", "limit"), BOUNDED)
     def test_it_is_refused_rather_than_truncated(
         self, client, auth_headers, profile, section, field, limit
     ):
@@ -351,6 +358,26 @@ class TestWhatIsTooLong:
         refused = client.post(f"/api/v1/profile/{section}", headers=auth_headers, json=body)
         assert refused.status_code == 422, refused.text
         assert refused.json()["failures"][0]["field"] == field
+
+    @pytest.mark.parametrize(("section", "field", "limit"), BOUNDED)
+    def test_the_patch_schema_bounds_it_too(
+        self, client, auth_headers, profile, section, field, limit
+    ):
+        """The create and patch schemas are two declarations of one rule, and
+        a bound on only one of them is the half a client finds."""
+        entry = _create(
+            client, auth_headers, section, dict(TestWhatCannotBeBlanked.CREATE[section])
+        )
+        before = client.get(f"/api/v1/profile/{section}", headers=auth_headers).json()
+
+        refused = client.patch(
+            f"/api/v1/profile/{section}/{entry}",
+            headers=auth_headers,
+            json={field: "a" * (limit + 1)},
+        )
+        assert refused.status_code == 422, refused.text
+        assert refused.json()["failures"][0]["field"] == field
+        assert client.get(f"/api/v1/profile/{section}", headers=auth_headers).json() == before
 
     def test_the_limit_itself_is_accepted(self, client, auth_headers, profile):
         """Off by one here would reject a name the column can hold."""
