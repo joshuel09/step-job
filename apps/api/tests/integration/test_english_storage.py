@@ -11,7 +11,10 @@ different in kind:
   that it carries the digest of the source as it read at the time.
 """
 
+import io
+import json
 import uuid
+import zipfile
 from datetime import UTC, datetime
 
 import pytest
@@ -90,6 +93,53 @@ class TestASuppliedEnglishName:
         assert patched.status_code == 200, patched.text
         assert patched.json()["employer_name_english"] == "Sample Corporation"
         assert patched.json()["employer_name"] == "株式会社サンプル", "the Japanese is untouched"
+
+    def test_an_institution_can_be_added_later(self, client, auth_headers, profile):
+        """The same gesture as the employer above, on the section routes.
+
+        These four sections share one registrar, so a PATCH that requires the
+        entry's main field would make the English name settable only by
+        resending the Japanese one — and a user who resends it is one typo
+        away from overwriting the fact the document is built on.
+        """
+        created = client.post(
+            "/api/v1/profile/education",
+            headers=auth_headers,
+            json={"institution": "サンプル大学"},
+        )
+        assert created.status_code == 201, created.text
+
+        patched = client.patch(
+            f"/api/v1/profile/education/{created.json()['id']}",
+            headers=auth_headers,
+            json={"institution_english": "Sample University"},
+        )
+        assert patched.status_code == 200, patched.text
+        assert patched.json()["institution_english"] == "Sample University"
+        assert patched.json()["institution"] == "サンプル大学", "the Japanese is untouched"
+
+    def test_a_certification_can_be_added_later(self, client, auth_headers, profile):
+        created = client.post(
+            "/api/v1/profile/certifications",
+            headers=auth_headers,
+            json={"name": "基本情報技術者", "issuer": "情報処理推進機構"},
+        )
+        assert created.status_code == 201, created.text
+
+        patched = client.patch(
+            f"/api/v1/profile/certifications/{created.json()['id']}",
+            headers=auth_headers,
+            json={
+                "name_english": "Fundamental Information Technology Engineer",
+                "issuer_english": "Information-technology Promotion Agency",
+            },
+        )
+        assert patched.status_code == 200, patched.text
+        body = patched.json()
+        assert body["name_english"] == "Fundamental Information Technology Engineer"
+        assert body["issuer_english"] == "Information-technology Promotion Agency"
+        assert body["name"] == "基本情報技術者", "the Japanese is untouched"
+        assert body["issuer"] == "情報処理推進機構"
 
     def test_absent_means_absent_and_not_a_guess(self, client, auth_headers, profile):
         """FR-021. Nothing transliterates 株式会社サンプル into anything."""
@@ -180,6 +230,72 @@ class TestAnApprovedRendering:
             )
             == 2
         )
+
+
+class TestLeavingWithTheProfile:
+    """An export is every entry the user holds, with nothing summarised away
+    (FR-036). An approved English rendering is one of those things.
+
+    The failure this guards against reads as a success: an archive with
+    every entry in it, and the wording the user settled on for each of them
+    quietly absent.
+    """
+
+    def _approved(self, session, profile):
+        row = EntryTranslation(
+            profile_id=profile.id,
+            entry_type=TranslatableEntry.career_story,
+            entry_id=uuid.uuid4(),
+            field="title",
+            approved_text="Cut the build in half",
+            approved_at=datetime.now(UTC),
+            source_fingerprint=fingerprint("ビルド時間を半分にした"),
+        )
+        session.add(row)
+        session.flush()
+        return row
+
+    def _payload(self, client, auth_headers):
+        response = client.post("/api/v1/profile/export", headers=auth_headers)
+        assert response.status_code == 200, response.text
+        with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+            return json.loads(archive.read("profile.json"))
+
+    def test_the_archive_carries_the_approved_english(self, client, auth_headers, session, profile):
+        self._approved(session, profile)
+
+        exported = self._payload(client, auth_headers)["translations"]
+        assert [t["approved_text"] for t in exported] == ["Cut the build in half"]
+        assert exported[0]["field"] == "title"
+        assert exported[0]["language"] == "en"
+
+    def test_it_carries_the_fingerprint_too(self, client, auth_headers, session, profile):
+        """So an approval that had gone stale can still be seen to have been
+        stale, rather than reading as current in the copy the user keeps."""
+        self._approved(session, profile)
+
+        exported = self._payload(client, auth_headers)["translations"]
+        assert exported[0]["source_fingerprint"] == fingerprint("ビルド時間を半分にした")
+
+    def test_a_profile_with_none_exports_an_empty_list(self, client, auth_headers, profile):
+        """Not a missing key: a reader of the archive should not have to tell
+        "no approved English" from "this export predates the field"."""
+        assert self._payload(client, auth_headers)["translations"] == []
+
+    def test_the_supplied_names_come_too(self, client, auth_headers, profile):
+        client.post(
+            "/api/v1/profile/experiences",
+            headers=auth_headers,
+            json={
+                "employer_name": "株式会社サンプル",
+                "employer_name_english": "Sample Corporation",
+                "job_title": "エンジニア",
+                "started_on": "2020-04-01",
+            },
+        )
+
+        exported = self._payload(client, auth_headers)["experiences"]
+        assert exported[0]["employer_name_english"] == "Sample Corporation"
 
 
 class TestWhatMayBeDrafted:

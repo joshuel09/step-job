@@ -23,6 +23,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.career import models, service
+from app.translations.models import EntryTranslation
 
 
 def _value(v: Any) -> Any:
@@ -32,10 +33,7 @@ def _value(v: Any) -> Any:
 
 
 def _row(entry: Any) -> dict[str, Any]:
-    return {
-        column.name: _value(getattr(entry, column.name))
-        for column in entry.__table__.columns
-    }
+    return {column.name: _value(getattr(entry, column.name)) for column in entry.__table__.columns}
 
 
 def build_payload(session: Session, profile: models.CareerProfile) -> dict[str, Any]:
@@ -60,6 +58,18 @@ def build_payload(session: Session, profile: models.CareerProfile) -> dict[str, 
         _row(s)
         for s in session.query(models.CareerStory)
         .filter(models.CareerStory.profile_id == profile.id)
+        .all()
+    ]
+
+    # The English the user approved is theirs as much as the Japanese they
+    # wrote (FR-036). Leaving it out would hand back an archive that reads
+    # complete and is not: every entry present, and the wording the user
+    # settled on for each of them gone. The fingerprints come too, so an
+    # approval that had gone stale can still be seen to have been stale.
+    payload["translations"] = [
+        _row(t)
+        for t in session.query(EntryTranslation)
+        .filter(EntryTranslation.profile_id == profile.id)
         .all()
     ]
     return payload

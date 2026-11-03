@@ -513,7 +513,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["WorkExperienceInput"];
+                    "application/json": components["schemas"]["WorkExperiencePatch"];
                 };
             };
             responses: {
@@ -645,7 +645,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["Education"];
+                    "application/json": components["schemas"]["EducationPatch"];
                 };
             };
             responses: {
@@ -777,7 +777,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["Certification"];
+                    "application/json": components["schemas"]["CertificationPatch"];
                 };
             };
             responses: {
@@ -908,7 +908,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["Skill"];
+                    "application/json": components["schemas"]["SkillPatch"];
                 };
             };
             responses: {
@@ -1039,7 +1039,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["Language"];
+                    "application/json": components["schemas"]["LanguagePatch"];
                 };
             };
             responses: {
@@ -1670,6 +1670,57 @@ export interface components {
             language: string;
             /** @enum {string} */
             proficiency: "native" | "business" | "conversational" | "basic";
+            qualification?: string | null;
+        };
+        /** @description WorkExperienceInput with nothing required. `ended_on` is the only field here that means something as null — the job is ongoing. */
+        WorkExperiencePatch: {
+            employer_name?: string;
+            employer_name_english?: string | null;
+            job_title?: string;
+            /** @enum {string|null} */
+            employment_type?: "permanent" | "contract" | "part_time" | "internship" | "freelance" | null;
+            /** Format: date */
+            started_on?: string;
+            /** Format: date */
+            ended_on?: string | null;
+            description?: string;
+            source_language?: components["schemas"]["Locale"];
+        };
+        /** @description Education with nothing required. */
+        EducationPatch: {
+            institution?: string;
+            institution_english?: string | null;
+            qualification?: string | null;
+            field_of_study?: string | null;
+            /** Format: date */
+            started_on?: string | null;
+            /** Format: date */
+            ended_on?: string | null;
+            source_language?: components["schemas"]["Locale"];
+        };
+        /** @description Certification with nothing required. */
+        CertificationPatch: {
+            name?: string;
+            name_english?: string | null;
+            issuer?: string | null;
+            issuer_english?: string | null;
+            /** Format: date */
+            issued_on?: string | null;
+            /** Format: date */
+            expires_on?: string | null;
+            source_language?: components["schemas"]["Locale"];
+        };
+        /** @description Skill with nothing required. */
+        SkillPatch: {
+            name?: string;
+            /** @enum {string|null} */
+            level?: "beginner" | "intermediate" | "advanced" | "expert" | null;
+        };
+        /** @description Language with nothing required. */
+        LanguagePatch: {
+            language?: string;
+            /** @enum {string} */
+            proficiency?: "native" | "business" | "conversational" | "basic";
             qualification?: string | null;
         };
         CareerPreference: {

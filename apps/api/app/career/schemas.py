@@ -2,8 +2,9 @@
 
 import uuid
 from datetime import date, datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import AfterValidator, BaseModel, ConfigDict
 
 from app.career.models import (
     EmploymentType,
@@ -18,6 +19,28 @@ from app.career.models import (
 
 class ORMModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
+
+def _reject_null[T](value: T) -> T:
+    """Refuse an explicit null on a field the entry cannot be without.
+
+    Omitting a field and sending it as null are different requests: the
+    first leaves it alone, the second asks to erase it. Patch bodies make
+    every field optional so the first is possible, which would let the
+    second through to a column that does not accept it — an unexplainable
+    500, or a blank where the document expects a fact.
+
+    None only ever reaches here explicitly. Pydantic does not validate
+    defaults, so an omitted field is never seen by this.
+    """
+    if value is None:
+        raise ValueError("This cannot be removed. Omit it to leave it unchanged.")
+    return value
+
+
+#: For a patch field declared optional so it may be omitted, but whose value
+#: the entry must keep.
+NotBlankable = AfterValidator(_reject_null)
 
 
 class IdentityIn(BaseModel):
@@ -73,14 +96,20 @@ class WorkExperienceIn(BaseModel):
 
 
 class WorkExperiencePatch(BaseModel):
-    employer_name: str | None = None
+    """Every field optional, so any one of them can be changed on its own.
+
+    `ended_on` is the only one of these that means something as null — the
+    job is ongoing. The rest the entry cannot be without.
+    """
+
+    employer_name: Annotated[str | None, NotBlankable] = None
     employer_name_english: str | None = None
-    job_title: str | None = None
+    job_title: Annotated[str | None, NotBlankable] = None
     employment_type: EmploymentType | None = None
-    started_on: date | None = None
+    started_on: Annotated[date | None, NotBlankable] = None
     ended_on: date | None = None
-    description: str | None = None
-    source_language: Locale | None = None
+    description: Annotated[str | None, NotBlankable] = None
+    source_language: Annotated[Locale | None, NotBlankable] = None
 
 
 class WorkExperienceOut(ORMModel):
@@ -105,6 +134,16 @@ class EducationIn(BaseModel):
     source_language: Locale = Locale.en
 
 
+class EducationPatch(BaseModel):
+    institution: Annotated[str | None, NotBlankable] = None
+    institution_english: str | None = None
+    qualification: str | None = None
+    field_of_study: str | None = None
+    started_on: date | None = None
+    ended_on: date | None = None
+    source_language: Annotated[Locale | None, NotBlankable] = None
+
+
 class EducationOut(EducationIn, ORMModel):
     id: uuid.UUID
 
@@ -122,12 +161,27 @@ class CertificationIn(BaseModel):
     source_language: Locale = Locale.en
 
 
+class CertificationPatch(BaseModel):
+    name: Annotated[str | None, NotBlankable] = None
+    name_english: str | None = None
+    issuer: str | None = None
+    issuer_english: str | None = None
+    issued_on: date | None = None
+    expires_on: date | None = None
+    source_language: Annotated[Locale | None, NotBlankable] = None
+
+
 class CertificationOut(CertificationIn, ORMModel):
     id: uuid.UUID
 
 
 class SkillIn(BaseModel):
     name: str
+    level: SkillLevel | None = None
+
+
+class SkillPatch(BaseModel):
+    name: Annotated[str | None, NotBlankable] = None
     level: SkillLevel | None = None
 
 
@@ -138,6 +192,12 @@ class SkillOut(SkillIn, ORMModel):
 class LanguageIn(BaseModel):
     language: str
     proficiency: LanguageProficiency
+    qualification: str | None = None
+
+
+class LanguagePatch(BaseModel):
+    language: Annotated[str | None, NotBlankable] = None
+    proficiency: Annotated[LanguageProficiency | None, NotBlankable] = None
     qualification: str | None = None
 
 

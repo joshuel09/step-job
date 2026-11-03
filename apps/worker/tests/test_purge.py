@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 
 from app.career.models import CareerProfile, EntrySnapshot, Identity
 from app.db.soft_delete import with_deleted
+from app.translations.models import EntryTranslation, TranslatableEntry
 from sqlalchemy import select
 from worker.purge import find_due, purge_due_profiles
 
@@ -89,6 +90,35 @@ def test_purging_cascades_to_everything_beneath_the_profile(session):
 
     assert session.scalars(select(Identity)).all() == []
     assert session.scalars(select(EntrySnapshot)).all() == []
+
+
+def test_purging_cascades_to_approved_english(session):
+    """`entry_translation` hangs off the profile by a real foreign key and by
+    nothing else — the ORM has no relationship to it, so if that key ever
+    loses its cascade the rows outlive the profile silently.
+
+    What would survive is the user's own words in two languages. FR-031
+    allows nothing to be left orphaned still holding career data, and this
+    is the test standing behind the claim.
+    """
+    profile = _deleted_profile(session, days_ago=31)
+    session.add(
+        EntryTranslation(
+            profile_id=profile.id,
+            entry_type=TranslatableEntry.career_story,
+            entry_id=__import__("uuid").uuid4(),
+            field="title",
+            approved_text="Cut the build in half",
+            approved_at=datetime.now(UTC),
+            source_fingerprint="0" * 64,
+        )
+    )
+    session.flush()
+
+    purge_due_profiles(session)
+    session.expire_all()
+
+    assert session.scalars(select(EntryTranslation)).all() == []
 
 
 def test_purging_is_idempotent(session):

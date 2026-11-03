@@ -246,7 +246,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/WorkExperienceInput" }
+            schema: { $ref: "#/components/schemas/WorkExperiencePatch" }
       responses:
         "200":
           description: Updated
@@ -318,7 +318,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/Education" }
+            schema: { $ref: "#/components/schemas/EducationPatch" }
       responses:
         "200":
           description: Updated
@@ -376,7 +376,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/Certification" }
+            schema: { $ref: "#/components/schemas/CertificationPatch" }
       responses:
         "200":
           description: Updated
@@ -433,7 +433,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/Skill" }
+            schema: { $ref: "#/components/schemas/SkillPatch" }
       responses:
         "200":
           description: Updated
@@ -490,7 +490,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/Language" }
+            schema: { $ref: "#/components/schemas/LanguagePatch" }
       responses:
         "200":
           description: Updated
@@ -1022,6 +1022,77 @@ components:
       required: [language, proficiency]
       properties:
         id: { type: string, format: uuid, readOnly: true }
+        language: { type: string }
+        proficiency:
+          type: string
+          enum: [native, business, conversational, basic]
+        qualification: { type: [string, "null"] }
+
+    # Patch bodies. Every field optional, so one of them can be changed
+    # without resending the rest — a PATCH that required an entry's main
+    # field would make every other field settable only by sending that one,
+    # and a client that resends it is one typo away from overwriting the
+    # fact the document is built on.
+    #
+    # Optional is not the same as nullable. A field written here as a plain
+    # type may be omitted but not sent as null: null asks to erase something
+    # the entry cannot be without, and the answer is 422. The ones written
+    # `[type, "null"]` are the ones a user may genuinely clear.
+
+    WorkExperiencePatch:
+      type: object
+      description: >
+        WorkExperienceInput with nothing required. `ended_on` is the only
+        field here that means something as null — the job is ongoing.
+      properties:
+        employer_name: { type: string }
+        employer_name_english: { type: [string, "null"] }
+        job_title: { type: string }
+        employment_type:
+          type: [string, "null"]
+          enum: [permanent, contract, part_time, internship, freelance, null]
+        started_on: { type: string, format: date }
+        ended_on: { type: [string, "null"], format: date }
+        description: { type: string }
+        source_language: { $ref: "#/components/schemas/Locale" }
+
+    EducationPatch:
+      type: object
+      description: Education with nothing required.
+      properties:
+        institution: { type: string }
+        institution_english: { type: [string, "null"] }
+        qualification: { type: [string, "null"] }
+        field_of_study: { type: [string, "null"] }
+        started_on: { type: [string, "null"], format: date }
+        ended_on: { type: [string, "null"], format: date }
+        source_language: { $ref: "#/components/schemas/Locale" }
+
+    CertificationPatch:
+      type: object
+      description: Certification with nothing required.
+      properties:
+        name: { type: string }
+        name_english: { type: [string, "null"] }
+        issuer: { type: [string, "null"] }
+        issuer_english: { type: [string, "null"] }
+        issued_on: { type: [string, "null"], format: date }
+        expires_on: { type: [string, "null"], format: date }
+        source_language: { $ref: "#/components/schemas/Locale" }
+
+    SkillPatch:
+      type: object
+      description: Skill with nothing required.
+      properties:
+        name: { type: string }
+        level:
+          type: [string, "null"]
+          enum: [beginner, intermediate, advanced, expert, null]
+
+    LanguagePatch:
+      type: object
+      description: Language with nothing required.
+      properties:
         language: { type: string }
         proficiency:
           type: string
