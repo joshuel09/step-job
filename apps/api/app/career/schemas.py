@@ -182,8 +182,21 @@ class EducationPatch(BaseModel):
     source_language: Annotated[Locale | None, Stated] = None
 
 
-class EducationOut(EducationIn, ORMModel):
+# The output models below declare their fields rather than inheriting them
+# from the input ones, as WorkExperienceOut already did. Inheriting would
+# carry the write-time rules onto the read path, and a row that predates a
+# rule — or that an import wrote straight through the service — would then
+# fail validation on its way out. A blank institution is a thing to fix;
+# a 500 on the page that would let the user fix it is not.
+class EducationOut(ORMModel):
     id: uuid.UUID
+    institution: str
+    institution_english: str | None = None
+    qualification: str | None = None
+    field_of_study: str | None = None
+    started_on: date | None = None
+    ended_on: date | None = None
+    source_language: Locale
 
 
 class CertificationIn(BaseModel):
@@ -209,8 +222,15 @@ class CertificationPatch(BaseModel):
     source_language: Annotated[Locale | None, Stated] = None
 
 
-class CertificationOut(CertificationIn, ORMModel):
+class CertificationOut(ORMModel):
     id: uuid.UUID
+    name: str
+    name_english: str | None = None
+    issuer: str | None = None
+    issuer_english: str | None = None
+    issued_on: date | None = None
+    expires_on: date | None = None
+    source_language: Locale
 
 
 class SkillIn(BaseModel):
@@ -223,8 +243,10 @@ class SkillPatch(BaseModel):
     level: SkillLevel | None = None
 
 
-class SkillOut(SkillIn, ORMModel):
+class SkillOut(ORMModel):
     id: uuid.UUID
+    name: str
+    level: SkillLevel | None = None
 
 
 class LanguageIn(BaseModel):
@@ -239,8 +261,11 @@ class LanguagePatch(BaseModel):
     qualification: str | None = None
 
 
-class LanguageOut(LanguageIn, ORMModel):
+class LanguageOut(ORMModel):
     id: uuid.UUID
+    language: str
+    proficiency: LanguageProficiency
+    qualification: str | None = None
 
 
 class CareerPreferenceIn(BaseModel):

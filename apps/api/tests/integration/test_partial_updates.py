@@ -277,3 +277,44 @@ class TestWhatCannotBeBlanked:
         )
         assert cleared.status_code == 200, cleared.text
         assert cleared.json()["institution_english"] is None
+
+
+class TestTheReadPathIsNotTheWritePath:
+    """A rule about what may be written is not a rule about what may be read.
+
+    These entries can hold a blank: rows predate the rule, and feature 002's
+    proposal acceptance writes through `service.create_entry` with a dict
+    rather than through the schemas. If the output models carried the
+    write-time validators, such a row would fail validation on its way out —
+    and the page the user would fix it on is the page that broke.
+    """
+
+    def test_a_blank_already_stored_still_reads(self, client, auth_headers, session, profile):
+        from app.career import models
+
+        session.add(models.Education(profile_id=profile.id, institution=""))
+        session.add(models.Skill(profile_id=profile.id, name=""))
+        session.flush()
+
+        education = client.get("/api/v1/profile/education", headers=auth_headers)
+        assert education.status_code == 200, education.text
+        assert education.json()[0]["institution"] == ""
+
+        skills = client.get("/api/v1/profile/skills", headers=auth_headers)
+        assert skills.status_code == 200, skills.text
+
+    def test_and_can_then_be_corrected(self, client, auth_headers, session, profile):
+        """The point of still serving it: the user can see it and fix it."""
+        from app.career import models
+
+        entry = models.Education(profile_id=profile.id, institution="")
+        session.add(entry)
+        session.flush()
+
+        fixed = client.patch(
+            f"/api/v1/profile/education/{entry.id}",
+            headers=auth_headers,
+            json={"institution": "サンプル大学"},
+        )
+        assert fixed.status_code == 200, fixed.text
+        assert fixed.json()["institution"] == "サンプル大学"
