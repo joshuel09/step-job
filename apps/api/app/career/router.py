@@ -266,9 +266,7 @@ def create_experience(session: Db, caller: Caller, body: schemas.WorkExperienceI
     return service.create_experience(session, profile, body.model_dump())
 
 
-@router.get(
-    "/profile/experiences/{experience_id}", response_model=schemas.WorkExperienceDetail
-)
+@router.get("/profile/experiences/{experience_id}", response_model=schemas.WorkExperienceDetail)
 def get_experience(session: Db, caller: Caller, experience_id: uuid.UUID):
     """A role with the accomplishments recorded against it (User Story 2)."""
     profile = _profile(session, caller)
@@ -310,15 +308,22 @@ def delete_experience(
 
 # --- remaining sections -----------------------------------------------------
 
+# Three schemas per section, not two: a POST must carry the whole entry, a
+# PATCH may carry one field of it, and validating the second with the first
+# makes a field settable only by resending a field it has nothing to do with.
 _SECTION_SCHEMAS = {
-    "education": (schemas.EducationIn, schemas.EducationOut),
-    "certifications": (schemas.CertificationIn, schemas.CertificationOut),
-    "skills": (schemas.SkillIn, schemas.SkillOut),
-    "languages": (schemas.LanguageIn, schemas.LanguageOut),
+    "education": (schemas.EducationIn, schemas.EducationPatch, schemas.EducationOut),
+    "certifications": (
+        schemas.CertificationIn,
+        schemas.CertificationPatch,
+        schemas.CertificationOut,
+    ),
+    "skills": (schemas.SkillIn, schemas.SkillPatch, schemas.SkillOut),
+    "languages": (schemas.LanguageIn, schemas.LanguagePatch, schemas.LanguageOut),
 }
 
 
-def _register_section(section: str, schema_in: type, schema_out: type) -> None:
+def _register_section(section: str, schema_in: type, schema_patch: type, schema_out: type) -> None:
     @router.get(f"/profile/{section}", response_model=list[schema_out], name=f"list_{section}")
     def _list(session: Db, caller: Caller):
         return service.list_entries(session, _profile(session, caller), section)
@@ -336,7 +341,7 @@ def _register_section(section: str, schema_in: type, schema_out: type) -> None:
     @router.patch(
         f"/profile/{section}/{{entry_id}}", response_model=schema_out, name=f"patch_{section}"
     )
-    def _patch(session: Db, caller: Caller, entry_id: uuid.UUID, body: schema_in):  # type: ignore[valid-type]
+    def _patch(session: Db, caller: Caller, entry_id: uuid.UUID, body: schema_patch):  # type: ignore[valid-type]
         profile = _profile(session, caller)
         return service.update_entry(
             session, profile, section, entry_id, body.model_dump(exclude_unset=True)
@@ -353,5 +358,5 @@ def _register_section(section: str, schema_in: type, schema_out: type) -> None:
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-for _section, (_in, _out) in _SECTION_SCHEMAS.items():
-    _register_section(_section, _in, _out)
+for _section, (_in, _patch_schema, _out) in _SECTION_SCHEMAS.items():
+    _register_section(_section, _in, _patch_schema, _out)

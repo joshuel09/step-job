@@ -18,6 +18,8 @@ from sqlalchemy.orm import Session
 
 from app.career import models
 from app.core.errors import NotFoundError, ValidationFailed
+from app.translations import service as translations
+from app.translations.models import TranslatableEntry
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +47,7 @@ def _owned_experience(
     return experience
 
 
-def get(
-    session: Session, profile: models.CareerProfile, story_id: uuid.UUID
-) -> models.CareerStory:
+def get(session: Session, profile: models.CareerProfile, story_id: uuid.UUID) -> models.CareerStory:
     story = session.scalars(
         select(models.CareerStory).where(
             models.CareerStory.id == story_id,
@@ -77,9 +77,7 @@ def search(
     return list(session.scalars(statement.order_by(models.CareerStory.created_at.desc())))
 
 
-def create(
-    session: Session, profile: models.CareerProfile, data: dict
-) -> models.CareerStory:
+def create(session: Session, profile: models.CareerProfile, data: dict) -> models.CareerStory:
     experience_id = data.get("work_experience_id")
     if experience_id is not None:
         _owned_experience(session, profile, experience_id)
@@ -107,6 +105,9 @@ def update(
 
 def delete(session: Session, profile: models.CareerProfile, story_id: uuid.UUID) -> None:
     story = get(session, profile, story_id)
+    # FR-024: the English goes with it. A story is the entry most likely to
+    # have one — it is prose rather than a proper noun.
+    translations.delete_for_entry(session, profile.id, TranslatableEntry.career_story, story_id)
     session.delete(story)
     session.flush()
     logger.info("story deleted", extra={"profile_id": profile.id, "entry_id": story_id})

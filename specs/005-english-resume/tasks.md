@@ -53,8 +53,8 @@ task that cannot start**, and the table above is why.
 **Purpose**: Nothing to install. This feature reuses what features 003 and 004
 brought in.
 
-- [ ] T001 Confirm reportlab, pypdf and the embedded font are already runtime dependencies in `apps/api/pyproject.toml`, and record in the PR that this feature adds none
-- [ ] T002 Create `apps/api/app/translations/__init__.py` and `apps/api/app/resume/__init__.py`
+- [X] T001 Confirm reportlab, pypdf and the embedded font are already runtime dependencies in `apps/api/pyproject.toml`, and record in the PR that this feature adds none
+- [X] T002 Create `apps/api/app/translations/__init__.py` and `apps/api/app/resume/__init__.py`
 
 ---
 
@@ -65,17 +65,17 @@ puts it on the profile. One migration (constitution gate G11).
 
 **No external dependency.** This phase can be built immediately.
 
-- [ ] T003 Create `apps/api/app/translations/models.py` with `EntryTranslation` (`Entity`, `ProfileOwned`) carrying `entry_type`, `entry_id`, `field`, `language`, `approved_text`, `approved_at`, `source_fingerprint`, per data-model.md
-- [ ] T004 [P] Add the `TranslatableEntry` enum (`work_experience`, `education`, `career_story`, `skill`) to `apps/api/app/translations/models.py` — **not** `certification`, which has only proper nouns (research.md R-002)
-- [ ] T005 [P] Add the `NamedEntry` enum (`work_experience`, `education`, `certification`) to `apps/api/app/translations/models.py`, separate from `TranslatableEntry` because a supplied name and an approved rendering are different kinds of fact
-- [ ] T006 Add `employer_name_english` to `WorkExperience`, `institution_english` to `Education`, and `name_english` and `issuer_english` to `Certification` in `apps/api/app/career/models.py`, all nullable with no default
-- [ ] T007 Generate one Alembic migration in `apps/api/migrations/versions/` creating `entry_translation` with its unique constraint on `(profile_id, entry_type, entry_id, field, language)` and its `(profile_id, language)` index, plus the four columns from T006. No backfill — a guessed English name is the transliteration FR-021 forbids
-- [ ] T008 Run `alembic upgrade head`, then `downgrade -1`, then `upgrade head` again against a real database for the migration in `apps/api/migrations/versions/`, confirming the schema returns to the same state each time — a downgrade nobody runs is a downgrade that does not work
-- [ ] T009 [P] Create `apps/api/app/translations/fingerprint.py` with a digest of a source string, stable across processes — a salted or address-based hash would mark every approval stale on restart (FR-023)
-- [ ] T010 [P] Unit tests in `apps/api/tests/unit/test_fingerprint.py` — the same text digests the same twice, different text differs, and whitespace-only changes are **not** treated as equal, since a user may have fixed spacing deliberately (FR-023)
-- [ ] T011 Add `employer_name_english`, `institution_english`, `name_english` and `issuer_english` to `WorkExperienceIn/Out`, `EducationIn/Out` and `CertificationIn/Out` in `apps/api/app/career/schemas.py`, all optional
-- [ ] T012 Document the same four properties on `specs/001-master-career-profile/contracts/openapi.yaml`. They are profile fields set through the existing section routes — a route of this feature's own would be a second way to edit an entry, which Principle I rules out
-- [ ] T013 Regenerate the typed client (`pnpm gen:api`) and commit `packages/api-client/src/`; CI fails on a stale client
+- [X] T003 Create `apps/api/app/translations/models.py` with `EntryTranslation` (`Entity`, `ProfileOwned`) carrying `entry_type`, `entry_id`, `field`, `language`, `approved_text`, `approved_at`, `source_fingerprint`, per data-model.md
+- [X] T004 [P] Add the `TranslatableEntry` enum (`work_experience`, `education`, `career_story`, `skill`) to `apps/api/app/translations/models.py` — **not** `certification`, which has only proper nouns (research.md R-002)
+- [X] T005 [P] Add the `NamedEntry` enum (`work_experience`, `education`, `certification`) to `apps/api/app/translations/models.py`, separate from `TranslatableEntry` because a supplied name and an approved rendering are different kinds of fact
+- [X] T006 Add `employer_name_english` to `WorkExperience`, `institution_english` to `Education`, and `name_english` and `issuer_english` to `Certification` in `apps/api/app/career/models.py`, all nullable with no default
+- [X] T007 Generate one Alembic migration in `apps/api/migrations/versions/` creating `entry_translation` with its unique constraint on `(profile_id, entry_type, entry_id, field, language)` and its `(profile_id, language)` index, plus the four columns from T006. No backfill — a guessed English name is the transliteration FR-021 forbids
+- [X] T008 Run `alembic upgrade head`, then `downgrade -1`, then `upgrade head` again against a real database for the migration in `apps/api/migrations/versions/`, confirming the schema returns to the same state each time — a downgrade nobody runs is a downgrade that does not work
+- [X] T009 [P] Create `apps/api/app/translations/fingerprint.py` with a digest of a source string, stable across processes — a salted or address-based hash would mark every approval stale on restart (FR-023)
+- [X] T010 [P] Unit tests in `apps/api/tests/unit/test_fingerprint.py` — the same text digests the same twice, different text differs, and whitespace-only changes are **not** treated as equal, since a user may have fixed spacing deliberately (FR-023)
+- [X] T011 Add `employer_name_english`, `institution_english`, `name_english` and `issuer_english` to `WorkExperienceIn/Out`, `EducationIn/Out` and `CertificationIn/Out` in `apps/api/app/career/schemas.py`, all optional
+- [X] T012 Document the same four properties on `specs/001-master-career-profile/contracts/openapi.yaml`. They are profile fields set through the existing section routes — a route of this feature's own would be a second way to edit an entry, which Principle I rules out
+- [X] T013 Regenerate the typed client (`pnpm gen:api`) and commit `packages/api-client/src/`; CI fails on a stale client
 
 **Checkpoint**: an approved English version has somewhere to live, and an
 organisation has somewhere to carry its English name.
@@ -151,21 +151,21 @@ draft for each entry, and keeps the words they approve.
 version, and confirm the approved English is in the profile and appears in the
 next document without being translated again.
 
-**⚠️ T046 needs #65** — the readiness report is one mechanism, not two.
+**⚠️ T050 needs #65** — the readiness report is one mechanism, not two. (This read T046 before; T046 is the deletion cascade and has nothing to do with #65.)
 
 ### Tests for User Story 2
 
 - [ ] T039 [P] [US2] Integration tests for quickstart Scenarios 6 and 7 in `apps/api/tests/integration/test_translation_flow.py` — a draft is returned with its source beside it, **querying stored versions afterwards returns nothing**, and a 課長 title comes back with at least two options (the second assertion is the one that matters: the request that drafts must store nothing)
 - [ ] T040 [P] [US2] Integration tests for quickstart Scenarios 8, 9 and 10 in `apps/api/tests/integration/test_translation_flow.py` — an approval is stored and reused, the user's wording appears character for character and the draft's does not, and a blank or whitespace approval is refused 422
 - [ ] T041 [P] [US2] Integration test for quickstart Scenario 11 in `apps/api/tests/integration/test_translation_staleness.py` — editing the source marks the approval stale, **leaves it stored**, and does not block generation (FR-023)
-- [ ] T042 [P] [US2] Integration test for quickstart Scenario 19 in `apps/api/tests/integration/test_translation_flow.py` — deleting an entry of each of the four translatable types leaves no orphan row (FR-024). `entry_id` cannot be a foreign key across four tables, so this test is the foreign key
+- [x] T042 [P] [US2] Integration test for quickstart Scenario 19 in `apps/api/tests/integration/test_translation_flow.py` — deleting an entry of each of the four translatable types leaves no orphan row (FR-024). `entry_id` cannot be a foreign key across four tables, so this test is the foreign key
 - [ ] T043 [P] [US2] Contract tests in `apps/api/tests/contract/test_translations.py` for all four translation routes, including 502 and 503 on the drafts route
 
 ### Implementation for User Story 2
 
-- [ ] T044 [US2] Create `apps/api/app/translations/service.py` with approve (upsert on the natural key, storing the text exactly as given and recording the fingerprint), delete, and list with staleness computed by comparing a fresh digest against the stored one (FR-019, FR-023)
+- [ ] T044 [US2] Extend `apps/api/app/translations/service.py` (created in Phase 2 for T046) with approve (upsert on the natural key, storing the text exactly as given and recording the fingerprint), delete, and list with staleness computed by comparing a fresh digest against the stored one (FR-019, FR-023)
 - [ ] T045 [US2] Refuse an empty or whitespace-only approval with 422 in `apps/api/app/translations/service.py` (FR-025) — an approved blank is not an English version, it is an entry that vanishes from a document silently
-- [ ] T046 [US2] Delete an entry's translations when the entry is deleted, in `apps/api/app/career/service.py`, for each of the four translatable types (FR-024)
+- [x] T046 [US2] Delete an entry's translations when the entry is deleted, in `apps/api/app/career/service.py`, for each of the four translatable types (FR-024) — pulled forward into Phase 2 with the export: once an approved rendering is in the archive, an entry's deletion has to take it, and the gap should never have existed. Story deletion is in `stories.py` rather than `service.py`
 - [ ] T047 [US2] Create `apps/api/app/translations/schemas.py` with `TranslationApproval`, `StoredTranslation`, `TranslationDraftRequest` and the draft response per the contract
 - [ ] T048 [US2] Add drafting to `apps/api/app/translations/service.py`, calling `get_provider().draft_translation(...)` and returning the result **without storing it**. Map `ProviderUnavailable` to 503 and `ProviderResponseInvalid` to 502, because a user needs to know whether trying again is worth their time
 - [ ] T049 [US2] Create `apps/api/app/translations/router.py` serving `GET`/`PUT /profile/translations`, `DELETE /profile/translations/{translation_id}` and `POST /profile/translations/drafts`, and register it in `apps/api/app/main.py`

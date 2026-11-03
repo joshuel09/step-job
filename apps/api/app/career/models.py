@@ -253,6 +253,13 @@ class WorkExperience(Entity, ProfileOwned):
         Enum(Locale, name="locale"), default=Locale.en, nullable=False
     )
 
+    # Added by feature 005. The company's own English name, as the user
+    # states it — not a rendering of the Japanese one, which is why it lives
+    # here rather than in entry_translation. Null means they have not
+    # supplied one, and a document then prints the name as recorded rather
+    # than transliterating it (FR-021).
+    employer_name_english: Mapped[str | None] = mapped_column(String(255), default=None)
+
     skills: Mapped[list["Skill"]] = relationship(
         secondary=skill_experience, back_populates="experiences"
     )
@@ -275,6 +282,11 @@ class Education(Entity, ProfileOwned):
         Enum(Locale, name="locale"), default=Locale.en, nullable=False
     )
 
+    # Added by feature 005. The institution's own English name, as the user
+    # states it. A university's English name is the one it uses, not a
+    # reading of its Japanese one (FR-021).
+    institution_english: Mapped[str | None] = mapped_column(String(255), default=None)
+
 
 class Certification(Entity, ProfileOwned):
     __tablename__ = "certification"
@@ -283,6 +295,14 @@ class Certification(Entity, ProfileOwned):
     issuer: Mapped[str | None] = mapped_column(String(255), default=None)
     issued_on: Mapped[date | None] = mapped_column(Date, default=None)
     expires_on: Mapped[date | None] = mapped_column(Date, default=None)
+
+    # Added by feature 005, and the pair most easily got wrong. A
+    # certification is in no translation at all: a name, an issuer and two
+    # dates means the first two are proper nouns and the last two are not
+    # words. An invented awarding body on a resume is a claim the applicant
+    # has to answer for, so both are the user's to state (R-002).
+    name_english: Mapped[str | None] = mapped_column(String(255), default=None)
+    issuer_english: Mapped[str | None] = mapped_column(String(255), default=None)
     source_language: Mapped[Locale] = mapped_column(
         Enum(Locale, name="locale"), default=Locale.en, nullable=False
     )

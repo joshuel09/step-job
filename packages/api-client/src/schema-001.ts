@@ -513,7 +513,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["WorkExperienceInput"];
+                    "application/json": components["schemas"]["WorkExperiencePatch"];
                 };
             };
             responses: {
@@ -645,7 +645,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["Education"];
+                    "application/json": components["schemas"]["EducationPatch"];
                 };
             };
             responses: {
@@ -777,7 +777,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["Certification"];
+                    "application/json": components["schemas"]["CertificationPatch"];
                 };
             };
             responses: {
@@ -792,6 +792,7 @@ export interface paths {
                 };
                 401: components["responses"]["Unauthorised"];
                 404: components["responses"]["NotFound"];
+                422: components["responses"]["ValidationFailed"];
             };
         };
         trace?: never;
@@ -908,7 +909,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["Skill"];
+                    "application/json": components["schemas"]["SkillPatch"];
                 };
             };
             responses: {
@@ -923,6 +924,7 @@ export interface paths {
                 };
                 401: components["responses"]["Unauthorised"];
                 404: components["responses"]["NotFound"];
+                422: components["responses"]["ValidationFailed"];
             };
         };
         trace?: never;
@@ -1039,7 +1041,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["Language"];
+                    "application/json": components["schemas"]["LanguagePatch"];
                 };
             };
             responses: {
@@ -1054,6 +1056,7 @@ export interface paths {
                 };
                 401: components["responses"]["Unauthorised"];
                 404: components["responses"]["NotFound"];
+                422: components["responses"]["ValidationFailed"];
             };
         };
         trace?: never;
@@ -1605,6 +1608,8 @@ export interface components {
         };
         WorkExperienceInput: {
             employer_name: string;
+            /** @description The organisation's own English name, as the user supplies it. Added by feature 005. Not a rendering of the Japanese one and never drafted: a company's English name is whatever that company calls itself. Null means the user has not supplied one, and a document then prints the name as recorded rather than transliterating it. */
+            employer_name_english?: string | null;
             job_title: string;
             /** @enum {string|null} */
             employment_type?: "permanent" | "contract" | "part_time" | "internship" | "freelance" | null;
@@ -1629,6 +1634,8 @@ export interface components {
             /** Format: uuid */
             readonly id?: string;
             institution: string;
+            /** @description The organisation's own English name, as the user supplies it. Added by feature 005. Not a rendering of the Japanese one and never drafted: a university's English name is the one it uses. Null means the user has not supplied one, and a document then prints the name as recorded rather than transliterating it. */
+            institution_english?: string | null;
             qualification?: string | null;
             field_of_study?: string | null;
             /** Format: date */
@@ -1641,7 +1648,11 @@ export interface components {
             /** Format: uuid */
             readonly id?: string;
             name: string;
+            /** @description The certification's own English name, as the user supplies it. Added by feature 005. A certification carries a name, an issuer and two dates, so the first two are proper nouns and the last two are not words — there is nothing here the product drafts. */
+            name_english?: string | null;
             issuer?: string | null;
+            /** @description The awarding body's own English name, as the user supplies it. Added by feature 005, and the one most easily guessed at: an invented awarding body on a resume is a claim the applicant has to answer for. */
+            issuer_english?: string | null;
             /** Format: date */
             issued_on?: string | null;
             /** Format: date */
@@ -1662,6 +1673,57 @@ export interface components {
             language: string;
             /** @enum {string} */
             proficiency: "native" | "business" | "conversational" | "basic";
+            qualification?: string | null;
+        };
+        /** @description WorkExperienceInput with nothing required. `ended_on` is the only field here that means something as null — the job is ongoing. */
+        WorkExperiencePatch: {
+            employer_name?: string;
+            employer_name_english?: string | null;
+            job_title?: string;
+            /** @enum {string|null} */
+            employment_type?: "permanent" | "contract" | "part_time" | "internship" | "freelance" | null;
+            /** Format: date */
+            started_on?: string;
+            /** Format: date */
+            ended_on?: string | null;
+            description?: string;
+            source_language?: components["schemas"]["Locale"];
+        };
+        /** @description Education with nothing required. */
+        EducationPatch: {
+            institution?: string;
+            institution_english?: string | null;
+            qualification?: string | null;
+            field_of_study?: string | null;
+            /** Format: date */
+            started_on?: string | null;
+            /** Format: date */
+            ended_on?: string | null;
+            source_language?: components["schemas"]["Locale"];
+        };
+        /** @description Certification with nothing required. */
+        CertificationPatch: {
+            name?: string;
+            name_english?: string | null;
+            issuer?: string | null;
+            issuer_english?: string | null;
+            /** Format: date */
+            issued_on?: string | null;
+            /** Format: date */
+            expires_on?: string | null;
+            source_language?: components["schemas"]["Locale"];
+        };
+        /** @description Skill with nothing required. */
+        SkillPatch: {
+            name?: string;
+            /** @enum {string|null} */
+            level?: "beginner" | "intermediate" | "advanced" | "expert" | null;
+        };
+        /** @description Language with nothing required. */
+        LanguagePatch: {
+            language?: string;
+            /** @enum {string} */
+            proficiency?: "native" | "business" | "conversational" | "basic";
             qualification?: string | null;
         };
         CareerPreference: {

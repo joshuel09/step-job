@@ -5,6 +5,7 @@ from app.career import models  # noqa: F401 - registers tables on the metadata
 from app.core.settings import get_settings
 from app.db.base import Base
 from app.imports import models as import_models  # noqa: F401 - registers tables on the metadata
+from app.translations import models as translation_models  # noqa: F401 - registers tables
 from sqlalchemy import engine_from_config, pool
 
 config = context.config
