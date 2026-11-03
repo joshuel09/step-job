@@ -792,6 +792,7 @@ export interface paths {
                 };
                 401: components["responses"]["Unauthorised"];
                 404: components["responses"]["NotFound"];
+                422: components["responses"]["ValidationFailed"];
             };
         };
         trace?: never;
@@ -923,6 +924,7 @@ export interface paths {
                 };
                 401: components["responses"]["Unauthorised"];
                 404: components["responses"]["NotFound"];
+                422: components["responses"]["ValidationFailed"];
             };
         };
         trace?: never;
@@ -1054,6 +1056,7 @@ export interface paths {
                 };
                 401: components["responses"]["Unauthorised"];
                 404: components["responses"]["NotFound"];
+                422: components["responses"]["ValidationFailed"];
             };
         };
         trace?: never;

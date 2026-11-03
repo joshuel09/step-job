@@ -151,21 +151,21 @@ draft for each entry, and keeps the words they approve.
 version, and confirm the approved English is in the profile and appears in the
 next document without being translated again.
 
-**⚠️ T046 needs #65** — the readiness report is one mechanism, not two.
+**⚠️ T050 needs #65** — the readiness report is one mechanism, not two. (This read T046 before; T046 is the deletion cascade and has nothing to do with #65.)
 
 ### Tests for User Story 2
 
 - [ ] T039 [P] [US2] Integration tests for quickstart Scenarios 6 and 7 in `apps/api/tests/integration/test_translation_flow.py` — a draft is returned with its source beside it, **querying stored versions afterwards returns nothing**, and a 課長 title comes back with at least two options (the second assertion is the one that matters: the request that drafts must store nothing)
 - [ ] T040 [P] [US2] Integration tests for quickstart Scenarios 8, 9 and 10 in `apps/api/tests/integration/test_translation_flow.py` — an approval is stored and reused, the user's wording appears character for character and the draft's does not, and a blank or whitespace approval is refused 422
 - [ ] T041 [P] [US2] Integration test for quickstart Scenario 11 in `apps/api/tests/integration/test_translation_staleness.py` — editing the source marks the approval stale, **leaves it stored**, and does not block generation (FR-023)
-- [ ] T042 [P] [US2] Integration test for quickstart Scenario 19 in `apps/api/tests/integration/test_translation_flow.py` — deleting an entry of each of the four translatable types leaves no orphan row (FR-024). `entry_id` cannot be a foreign key across four tables, so this test is the foreign key
+- [x] T042 [P] [US2] Integration test for quickstart Scenario 19 in `apps/api/tests/integration/test_translation_flow.py` — deleting an entry of each of the four translatable types leaves no orphan row (FR-024). `entry_id` cannot be a foreign key across four tables, so this test is the foreign key
 - [ ] T043 [P] [US2] Contract tests in `apps/api/tests/contract/test_translations.py` for all four translation routes, including 502 and 503 on the drafts route
 
 ### Implementation for User Story 2
 
-- [ ] T044 [US2] Create `apps/api/app/translations/service.py` with approve (upsert on the natural key, storing the text exactly as given and recording the fingerprint), delete, and list with staleness computed by comparing a fresh digest against the stored one (FR-019, FR-023)
+- [ ] T044 [US2] Extend `apps/api/app/translations/service.py` (created in Phase 2 for T046) with approve (upsert on the natural key, storing the text exactly as given and recording the fingerprint), delete, and list with staleness computed by comparing a fresh digest against the stored one (FR-019, FR-023)
 - [ ] T045 [US2] Refuse an empty or whitespace-only approval with 422 in `apps/api/app/translations/service.py` (FR-025) — an approved blank is not an English version, it is an entry that vanishes from a document silently
-- [ ] T046 [US2] Delete an entry's translations when the entry is deleted, in `apps/api/app/career/service.py`, for each of the four translatable types (FR-024)
+- [x] T046 [US2] Delete an entry's translations when the entry is deleted, in `apps/api/app/career/service.py`, for each of the four translatable types (FR-024) — pulled forward into Phase 2 with the export: once an approved rendering is in the archive, an entry's deletion has to take it, and the gap should never have existed. Story deletion is in `stories.py` rather than `service.py`
 - [ ] T047 [US2] Create `apps/api/app/translations/schemas.py` with `TranslationApproval`, `StoredTranslation`, `TranslationDraftRequest` and the draft response per the contract
 - [ ] T048 [US2] Add drafting to `apps/api/app/translations/service.py`, calling `get_provider().draft_translation(...)` and returning the result **without storing it**. Map `ProviderUnavailable` to 503 and `ProviderResponseInvalid` to 502, because a user needs to know whether trying again is worth their time
 - [ ] T049 [US2] Create `apps/api/app/translations/router.py` serving `GET`/`PUT /profile/translations`, `DELETE /profile/translations/{translation_id}` and `POST /profile/translations/drafts`, and register it in `apps/api/app/main.py`

@@ -16,6 +16,8 @@ from app.career import models
 from app.career.validation import check_date_range, check_salary_range, normalise_employer
 from app.core.errors import NotFoundError, ValidationFailed
 from app.db.soft_delete import with_deleted
+from app.translations import service as translations
+from app.translations.models import TranslatableEntry
 
 logger = logging.getLogger(__name__)
 
@@ -163,10 +165,12 @@ def references_to_experience(
     return references
 
 
-def delete_experience(
-    session: Session, profile: models.CareerProfile, entry_id: uuid.UUID
-) -> None:
+def delete_experience(session: Session, profile: models.CareerProfile, entry_id: uuid.UUID) -> None:
     entry = _owned(session, profile, models.WorkExperience, entry_id)
+    # FR-024: no stored English outlives the entry it is a translation of.
+    # Attached stories are not touched — they survive the employer going
+    # (`ondelete="SET NULL"`), so their own English survives with them.
+    translations.delete_for_entry(session, profile.id, TranslatableEntry.work_experience, entry_id)
     session.delete(entry)
     session.flush()
     logger.info(
@@ -216,10 +220,22 @@ def update_entry(
     return entry
 
 
+#: The sections whose entries may carry an approved English rendering.
+#: Certifications and languages are absent because nothing drafts them —
+#: see `TranslatableEntry`.
+_TRANSLATABLE_SECTIONS = {
+    "education": TranslatableEntry.education,
+    "skills": TranslatableEntry.skill,
+}
+
+
 def delete_entry(
     session: Session, profile: models.CareerProfile, section: str, entry_id: uuid.UUID
 ) -> None:
     entry = _owned(session, profile, SECTION_MODELS[section], entry_id)
+    entry_type = _TRANSLATABLE_SECTIONS.get(section)
+    if entry_type is not None:
+        translations.delete_for_entry(session, profile.id, entry_type, entry_id)
     session.delete(entry)
     session.flush()
     logger.info(
@@ -243,9 +259,7 @@ def put_singleton(
         if failures:
             raise ValidationFailed(failures)
 
-    existing = session.scalars(
-        select(model).where(model.profile_id == profile.id)
-    ).first()
+    existing = session.scalars(select(model).where(model.profile_id == profile.id)).first()
     if existing is None:
         existing = model(profile_id=profile.id, **data)
         session.add(existing)

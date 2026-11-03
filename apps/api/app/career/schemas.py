@@ -38,9 +38,47 @@ def _reject_null[T](value: T) -> T:
     return value
 
 
-#: For a patch field declared optional so it may be omitted, but whose value
-#: the entry must keep.
-NotBlankable = AfterValidator(_reject_null)
+def _reject_blank[T](value: T) -> T:
+    """Refuse a null, and refuse a string with nothing in it.
+
+    A blank is the quieter of the two and the one that reaches paper: the
+    request succeeds, the entry keeps its row, and the document prints a
+    heading with no employer under it. FR-025 refuses a blank approval for
+    the same reason, and a blank fact is no better than a blank rendering.
+
+    Whitespace counts as blank. A name of three spaces is a name the user
+    cannot see they have lost.
+    """
+    if isinstance(value, str) and not value.strip():
+        raise ValueError("This cannot be blank.")
+    return _reject_null(value)
+
+
+#: A field the entry cannot be without: never null, never blank. On a patch
+#: body it is still optional, because omitting it leaves it alone.
+Stated = AfterValidator(_reject_blank)
+
+#: A field that may hold nothing but may not hold null — `description`,
+#: which is empty on an entry that has not been described yet.
+NotNullable = AfterValidator(_reject_null)
+
+
+def _supplied_or_absent(value: str | None) -> str | None:
+    """An English name the user gave, or nothing — and nothing means null.
+
+    Null is how "not supplied" is recorded (FR-021). An empty string is a
+    third state meaning the same thing, which every caller then has to know
+    to check for: a generator asking `if employer_name_english` falls back
+    to the Japanese, one asking `is not None` prints an empty name.
+    """
+    if value is not None and not value.strip():
+        raise ValueError("This cannot be blank. Leave it out to record no English name.")
+    return value
+
+
+#: An optional English name the user states. Null means not supplied; blank
+#: is not a way of saying so.
+SuppliedName = AfterValidator(_supplied_or_absent)
 
 
 class IdentityIn(BaseModel):
@@ -81,8 +119,8 @@ class JapanProfileOut(JapanProfileIn, ORMModel):
 
 
 class WorkExperienceIn(BaseModel):
-    employer_name: str
-    job_title: str
+    employer_name: Annotated[str, Stated]
+    job_title: Annotated[str, Stated]
     employment_type: EmploymentType | None = None
     started_on: date
     ended_on: date | None = None
@@ -92,7 +130,7 @@ class WorkExperienceIn(BaseModel):
     # through this route rather than one of feature 005's own: it is a
     # profile field, and a second way to edit an entry is what Principle I
     # rules out. Absent means they have not given one, never a guess.
-    employer_name_english: str | None = None
+    employer_name_english: Annotated[str | None, SuppliedName] = None
 
 
 class WorkExperiencePatch(BaseModel):
@@ -102,14 +140,14 @@ class WorkExperiencePatch(BaseModel):
     job is ongoing. The rest the entry cannot be without.
     """
 
-    employer_name: Annotated[str | None, NotBlankable] = None
-    employer_name_english: str | None = None
-    job_title: Annotated[str | None, NotBlankable] = None
+    employer_name: Annotated[str | None, Stated] = None
+    employer_name_english: Annotated[str | None, SuppliedName] = None
+    job_title: Annotated[str | None, Stated] = None
     employment_type: EmploymentType | None = None
-    started_on: Annotated[date | None, NotBlankable] = None
+    started_on: Annotated[date | None, Stated] = None
     ended_on: date | None = None
-    description: Annotated[str | None, NotBlankable] = None
-    source_language: Annotated[Locale | None, NotBlankable] = None
+    description: Annotated[str | None, NotNullable] = None
+    source_language: Annotated[Locale | None, Stated] = None
 
 
 class WorkExperienceOut(ORMModel):
@@ -125,8 +163,8 @@ class WorkExperienceOut(ORMModel):
 
 
 class EducationIn(BaseModel):
-    institution: str
-    institution_english: str | None = None
+    institution: Annotated[str, Stated]
+    institution_english: Annotated[str | None, SuppliedName] = None
     qualification: str | None = None
     field_of_study: str | None = None
     started_on: date | None = None
@@ -135,13 +173,13 @@ class EducationIn(BaseModel):
 
 
 class EducationPatch(BaseModel):
-    institution: Annotated[str | None, NotBlankable] = None
-    institution_english: str | None = None
+    institution: Annotated[str | None, Stated] = None
+    institution_english: Annotated[str | None, SuppliedName] = None
     qualification: str | None = None
     field_of_study: str | None = None
     started_on: date | None = None
     ended_on: date | None = None
-    source_language: Annotated[Locale | None, NotBlankable] = None
+    source_language: Annotated[Locale | None, Stated] = None
 
 
 class EducationOut(EducationIn, ORMModel):
@@ -149,26 +187,26 @@ class EducationOut(EducationIn, ORMModel):
 
 
 class CertificationIn(BaseModel):
-    name: str
+    name: Annotated[str, Stated]
     # A certification is in no translation at all: a name, an issuer and two
     # dates means the first two are proper nouns and the last two are not
     # words. Both English forms are the user's to state (R-002).
-    name_english: str | None = None
+    name_english: Annotated[str | None, SuppliedName] = None
     issuer: str | None = None
-    issuer_english: str | None = None
+    issuer_english: Annotated[str | None, SuppliedName] = None
     issued_on: date | None = None
     expires_on: date | None = None
     source_language: Locale = Locale.en
 
 
 class CertificationPatch(BaseModel):
-    name: Annotated[str | None, NotBlankable] = None
-    name_english: str | None = None
+    name: Annotated[str | None, Stated] = None
+    name_english: Annotated[str | None, SuppliedName] = None
     issuer: str | None = None
-    issuer_english: str | None = None
+    issuer_english: Annotated[str | None, SuppliedName] = None
     issued_on: date | None = None
     expires_on: date | None = None
-    source_language: Annotated[Locale | None, NotBlankable] = None
+    source_language: Annotated[Locale | None, Stated] = None
 
 
 class CertificationOut(CertificationIn, ORMModel):
@@ -176,12 +214,12 @@ class CertificationOut(CertificationIn, ORMModel):
 
 
 class SkillIn(BaseModel):
-    name: str
+    name: Annotated[str, Stated]
     level: SkillLevel | None = None
 
 
 class SkillPatch(BaseModel):
-    name: Annotated[str | None, NotBlankable] = None
+    name: Annotated[str | None, Stated] = None
     level: SkillLevel | None = None
 
 
@@ -190,14 +228,14 @@ class SkillOut(SkillIn, ORMModel):
 
 
 class LanguageIn(BaseModel):
-    language: str
+    language: Annotated[str, Stated]
     proficiency: LanguageProficiency
     qualification: str | None = None
 
 
 class LanguagePatch(BaseModel):
-    language: Annotated[str | None, NotBlankable] = None
-    proficiency: Annotated[LanguageProficiency | None, NotBlankable] = None
+    language: Annotated[str | None, Stated] = None
+    proficiency: Annotated[LanguageProficiency | None, Stated] = None
     qualification: str | None = None
 
 

@@ -385,6 +385,7 @@ paths:
               schema: { $ref: "#/components/schemas/Certification" }
         "401": { $ref: "#/components/responses/Unauthorised" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
     delete:
       tags: [sections]
       summary: Delete a certification
@@ -442,6 +443,7 @@ paths:
               schema: { $ref: "#/components/schemas/Skill" }
         "401": { $ref: "#/components/responses/Unauthorised" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
     delete:
       tags: [sections]
       summary: Delete a skill
@@ -499,6 +501,7 @@ paths:
               schema: { $ref: "#/components/schemas/Language" }
         "401": { $ref: "#/components/responses/Unauthorised" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
     delete:
       tags: [sections]
       summary: Delete a language
