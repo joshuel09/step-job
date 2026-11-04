@@ -339,6 +339,18 @@ class TestAnAlternativeForWordsNobodyWrote:
         with pytest.raises(ProviderResponseInvalid):
             provider.draft_translation("課長と主任", "ja", "en")
 
+    @pytest.mark.parametrize("phrase", ["", "   ", "\n"], ids=["empty", "spaces", "newline"])
+    def test_a_blank_phrase_is_refused_by_the_schema(self, phrase):
+        """Where the rule belongs, rather than as a second condition on the
+        membership check below.
+
+        `"" in text` is true of every string, so a blank phrase sails
+        through the very check that exists to catch a phrase the user never
+        wrote — and the user is shown a choice about nothing.
+        """
+        with pytest.raises(ValidationError):
+            RenderingAlternative(phrase=phrase, options=["Manager", "Section Chief"])
+
     def test_the_fake_only_offers_phrases_it_found(self):
         """Which is why the fake never trips this check: its alternatives
         come from scanning the source, not from a list it carries."""

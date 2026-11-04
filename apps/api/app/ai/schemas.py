@@ -102,6 +102,21 @@ class RenderingAlternative(BaseModel):
         default=None, description="What distinguishes the options, in one line"
     )
 
+    @field_validator("phrase")
+    @classmethod
+    def _a_phrase_has_words_in_it(cls, phrase: str) -> str:
+        """A blank is in every source text, which is the problem.
+
+        The provider checks that a phrase appears in what it was given, and
+        `"" in text` is true of every string — so a blank phrase passes a
+        membership test that exists to catch exactly this. The rule belongs
+        here, on the field documented as appearing in the source, rather
+        than as a second condition wherever that membership is checked.
+        """
+        if not phrase.strip():
+            raise ValueError("A phrase is a passage of the source, and a blank is not one.")
+        return phrase
+
     @field_validator("options")
     @classmethod
     def _options_are_a_real_choice(cls, options: list[str]) -> list[str]:
