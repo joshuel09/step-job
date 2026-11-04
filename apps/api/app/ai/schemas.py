@@ -73,3 +73,59 @@ class ExtractionResult(BaseModel):
             "can see what the document lacked rather than assume it was lost."
         ),
     )
+
+
+class RenderingAlternative(BaseModel):
+    """A phrase that could reasonably render more than one way.
+
+    This is the feature's central difficulty made into a type. 課長 is
+    "Manager", "Section Chief" or "Department Head", and those are three
+    different claims about the user's seniority. No check can tell which one
+    is true — the answer is a fact about their job that only they hold.
+
+    So the ambiguity is returned rather than resolved. A single confident
+    rendering would make the product's choice of English word into a claim
+    about someone's career, which is what Principle IV forbids; handing back
+    the options moves the choice to the person who knows (research.md R-004).
+    """
+
+    phrase: str = Field(description="The phrase in the source text, exactly as it appears")
+    options: list[str] = Field(
+        min_length=2,
+        description=(
+            "The readings this phrase could take. At least two: one option is "
+            "not an alternative, it is a rendering, and belongs in the draft."
+        ),
+    )
+    note: str | None = Field(
+        default=None, description="What distinguishes the options, in one line"
+    )
+
+
+class TranslationDraft(BaseModel):
+    """A suggestion, not a claim.
+
+    Stored nowhere. It reaches a document only through an approval, which is
+    the user's authorship rather than the model's (plan.md G13).
+
+    What this schema does **not** have is the point of it. There is no field
+    for a summary, a seniority, a headcount, a duration or an outcome, so a
+    provider cannot return an embellishment through it — not because the
+    prompt asks it not to, but because there is nowhere to put one. The only
+    text it may produce is a rendering of the text it was given.
+    """
+
+    text: str = Field(description="The English rendering of the source text, and nothing more")
+    source_text: str = Field(
+        description=(
+            "The text this renders, echoed back so the user compares the two "
+            "rather than approving English against nothing."
+        )
+    )
+    alternatives: list[RenderingAlternative] = Field(
+        default_factory=list,
+        description=(
+            "Phrases that could reasonably render more than one way. Empty "
+            "when the rendering is unambiguous."
+        ),
+    )

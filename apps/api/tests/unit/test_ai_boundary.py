@@ -31,13 +31,27 @@ def _imported_roots(path: Path) -> set[str]:
     return roots
 
 
+def _imported_modules(path: Path) -> set[str]:
+    """Every dotted module name imported, not just its first segment.
+
+    `_imported_roots` answers "does this touch `app`", which every module
+    does. Telling `app.career` from `app.ai` needs the whole name.
+    """
+    tree = ast.parse(path.read_text())
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names |= {alias.name for alias in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            names.add(node.module)
+    return names
+
+
 def _feature_modules() -> list[Path]:
     return [p for p in APP.rglob("*.py") if p != SDK_GATEWAY]
 
 
-@pytest.mark.parametrize(
-    "module", _feature_modules(), ids=lambda p: str(p.relative_to(APP))
-)
+@pytest.mark.parametrize("module", _feature_modules(), ids=lambda p: str(p.relative_to(APP)))
 def test_no_feature_module_imports_a_provider_sdk(module: Path):
     offending = _imported_roots(module) & PROVIDER_SDKS
     assert not offending, (
@@ -77,3 +91,39 @@ def test_the_provider_receives_only_text():
 
     signature = inspect.signature(AIProvider.extract_career_information)
     assert list(signature.parameters) == ["self", "text"]
+
+
+def test_drafting_a_translation_also_receives_only_text():
+    """The second operation (feature 005) keeps the property the first has.
+
+    "One operation, deliberately" was never about the number of methods. It
+    was about what a provider is handed: text, and nothing that would let it
+    read or write a profile. A `profile`, a `session` or an `entry_id` in
+    this signature would be the breach (research.md R-003).
+    """
+    import inspect
+
+    signature = inspect.signature(AIProvider.draft_translation)
+    assert list(signature.parameters) == ["self", "text", "source_language", "target_language"]
+
+
+def test_generation_cannot_reach_a_model():
+    """R-005 and SC-010, as a shape rather than a promise.
+
+    A document is assembled from approved text in the profile. If anything
+    under `app/resume/` could call a provider, "an unapproved draft reached a
+    resume" becomes a bug someone can introduce by forgetting a check. With
+    no import there is no check to forget.
+    """
+    offenders = {
+        str(module.relative_to(APP)): sorted(reached)
+        for module in (APP / "resume").rglob("*.py")
+        if (
+            reached := {
+                name
+                for name in _imported_modules(module)
+                if name == "app.ai" or name.startswith("app.ai.")
+            }
+        )
+    }
+    assert not offenders, f"these reach the model boundary from the render path: {offenders}"
