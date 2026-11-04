@@ -105,18 +105,26 @@ class RenderingAlternative(BaseModel):
     @field_validator("options")
     @classmethod
     def _options_are_a_real_choice(cls, options: list[str]) -> list[str]:
-        """Two of the same word is not two options.
+        """Every reading counts, and every reading has to be one.
 
         `min_length` counts entries, and ["Manager", "Manager"] has two. A
         user shown that is being asked to choose and given nothing to choose
         between, which is worse than a confident draft: it looks as though
         the ambiguity was surfaced.
+
+        Checked over the whole list rather than for two survivors. A blank
+        or a repeat in a list of three is the same defect with the evidence
+        hidden behind the options that happen to be fine — the user still
+        sees an option that is not one, and clicking it would approve an
+        empty rendering.
         """
-        distinct = {option.strip() for option in options if option.strip()}
-        if len(distinct) < 2:
+        stripped = [option.strip() for option in options]
+        if not all(stripped):
+            raise ValueError("A reading cannot be blank.")
+        if len(set(stripped)) != len(stripped):
             raise ValueError(
-                "An alternative needs at least two readings that differ. "
-                "A single reading is the draft, not a choice."
+                "Readings must differ from each other. The same word twice is "
+                "the draft, not a choice."
             )
         return options
 

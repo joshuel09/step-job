@@ -100,14 +100,30 @@ class TestAnAmbiguousPhrase:
             ["Manager", " Manager "],
             ["Manager", ""],
             ["", "   "],
+            ["Manager", "Section Chief", ""],
+            ["Manager", "Section Chief", "Manager"],
+            ["Manager", "Section Chief", " Section Chief"],
         ],
-        ids=["identical", "identical-with-padding", "one-blank", "both-blank"],
+        ids=[
+            "identical",
+            "identical-with-padding",
+            "one-blank",
+            "both-blank",
+            "blank-among-three",
+            "repeat-among-three",
+            "repeat-among-three-with-padding",
+        ],
     )
     def test_two_of_the_same_word_is_not_two_options(self, options):
         """Counting entries is not the rule. A user shown ["Manager",
         "Manager"] is being asked to choose and given nothing to choose
         between, which is worse than a confident draft — it looks as though
         the ambiguity was surfaced.
+
+        The three-option cases are the ones that would slip through a check
+        looking only for two survivors. A blank among three still shows the
+        user an option that is not one, and clicking it approves an empty
+        rendering.
         """
         with pytest.raises(ValidationError):
             RenderingAlternative(phrase="課長", options=options)
@@ -264,3 +280,68 @@ class TestTheEchoedSource:
         provider = self._provider(TranslationDraft(text="Manager", source_text=" 課長 "))
         with pytest.raises(ProviderResponseInvalid):
             provider.draft_translation("課長", "ja", "en")
+
+
+class TestAnAlternativeForWordsNobodyWrote:
+    """`phrase` is documented as appearing in the source exactly.
+
+    An alternative for a phrase the user never wrote is a false choice: the
+    interface cannot show it beside the source it is supposed to be part
+    of, and the user is asked to decide about a term that is not theirs.
+    Same rule as the echoed source, one level down.
+    """
+
+    def _provider(self, returns: TranslationDraft):
+        from app.ai.openai_provider import OpenAIProvider
+
+        provider = OpenAIProvider(api_key="unused-in-this-test", model="unused")
+        provider._parse = lambda *args, **kwargs: returns  # type: ignore[method-assign]
+        return provider
+
+    def test_a_phrase_from_the_source_is_fine(self):
+        provider = self._provider(
+            TranslationDraft(
+                text="Manager",
+                source_text="課長",
+                alternatives=[
+                    RenderingAlternative(phrase="課長", options=["Manager", "Section Chief"])
+                ],
+            )
+        )
+        assert provider.draft_translation("課長", "ja", "en").alternatives[0].phrase == "課長"
+
+    def test_a_phrase_that_is_not_is_an_unusable_response(self):
+        provider = self._provider(
+            TranslationDraft(
+                text="Manager",
+                source_text="課長",
+                alternatives=[
+                    RenderingAlternative(phrase="部長", options=["Director", "General Manager"])
+                ],
+            )
+        )
+        with pytest.raises(ProviderResponseInvalid):
+            provider.draft_translation("課長", "ja", "en")
+
+    def test_one_bad_phrase_among_good_ones_is_enough(self):
+        """Not "most of them check out". Each one is a question put to the
+        user, and one of them is about something they never wrote."""
+        provider = self._provider(
+            TranslationDraft(
+                text="Manager and Senior Staff",
+                source_text="課長と主任",
+                alternatives=[
+                    RenderingAlternative(phrase="課長", options=["Manager", "Section Chief"]),
+                    RenderingAlternative(phrase="部長", options=["Director", "Head"]),
+                ],
+            )
+        )
+        with pytest.raises(ProviderResponseInvalid):
+            provider.draft_translation("課長と主任", "ja", "en")
+
+    def test_the_fake_only_offers_phrases_it_found(self):
+        """Which is why the fake never trips this check: its alternatives
+        come from scanning the source, not from a list it carries."""
+        draft = _draft(text="課長としてビルド時間を半分にした")
+        for alternative in draft.alternatives:
+            assert alternative.phrase in draft.source_text

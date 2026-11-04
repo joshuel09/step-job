@@ -113,6 +113,17 @@ class OpenAIProvider:
                 "provider echoed a source text that is not the text it was given"
             )
 
+        # Same rule, one level down. `phrase` is documented as appearing in
+        # the source exactly, and an alternative for words the user never
+        # wrote is a false choice: the interface cannot show it beside the
+        # source, and the user is asked to decide about a term that is not
+        # theirs.
+        for alternative in draft.alternatives:
+            if alternative.phrase not in text:
+                raise ProviderResponseInvalid(
+                    "provider offered an alternative for a phrase that is not in the source"
+                )
+
         logger.info(
             "translation drafted",
             extra={
