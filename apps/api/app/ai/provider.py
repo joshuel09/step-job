@@ -12,7 +12,7 @@ to tell someone whether trying again is worth their time (FR-017b).
 
 from typing import Protocol, runtime_checkable
 
-from app.ai.schemas import ExtractionResult
+from app.ai.schemas import ExtractionResult, TranslationDraft
 
 
 class AIError(Exception):
@@ -45,20 +45,49 @@ class NoExtractableContent(AIError):
 
 @runtime_checkable
 class AIProvider(Protocol):
-    """Extract structured career information from text.
+    """Propose things about text. Two operations, both of them proposals.
 
-    One operation, deliberately. Every provider must return values carrying the
-    passage of source text they came from; what the application does with that
-    is not the provider's concern, and no provider is trusted to have got it
-    right — the verifier checks (research.md R-001).
+    "One operation, deliberately" was the first version of this docstring, and
+    the sentence that followed it is the one that mattered: a provider is given
+    text and nothing else. It receives no database access, no profile, and no
+    ability to write anything — it proposes, and deterministic code decides.
 
-    A provider is given text and nothing else. It receives no database access, no
-    profile, and no ability to write anything: it proposes, and deterministic
-    code decides.
+    Drafting a translation keeps every one of those properties. It takes text
+    and two languages, returns a proposal, and touches nothing. What would
+    breach the rule is an operation that took a profile, or wrote, or returned
+    something the application stored without a person in between; this does
+    none of those (research.md R-003).
+
+    Every provider must return extracted values carrying the passage of source
+    text they came from. What the application does with that is not the
+    provider's concern, and no provider is trusted to have got it right — the
+    verifier checks (research.md R-001).
     """
 
     def extract_career_information(self, text: str) -> ExtractionResult:
         """Return what the text contains.
+
+        Raises:
+            ProviderUnavailable: the service could not be reached.
+            ProviderResponseInvalid: the response could not be understood.
+        """
+        ...
+
+    def draft_translation(
+        self, text: str, source_language: str, target_language: str
+    ) -> TranslationDraft:
+        """Suggest a rendering of this text, for a person to accept or rewrite.
+
+        A suggestion and not a document (FR-018). Nothing stores what this
+        returns and no generator can reach it; a draft becomes part of a
+        resume only when the user approves it, at which point the words are
+        theirs.
+
+        Where a phrase could reasonably render more than one way, the options
+        belong in `alternatives` rather than being chosen here. 課長 is
+        "Manager", "Section Chief" or "Department Head", and picking one would
+        make the product's word choice into a claim about the user's
+        seniority (research.md R-004).
 
         Raises:
             ProviderUnavailable: the service could not be reached.

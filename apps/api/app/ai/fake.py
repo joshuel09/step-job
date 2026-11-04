@@ -20,7 +20,9 @@ from app.ai.schemas import (
     ExtractedEntryType,
     ExtractedField,
     ExtractionResult,
+    RenderingAlternative,
     SourceLanguage,
+    TranslationDraft,
 )
 
 _DATE = re.compile(r"\b(19|20)\d{2}\b|令和|平成|昭和")
@@ -30,8 +32,50 @@ _ROLE = re.compile(r"engineer|developer|designer|manager|エンジニア|デザ�
 _SEPARATOR = re.compile(r"[,、]")
 
 
+# A crude glossary, covering the phrases the fixtures use. Substitution
+# rather than anything cleverer: the fake's job is to be the same every time,
+# and a test that reads `"Section Manager" in draft.text` should be able to
+# see from here why.
+_GLOSSARY = {
+    "エンジニア": "Engineer",
+    "ソフトウェアエンジニア": "Software Engineer",
+    "シニアエンジニア": "Senior Engineer",
+    "ビルド時間を半分にした": "Halved the build time",
+    "ビルドが遅かった": "The build was slow",
+    "キャッシュを導入した": "Introduced caching",
+    "半分になった": "It halved",
+    "大学": "University",
+    "情報工学": "Computer Science",
+    "学士": "Bachelor's degree",
+}
+
+# Phrases whose English is a choice rather than a lookup, and the choices.
+# Each is a claim about seniority that only the user can settle, so the fake
+# returns the options exactly as a provider should (research.md R-004).
+_AMBIGUOUS = {
+    "課長": (
+        ["Manager", "Section Chief", "Department Head"],
+        "Three different claims about how senior the role was.",
+    ),
+    "部長": (
+        ["Director", "General Manager", "Head of Department"],
+        "Rank above 課長, but the English word depends on the company's size.",
+    ),
+    "主任": (
+        ["Senior Staff", "Team Lead", "Supervisor"],
+        "Whether anyone reported to you is the distinction, and only you know.",
+    ),
+}
+
+# An ambiguous phrase still has to render as *something* in the draft, and it
+# renders as the first option rather than a fourth word of its own. A draft
+# whose wording is not among the alternatives beside it asks the user to
+# choose between options none of which is what they are looking at.
+_RENDERINGS = _GLOSSARY | {phrase: options[0] for phrase, (options, _) in _AMBIGUOUS.items()}
+
+
 class FakeBehaviour(enum.StrEnum):
-    """What the fake does when asked to extract."""
+    """What the fake does when asked to extract, or to draft a translation."""
 
     extract = "extract"
     """Return entries quoting the source honestly."""
@@ -57,6 +101,13 @@ class FakeBehaviour(enum.StrEnum):
 
     unavailable = "unavailable"
     empty = "empty"
+    """No entries extracted; or, for a draft, a rendering with no words in it.
+
+    A provider that answers with a blank is answering, so this is not an
+    invalid response — it is a usable-looking draft that says nothing, which
+    is the shape FR-025 exists to refuse.
+    """
+
     invalid = "invalid"
 
 
@@ -86,9 +137,7 @@ class FakeAIProvider:
             case FakeBehaviour.invalid:
                 raise ProviderResponseInvalid("scripted unusable response")
             case FakeBehaviour.empty:
-                return ExtractionResult(
-                    entries=[], not_found=list(ExtractedEntryType)
-                )
+                return ExtractionResult(entries=[], not_found=list(ExtractedEntryType))
 
         return ExtractionResult(entries=[self._entry(text)], not_found=[])
 
@@ -151,3 +200,48 @@ class FakeAIProvider:
                 return line + " Ltd"
             case _:
                 return line
+
+    def draft_translation(
+        self, text: str, source_language: str, target_language: str
+    ) -> TranslationDraft:
+        """A rendering by substitution, and the ambiguities left unresolved.
+
+        There is no dishonest behaviour scripted here, and that absence is
+        the design rather than a gap. The dishonest draft would be one that
+        embellished — a seniority, a headcount, an outcome the source does
+        not state — and `TranslationDraft` has nowhere to put one. The fake
+        cannot return what the schema cannot carry, which is the same reason
+        a real provider cannot.
+
+        What *is* scripted is the pair that have nothing to do with content:
+        an outage and an unusable answer. Ambiguity is not scripted, because
+        it is a property of the text — a source with 課長 in it has a choice
+        to offer and one without it does not, whatever the fake is told to
+        do.
+        """
+        self.calls += 1
+
+        if self.fail_times and self.calls <= self.fail_times:
+            raise ProviderUnavailable("scripted transient outage")
+
+        match self.behaviour:
+            case FakeBehaviour.unavailable:
+                raise ProviderUnavailable("scripted outage")
+            case FakeBehaviour.invalid:
+                raise ProviderResponseInvalid("scripted unusable response")
+            case FakeBehaviour.empty:
+                return TranslationDraft(text="", source_text=text, alternatives=[])
+
+        rendered = text
+        for japanese, english in sorted(_RENDERINGS.items(), key=lambda kv: -len(kv[0])):
+            rendered = rendered.replace(japanese, english)
+
+        return TranslationDraft(
+            text=rendered,
+            source_text=text,
+            alternatives=[
+                RenderingAlternative(phrase=phrase, options=list(options), note=note)
+                for phrase, (options, note) in _AMBIGUOUS.items()
+                if phrase in text
+            ],
+        )

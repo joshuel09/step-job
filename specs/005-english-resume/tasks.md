@@ -91,13 +91,13 @@ go through the single `AIProvider` abstraction, not beside it.
 `runtime_checkable` and feature 002 asserts conformance, so both providers stop
 satisfying it the moment the method is added. That is the order working.
 
-- [ ] T014 [P] Add `TranslationDraft` and `RenderingAlternative` to `apps/api/app/ai/schemas.py` — `text`, `source_text` and `alternatives`, and **no field for a summary, a seniority or an outcome**, so a provider cannot return an embellishment through the schema (plan.md G13)
-- [ ] T015 Add `draft_translation(text, source_language, target_language) -> TranslationDraft` to the `AIProvider` protocol in `apps/api/app/ai/provider.py` (FR-018), with a docstring saying why a second operation does not breach "one operation, deliberately" — it is still given text and nothing else (research.md R-003)
-- [ ] T016 [P] Implement `draft_translation` on `FakeAIProvider` in `apps/api/app/ai/fake.py`, including behaviours for a confident rendering, a rendering with alternatives, unavailability and an unusable response
-- [ ] T017 Implement `draft_translation` on `OpenAIProvider` in `apps/api/app/ai/openai_provider.py`, requesting structured output against the `TranslationDraft` schema, with a prompt that asks for a rendering of the given text and nothing beyond it
-- [ ] T018 Run feature 002's provider conformance tests in `apps/api/tests/unit/test_ai_boundary.py` and confirm they pass again — the red introduced at T015 is now resolved
-- [ ] T019 [P] Confirm the G12 AST walker still passes: nothing under `app/translations/` or `app/resume/` imports `openai_provider`, and `app/resume/` imports nothing from `app.ai` at all
-- [ ] T020 [P] Unit tests in `apps/api/tests/unit/test_translation_drafts.py` for each fake behaviour, including that a draft carrying alternatives names at least two options per phrase
+- [x] T014 [P] Add `TranslationDraft` and `RenderingAlternative` to `apps/api/app/ai/schemas.py` — `text`, `source_text` and `alternatives`, and **no field for a summary, a seniority or an outcome**, so a provider cannot return an embellishment through the schema (plan.md G13)
+- [x] T015 Add `draft_translation(text, source_language, target_language) -> TranslationDraft` to the `AIProvider` protocol in `apps/api/app/ai/provider.py` (FR-018), with a docstring saying why a second operation does not breach "one operation, deliberately" — it is still given text and nothing else (research.md R-003)
+- [x] T016 [P] Implement `draft_translation` on `FakeAIProvider` in `apps/api/app/ai/fake.py`, including behaviours for a confident rendering, a rendering with alternatives, unavailability and an unusable response
+- [x] T017 Implement `draft_translation` on `OpenAIProvider` in `apps/api/app/ai/openai_provider.py`, requesting structured output against the `TranslationDraft` schema, with a prompt that asks for a rendering of the given text and nothing beyond it — the prompt lives in a new `apps/api/app/translations/prompts.py`, mirroring `app/imports/prompts.py`, and the request itself is shared with extraction so the outage/unusable distinction is made once
+- [x] T018 Run feature 002's provider conformance tests in `apps/api/tests/unit/test_ai_boundary.py` and confirm they pass again — the red introduced at T015 is now resolved
+- [x] T019 [P] Confirm the G12 AST walker still passes: nothing under `app/translations/` or `app/resume/` imports `openai_provider`, and `app/resume/` imports nothing from `app.ai` at all — the second half was a claim with no test behind it, so `test_generation_cannot_reach_a_model` now walks the imports under `app/resume/` for anything named `app.ai`
+- [x] T020 [P] Unit tests in `apps/api/tests/unit/test_translation_drafts.py` for each fake behaviour, including that a draft carrying alternatives names at least two options per phrase
 
 **Checkpoint**: a draft can be produced. Nothing stores one yet, and nothing
 renders one.

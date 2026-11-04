@@ -12,7 +12,7 @@ which is how Principle IV stops being an instruction and becomes an invariant.
 
 import enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ExtractedField(BaseModel):
@@ -71,5 +71,116 @@ class ExtractionResult(BaseModel):
         description=(
             "Kinds of career information looked for and not present, so the user "
             "can see what the document lacked rather than assume it was lost."
+        ),
+    )
+
+
+class RenderingAlternative(BaseModel):
+    """A phrase that could reasonably render more than one way.
+
+    This is the feature's central difficulty made into a type. 課長 is
+    "Manager", "Section Chief" or "Department Head", and those are three
+    different claims about the user's seniority. No check can tell which one
+    is true — the answer is a fact about their job that only they hold.
+
+    So the ambiguity is returned rather than resolved. A single confident
+    rendering would make the product's choice of English word into a claim
+    about someone's career, which is what Principle IV forbids; handing back
+    the options moves the choice to the person who knows (research.md R-004).
+    """
+
+    phrase: str = Field(description="The phrase in the source text, exactly as it appears")
+    options: list[str] = Field(
+        min_length=2,
+        description=(
+            "The readings this phrase could take. At least two, and different "
+            "from each other: one option is not an alternative, it is a "
+            "rendering, and belongs in the draft."
+        ),
+    )
+    note: str | None = Field(
+        default=None, description="What distinguishes the options, in one line"
+    )
+
+    @field_validator("phrase")
+    @classmethod
+    def _a_phrase_has_words_in_it(cls, phrase: str) -> str:
+        """A blank is in every source text, which is the problem.
+
+        The provider checks that a phrase appears in what it was given, and
+        `"" in text` is true of every string — so a blank phrase passes a
+        membership test that exists to catch exactly this. The rule belongs
+        here, on the field documented as appearing in the source, rather
+        than as a second condition wherever that membership is checked.
+        """
+        if not phrase.strip():
+            raise ValueError("A phrase is a passage of the source, and a blank is not one.")
+        return phrase
+
+    @field_validator("options")
+    @classmethod
+    def _options_are_a_real_choice(cls, options: list[str]) -> list[str]:
+        """Every reading counts, and every reading has to be one.
+
+        `min_length` counts entries, and ["Manager", "Manager"] has two. A
+        user shown that is being asked to choose and given nothing to choose
+        between, which is worse than a confident draft: it looks as though
+        the ambiguity was surfaced.
+
+        Checked over the whole list rather than for two survivors. A blank
+        or a repeat in a list of three is the same defect with the evidence
+        hidden behind the options that happen to be fine — the user still
+        sees an option that is not one, and clicking it would approve an
+        empty rendering.
+        """
+        stripped = [option.strip() for option in options]
+        if not all(stripped):
+            raise ValueError("A reading cannot be blank.")
+        if len(set(stripped)) != len(stripped):
+            raise ValueError(
+                "Readings must differ from each other. The same word twice is "
+                "the draft, not a choice."
+            )
+        return options
+
+
+class TranslationDraft(BaseModel):
+    """A suggestion, not a claim.
+
+    Stored nowhere. It reaches a document only through an approval, and what
+    is stored then is the user's text — whether they wrote it, edited this,
+    or accepted it unchanged. That is where Principle IV is held for the
+    translation step, and this schema is not it (plan.md G13).
+
+    Being clear about what the shape does and does not buy, because it is
+    easy to overstate:
+
+    - It **does** keep an embellishment from becoming a structured fact.
+      There is no field for a summary, a seniority, a headcount, a duration
+      or an outcome, so a provider cannot return one as data that something
+      downstream reads, stores or renders as though the profile stated it.
+    - It **does not** stop a model writing "Led a team of twelve" inside
+      `text`. `text` is free prose, and no schema can tell a rendering from
+      an invention. Nothing mechanical can: unlike extraction, there is no
+      passage to check a translation against, because a rendering of 課長
+      does not appear in the Japanese.
+
+    So the guarantee is the review, not the type. The draft is shown beside
+    its source for a person to compare, and nothing of a model's reaches a
+    document that person has not approved.
+    """
+
+    text: str = Field(description="The English rendering of the source text, and nothing more")
+    source_text: str = Field(
+        description=(
+            "The text this renders, echoed back so the user compares the two "
+            "rather than approving English against nothing."
+        )
+    )
+    alternatives: list[RenderingAlternative] = Field(
+        default_factory=list,
+        description=(
+            "Phrases that could reasonably render more than one way. Empty "
+            "when the rendering is unambiguous."
         ),
     )
