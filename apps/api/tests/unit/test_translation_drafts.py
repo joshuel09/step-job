@@ -8,10 +8,13 @@ someone sends under their own name.
 
 Two of them are worth reading as a pair:
 
-- `TestWhatADraftCannotCarry` asserts there is nowhere in the schema to put
-  a seniority, a headcount or an outcome. That is gate G13's first guarantee
-  — not a prompt asking a model to behave, but a type with no field for
-  misbehaviour.
+- `TestWhatADraftCannotCarry` asserts there is no field for a seniority, a
+  headcount or an outcome, so a provider cannot return one as *data*. It is
+  worth being exact about what that buys, because it is easy to overstate:
+  it keeps an embellishment from becoming a structured fact, and it does
+  nothing about a model writing "Led a team of twelve" inside the rendering
+  itself. No schema could — a translation has no passage to check it
+  against. The review is the guarantee; this is a smaller, real thing.
 - `TestAnAmbiguousPhrase` asserts the opposite kind of thing: that the
   product does *not* decide. 課長 is "Manager", "Section Chief" or
   "Department Head", and choosing one would make the product's word into a
@@ -90,6 +93,25 @@ class TestAnAmbiguousPhrase:
         with pytest.raises(ValidationError):
             RenderingAlternative(phrase="課長", options=["Manager"])
 
+    @pytest.mark.parametrize(
+        "options",
+        [
+            ["Manager", "Manager"],
+            ["Manager", " Manager "],
+            ["Manager", ""],
+            ["", "   "],
+        ],
+        ids=["identical", "identical-with-padding", "one-blank", "both-blank"],
+    )
+    def test_two_of_the_same_word_is_not_two_options(self, options):
+        """Counting entries is not the rule. A user shown ["Manager",
+        "Manager"] is being asked to choose and given nothing to choose
+        between, which is worse than a confident draft — it looks as though
+        the ambiguity was surfaced.
+        """
+        with pytest.raises(ValidationError):
+            RenderingAlternative(phrase="課長", options=options)
+
     def test_a_note_says_what_separates_them(self):
         note = _draft().alternatives[0].note
         assert note and "senior" in note.lower()
@@ -120,11 +142,13 @@ class TestAnAmbiguousPhrase:
 
 
 class TestWhatADraftCannotCarry:
-    """Gate G13's first guarantee: there is nowhere to put an embellishment.
+    """No field for a seniority, a headcount or an outcome.
 
-    Not a prompt asking a model to behave — a type with no field for the
-    misbehaviour. A provider that wants to tell the user they led a team of
-    twelve has to find a field to put it in, and there is not one.
+    Which is not the same as "a model cannot embellish". It cannot return
+    an embellishment as a *field* — something downstream could read, store
+    or render as though the profile said it. It can still write one into
+    the rendering, and the test below says so out loud rather than leaving
+    the class name to imply otherwise.
     """
 
     FORBIDDEN = ("summary", "seniority", "headcount", "team_size", "outcome", "impact", "level")
@@ -144,6 +168,18 @@ class TestWhatADraftCannotCarry:
 
     def test_the_fields_are_exactly_the_three(self):
         assert set(TranslationDraft.model_fields) == {"text", "source_text", "alternatives"}
+
+    def test_but_the_rendering_itself_is_free_prose(self):
+        """Stated as a test so the class above is not read as more than it
+        is. This draft is an invention and the schema accepts it, because
+        `text` is prose and nothing mechanical separates a rendering from a
+        claim — unlike extraction, there is no passage to check against.
+
+        What stops it reaching a resume is the person who reads the draft
+        beside its source and does not approve it.
+        """
+        invented = TranslationDraft(text="Led a team of twelve", source_text="エンジニア")
+        assert invented.text == "Led a team of twelve"
 
 
 class TestWhenTheProviderFails:
@@ -193,3 +229,38 @@ class TestTheBoundaryItself:
             "source_language",
             "target_language",
         ]
+
+
+class TestTheEchoedSource:
+    """The source text comes back from the provider, so it is checked.
+
+    `source_text` is what the user compares the rendering against. A model
+    that echoes a different passage would have the interface present that
+    passage as the source of its English, and someone could approve a
+    rendering against text they never wrote. The fake cannot get this wrong;
+    a real provider can, so the concrete one checks.
+    """
+
+    def _provider(self, returns: TranslationDraft):
+        from app.ai.openai_provider import OpenAIProvider
+
+        provider = OpenAIProvider(api_key="unused-in-this-test", model="unused")
+        provider._parse = lambda *args, **kwargs: returns  # type: ignore[method-assign]
+        return provider
+
+    def test_a_faithful_echo_is_returned(self):
+        provider = self._provider(TranslationDraft(text="Manager", source_text="課長"))
+        assert provider.draft_translation("課長", "ja", "en").text == "Manager"
+
+    def test_a_different_passage_is_an_unusable_response(self):
+        provider = self._provider(TranslationDraft(text="Manager", source_text="部長"))
+        with pytest.raises(ProviderResponseInvalid):
+            provider.draft_translation("課長", "ja", "en")
+
+    def test_and_so_is_a_reworded_one(self):
+        """Exact, not normalised. The prompt asks for the text back
+        unchanged, and a provider that cannot manage that has got something
+        else wrong too."""
+        provider = self._provider(TranslationDraft(text="Manager", source_text=" 課長 "))
+        with pytest.raises(ProviderResponseInvalid):
+            provider.draft_translation("課長", "ja", "en")

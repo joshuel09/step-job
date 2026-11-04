@@ -101,6 +101,18 @@ class OpenAIProvider:
             build_translation_input(text, source_language, target_language),
             TranslationDraft,
         )
+
+        # The echo is what the user compares the rendering against. A model
+        # that returns a different passage has answered a question nobody
+        # asked, and the draft would present that passage as the source of
+        # its English — so a mismatch is an unusable response, not a draft.
+        # Exact, not normalised: the prompt asks for the text back unchanged,
+        # and a provider that cannot manage that has got something else wrong.
+        if draft.source_text != text:
+            raise ProviderResponseInvalid(
+                "provider echoed a source text that is not the text it was given"
+            )
+
         logger.info(
             "translation drafted",
             extra={

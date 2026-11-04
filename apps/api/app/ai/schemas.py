@@ -12,7 +12,7 @@ which is how Principle IV stops being an instruction and becomes an invariant.
 
 import enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ExtractedField(BaseModel):
@@ -93,26 +93,58 @@ class RenderingAlternative(BaseModel):
     options: list[str] = Field(
         min_length=2,
         description=(
-            "The readings this phrase could take. At least two: one option is "
-            "not an alternative, it is a rendering, and belongs in the draft."
+            "The readings this phrase could take. At least two, and different "
+            "from each other: one option is not an alternative, it is a "
+            "rendering, and belongs in the draft."
         ),
     )
     note: str | None = Field(
         default=None, description="What distinguishes the options, in one line"
     )
 
+    @field_validator("options")
+    @classmethod
+    def _options_are_a_real_choice(cls, options: list[str]) -> list[str]:
+        """Two of the same word is not two options.
+
+        `min_length` counts entries, and ["Manager", "Manager"] has two. A
+        user shown that is being asked to choose and given nothing to choose
+        between, which is worse than a confident draft: it looks as though
+        the ambiguity was surfaced.
+        """
+        distinct = {option.strip() for option in options if option.strip()}
+        if len(distinct) < 2:
+            raise ValueError(
+                "An alternative needs at least two readings that differ. "
+                "A single reading is the draft, not a choice."
+            )
+        return options
+
 
 class TranslationDraft(BaseModel):
     """A suggestion, not a claim.
 
-    Stored nowhere. It reaches a document only through an approval, which is
-    the user's authorship rather than the model's (plan.md G13).
+    Stored nowhere. It reaches a document only through an approval, and what
+    is stored then is the user's text — whether they wrote it, edited this,
+    or accepted it unchanged. That is where Principle IV is held for the
+    translation step, and this schema is not it (plan.md G13).
 
-    What this schema does **not** have is the point of it. There is no field
-    for a summary, a seniority, a headcount, a duration or an outcome, so a
-    provider cannot return an embellishment through it — not because the
-    prompt asks it not to, but because there is nowhere to put one. The only
-    text it may produce is a rendering of the text it was given.
+    Being clear about what the shape does and does not buy, because it is
+    easy to overstate:
+
+    - It **does** keep an embellishment from becoming a structured fact.
+      There is no field for a summary, a seniority, a headcount, a duration
+      or an outcome, so a provider cannot return one as data that something
+      downstream reads, stores or renders as though the profile stated it.
+    - It **does not** stop a model writing "Led a team of twelve" inside
+      `text`. `text` is free prose, and no schema can tell a rendering from
+      an invention. Nothing mechanical can: unlike extraction, there is no
+      passage to check a translation against, because a rendering of 課長
+      does not appear in the Japanese.
+
+    So the guarantee is the review, not the type. The draft is shown beside
+    its source for a person to compare, and nothing of a model's reaches a
+    document that person has not approved.
     """
 
     text: str = Field(description="The English rendering of the source text, and nothing more")

@@ -9,10 +9,13 @@ check that it did would reject every correct translation.
 
 So the guarantee is a different one, and it is structural rather than textual:
 
-1. **The schema has nowhere to put an embellishment.** `TranslationDraft`
+1. **An embellishment cannot become a structured fact.** `TranslationDraft`
    carries a rendering, the source it renders, and the phrases that could go
-   more than one way. No summary, no seniority, no headcount, no outcome. A
-   model asked to improve the text has no field to return the improvement in.
+   more than one way. No summary, no seniority, no headcount, no outcome, so
+   nothing downstream can read one as data the profile states. This is worth
+   stating precisely rather than generously: it does not stop a model writing
+   "Led a team of twelve" inside the rendering itself. Nothing mechanical
+   could — that is what the review below is for.
 
 2. **Nothing stores a draft.** The drafting route writes nothing. A draft
    reaches a document only when a person approves it, and what is stored is
