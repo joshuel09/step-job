@@ -12,14 +12,35 @@ era can reach this document" a property rather than a hope — the renderer
 cannot forget to pass `era=False` to a function it has no way to call.
 """
 
-import ast
 import re
 from datetime import date
 from pathlib import Path
 
 import pytest
 from app.documents import dates
-from app.documents.dates import MONTHS, PRESENT, format_month, format_period
+from app.documents.dates import PRESENT, format_month, format_period
+
+from tests.unit.import_graph import reaches
+
+APP = Path(__file__).resolve().parents[2] / "app"
+
+#: Written out here rather than read from the module under test. Comparing
+#: `MONTHS[n]` against `MONTHS[n]` passes whichever name is in the table,
+#: including a wrong one for a month nobody looked at.
+EXPECTED = {
+    1: "Jan",
+    2: "Feb",
+    3: "Mar",
+    4: "Apr",
+    5: "May",
+    6: "Jun",
+    7: "Jul",
+    8: "Aug",
+    9: "Sep",
+    10: "Oct",
+    11: "Nov",
+    12: "Dec",
+}
 
 ERA_NAMES = ("令和", "平成", "昭和", "大正", "明治")
 
@@ -59,10 +80,13 @@ class TestPrecision:
         hold (R-006)."""
         assert format_month(date(2021, 3, day)) == "Mar 2021"
 
-    @pytest.mark.parametrize("month", range(1, 13))
-    def test_every_month_has_a_name(self, month):
+    @pytest.mark.parametrize(("month", "name"), sorted(EXPECTED.items()))
+    def test_every_month_has_the_right_name(self, month, name):
+        """Against a literal, not against the table. September is the one
+        that goes wrong — "Sept" is four letters and wrong, and a test
+        reading the name out of the module would agree with it."""
         rendered = format_month(date(2021, month, 1))
-        assert rendered == f"{MONTHS[month - 1]} 2021"
+        assert rendered == f"{name} 2021"
         assert rendered.isascii()
 
 
@@ -99,28 +123,13 @@ class TestTheEraTableIsUnreachable:
     decision was "the era table it must never consult".
     """
 
-    def _imported_modules(self, path: Path) -> set[str]:
-        tree = ast.parse(path.read_text())
-        names: set[str] = set()
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                names |= {alias.name for alias in node.names}
-            elif isinstance(node, ast.ImportFrom):
-                base = node.module or ""
-                if node.level:
-                    package = Path(path).resolve().parent.name
-                    base = ".".join(filter(None, (f"app.{package}", node.module)))
-                if base:
-                    names.add(base)
-                names |= {".".join(filter(None, (base, alias.name))) for alias in node.names}
-        return names
-
     def test_it_imports_nothing_from_the_module_holding_the_eras(self):
-        reached = {
-            name
-            for name in self._imported_modules(Path(dates.__file__))
-            if name == "app.imports" or name.startswith("app.imports.")
-        }
+        """The walk itself lives in `tests/unit/import_graph.py` and is
+        checked by `test_import_graph.py` against every form of import,
+        including `from ..imports.dates import year_to_era` — which a walk
+        that reads `node.module` and stops sees as `imports.dates` and
+        quietly lets through."""
+        reached = reaches(Path(dates.__file__), "app.imports", root=APP)
         assert not reached, f"the era table is reachable from the English formatter: {reached}"
 
     def test_the_era_formatter_is_still_where_the_japanese_documents_read_it(self):

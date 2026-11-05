@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
+from app.career.models import Locale
 from app.translations.models import EntryTranslation, TranslatableEntry
 
 #: The `field` values an approved translation is stored under. These are the
@@ -122,11 +123,22 @@ class Approved:
     no query per entry. A lookup that finds nothing returns nothing, and the
     caller falls back to what was recorded — which is the ordinary case for a
     profile written in English, where there is nothing to translate.
+
+    The language is filtered here rather than left to the caller. `en` is the
+    only value stored today, and the column exists so that a third language
+    is a row rather than a migration — on the day that happens, a lookup
+    keyed without it would put someone's German into their English resume,
+    and it would do so silently. Discipline at the call site is not a
+    mechanism; this is.
     """
 
-    def __init__(self, translations: Iterable[EntryTranslation] = ()) -> None:
+    def __init__(
+        self, translations: Iterable[EntryTranslation] = (), *, language: Locale = Locale.en
+    ) -> None:
         self._by_key = {
-            (row.entry_type, row.entry_id, row.field): row.approved_text for row in translations
+            (row.entry_type, row.entry_id, row.field): row.approved_text
+            for row in translations
+            if row.language is language
         }
 
     def text(
@@ -167,6 +179,7 @@ def build_content(
     skills: Sequence[Any] = (),
     certifications: Sequence[Any] = (),
     translations: Iterable[EntryTranslation] = (),
+    language: Locale = Locale.en,
     include_skills: bool = True,
 ) -> ResumeContent:
     """Project the profile into what the renderer may see.
@@ -175,8 +188,18 @@ def build_content(
     means by order (FR-003). An entry with no start date sorts last rather
     than first: the profile does not say when it began, and putting it at the
     top would assert that it is the most recent thing the person did.
+
+    **A stale approval is used, deliberately.** Where the source text was
+    edited after its English was approved, FR-023 says to keep the approved
+    wording, report that it no longer matches, and not block generation —
+    so the divergence is the readiness report's to raise, not this
+    function's to resolve. Replacing the user's approved words with the
+    newer Japanese, or dropping the entry, would both be this module
+    deciding something FR-023 gives to the user. The snapshot records the
+    English actually used, so what was sent stays inspectable either way
+    (R-010).
     """
-    approved = Approved(translations)
+    approved = Approved(translations, language=language)
 
     return ResumeContent(
         contact=Contact(

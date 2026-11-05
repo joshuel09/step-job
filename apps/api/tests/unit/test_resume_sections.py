@@ -15,7 +15,7 @@ import uuid
 from datetime import UTC, date, datetime
 
 import pytest
-from app.career.models import JapanProfile
+from app.career.models import JapanProfile, Locale
 from app.resume.sections import (
     CertificationEntry,
     Contact,
@@ -94,12 +94,18 @@ def _certification(**overrides):
     )
 
 
-def _approved(entry_type, entry_id, field, text):
+def _approved(entry_type, entry_id, field, text, language=Locale.en):
+    """`language` is set explicitly, because the column's default is applied
+    at insert and these rows are never flushed. A row read back from the
+    database always carries one; a unit test's row only does if it says so,
+    and a helper that left it `None` would make every lookup here miss for
+    a reason that has nothing to do with what is being tested."""
     return EntryTranslation(
         profile_id=uuid.uuid4(),
         entry_type=entry_type,
         entry_id=entry_id,
         field=field,
+        language=language,
         approved_text=text,
         approved_at=datetime.now(UTC),
         source_fingerprint="0" * 64,
@@ -298,6 +304,50 @@ class TestWhichEnglishIsUsed:
         )
 
         assert content.experiences[0].job_title == "エンジニア"
+
+    def test_another_language_is_not_used_for_an_english_resume(self):
+        """`en` is the only value stored today and the column exists so a
+        third language is a row rather than a migration. On the day that
+        happens, a lookup keyed without the language would put someone's
+        German into their English resume and say nothing about it."""
+        entry = _experience()
+        content = build_content(
+            _identity(),
+            experiences=[entry],
+            translations=[
+                _approved(
+                    TranslatableEntry.work_experience,
+                    entry.id,
+                    "job_title",
+                    "Ingenieur",
+                    language=Locale.ja,
+                )
+            ],
+        )
+
+        assert content.experiences[0].job_title == "エンジニア"
+
+    def test_a_stale_approval_is_still_the_user_s_wording(self):
+        """FR-023: where the source was edited after approval, the approved
+        English is kept, the divergence is reported, and generation is not
+        blocked. Replacing it with the newer Japanese would be this module
+        deciding something the requirement gives to the user — and the
+        snapshot records what was actually used, so what was sent stays
+        inspectable (R-010).
+
+        The fingerprint here is of text the entry no longer holds, which is
+        exactly what "stale" means.
+        """
+        entry = _experience(job_title="シニアエンジニア")
+        content = build_content(
+            _identity(),
+            experiences=[entry],
+            translations=[
+                _approved(TranslatableEntry.work_experience, entry.id, "job_title", "Engineer")
+            ],
+        )
+
+        assert content.experiences[0].job_title == "Engineer"
 
     def test_a_certification_uses_supplied_names_only(self):
         """It is in no translation at all: a name, an issuer and two dates
