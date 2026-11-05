@@ -87,11 +87,18 @@ def reaches(path: Path, prefix: str, *, root: Path, through: str | None = None) 
     repository and does not try to open `datetime`. Cycles are ordinary in
     an application's import graph; `seen` is what stops this following one
     forever.
+
+    Package initialisers count. Importing `app.career.models` runs
+    `app/career/__init__.py` first, so whatever that file imports is
+    reached as surely as if the importing module had named it — and a walk
+    that followed only the module named in the import statement would miss
+    it entirely. Every ancestor initialiser of every module followed, and
+    of the starting file, goes into the queue.
     """
     package = through or prefix.split(".")[0]
     found: set[str] = set()
     seen: set[Path] = set()
-    queue = [path.resolve()]
+    queue = [path.resolve(), *_initialisers(path, root=root)]
 
     while queue:
         current = queue.pop()
@@ -106,8 +113,31 @@ def reaches(path: Path, prefix: str, *, root: Path, through: str | None = None) 
                 nxt = _file_for(name, root=root)
                 if nxt is not None:
                     queue.append(nxt)
+                    queue.extend(_initialisers(nxt, root=root))
 
     return found
+
+
+def _initialisers(path: Path, *, root: Path) -> list[Path]:
+    """Every `__init__.py` Python runs on the way to importing this file.
+
+    `import app.career.models` executes `app/__init__.py` and then
+    `app/career/__init__.py` before the module itself, so anything those
+    import is reached as surely as if the importing module had named it.
+    """
+    path, root = path.resolve(), root.resolve()
+    if root not in path.parents:
+        return []
+
+    found = []
+    current = path.parent
+    while True:
+        initialiser = current / "__init__.py"
+        if initialiser.is_file():
+            found.append(initialiser)
+        if current == root:
+            return found
+        current = current.parent
 
 
 def _file_for(name: str, *, root: Path) -> Path | None:

@@ -122,6 +122,28 @@ class TestAnIndirectPath:
 
         assert reaches(first, "app.imports", root=APP) == set()
 
+    def test_a_package_initialiser_counts(self, write_module, write_initialiser):
+        """Importing `app.career.models` runs `app/career/__init__.py`
+        first, so whatever that file imports is reached as surely as if the
+        importing module had named it.
+
+        A walk that followed only the module named in the import statement
+        would miss this entirely, and it is not a contrived shape — a
+        package initialiser that re-exports something is ordinary.
+        """
+        write_initialiser("resume", "from app.imports.dates import year_to_era")
+        entry = write_module("documents", "probe", "from app.resume.sections import Contact")
+
+        assert reaches(entry, "app.imports", root=APP)
+
+    def test_the_initialiser_of_the_starting_file_counts_too(self, write_module, write_initialiser):
+        """Importing the file under test runs its own package's initialiser
+        before a line of it executes."""
+        entry = write_module("documents", "probe", "from datetime import date")
+        write_initialiser("documents", "from app.imports.dates import year_to_era")
+
+        assert reaches(entry, "app.imports", root=APP)
+
     def test_an_unrelated_neighbour_is_not_followed_into_a_false_positive(self, write_module):
         """Following imports can only widen what is reported, so the test
         that it still reports nothing for a clean module is the one that

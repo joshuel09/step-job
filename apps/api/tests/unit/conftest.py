@@ -44,3 +44,26 @@ def write_module():
 
     yield write
     _sweep()
+
+
+@pytest.fixture
+def write_initialiser():
+    """Temporarily add a line to a package's `__init__.py`, then put it back.
+
+    A package initialiser cannot be written as a fixture module — it has
+    one fixed name and a real one already exists — so this appends and
+    restores rather than creating and deleting. The original text is held
+    in memory so a failing test still leaves the package as it found it.
+    """
+    originals: dict[Path, str] = {}
+
+    def write(package: str, line: str) -> Path:
+        path = APP / package / "__init__.py"
+        originals.setdefault(path, path.read_text())
+        path.write_text(originals[path] + line + "\n")
+        return path
+
+    yield write
+
+    for path, original in originals.items():
+        path.write_text(original)
