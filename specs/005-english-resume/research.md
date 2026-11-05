@@ -182,6 +182,16 @@ for two audiences, and a reader of either will see the other. A day-precision
 date is both unconventional on a resume and more than most profiles honestly
 hold.
 
+**Amended at T026.** The rationale above assumed the era table would be in
+`app/documents/dates.py`, the shared document module. It is not: it is in
+`app/imports/dates.py`, where features 003 and 004 read it from, so putting
+the Western formatter "beside" it would have made it importable from the one
+module that must never consult it. The structural rule won — the English
+formatter imports nothing from `app/imports`, and a test walks its imports to
+say so. What is lost is the arrangement where a reader of one formatter sees
+the other; what is kept is "the era table it must never consult", which was
+the operative half of the decision.
+
 **Alternatives considered**:
 
 - *`2021-03` or `03/2021`.* Rejected — the first reads as data, and the second
