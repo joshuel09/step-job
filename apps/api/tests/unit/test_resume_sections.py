@@ -360,13 +360,26 @@ class TestWhichEnglishIsUsed:
 
         content = build_content(_identity(), certifications=[entry])
 
-        assert content.certifications[0].name.startswith("Fundamental")
-        assert content.certifications[0].issuer.startswith("Information-technology")
+        assert content.certifications[0].name == "Fundamental Information Technology Engineer"
+        assert content.certifications[0].issuer == "Information-technology Promotion Agency"
 
     def test_a_certification_without_an_issuer_has_none(self):
         content = build_content(_identity(), certifications=[_certification(issuer=None)])
 
         assert content.certifications[0].issuer is None
+
+    def test_an_english_issuer_survives_a_missing_japanese_one(self):
+        """A profile may name the certificate and not who awarded it. A user
+        who then supplies the English issuer has said something, and
+        dropping it because the field it would fall back to is empty throws
+        away the only answer they gave."""
+        entry = _certification(
+            issuer=None, issuer_english="Information-technology Promotion Agency"
+        )
+
+        content = build_content(_identity(), certifications=[entry])
+
+        assert content.certifications[0].issuer == "Information-technology Promotion Agency"
 
 
 class TestNoProviderIsReached:

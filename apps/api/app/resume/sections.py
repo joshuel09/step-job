@@ -65,6 +65,13 @@ class Contact:
 
 @dataclass(frozen=True)
 class ExperienceEntry:
+    """One role, as the profile records it.
+
+    The employer is a name the user supplied or the name as recorded; the
+    title and the description are approved English or the text as written.
+    Nothing here is rephrased or summarised on the way through.
+    """
+
     employer: str
     job_title: str
     started_on: date | None
@@ -76,6 +83,13 @@ class ExperienceEntry:
 
 @dataclass(frozen=True)
 class EducationEntry:
+    """One course of study.
+
+    `qualification` and `field_of_study` are both optional: a profile that
+    names the institution and nothing else is a complete answer, and a
+    resume prints what it has.
+    """
+
     institution: str
     qualification: str | None
     field_of_study: str | None
@@ -86,6 +100,13 @@ class EducationEntry:
 
 @dataclass(frozen=True)
 class SkillEntry:
+    """One skill, with the level the user chose for it.
+
+    `level` is a string here rather than the enum it came from: the
+    renderer prints it and has no business comparing it, and this is the
+    boundary where the profile's vocabulary stops.
+    """
+
     name: str
     level: str | None
     source_entry_id: uuid.UUID
@@ -135,6 +156,7 @@ class Approved:
     def __init__(
         self, translations: Iterable[EntryTranslation] = (), *, language: Locale = Locale.en
     ) -> None:
+        """Index the rows for this language by entry, type and field."""
         self._by_key = {
             (row.entry_type, row.entry_id, row.field): row.approved_text
             for row in translations
@@ -160,15 +182,24 @@ class Approved:
         return recorded
 
 
-def _supplied_or_recorded(supplied: str | None, recorded: str) -> str:
+def _supplied_or_recorded(supplied: str | None, recorded: str | None) -> str | None:
     """An organisation's own English name, or its name as recorded.
 
     Never a transliteration. 株式会社サンプル is whatever that company calls
     itself in English, and where the user has not told us, the Japanese is
     what appears — which is why this document still embeds a CJK font
     (FR-021, R-007).
+
+    `recorded` is optional because a certification's issuer is: a profile
+    may name the certificate and not who awarded it. The English name is
+    still preferred when there is one, and a user who supplied an English
+    issuer without a Japanese one has said something — dropping it on the
+    grounds that the field it would have fallen back to is empty would
+    throw away the only answer they gave.
     """
-    return supplied.strip() if supplied and supplied.strip() else recorded
+    if supplied and supplied.strip():
+        return supplied.strip()
+    return recorded
 
 
 def build_content(
@@ -212,7 +243,8 @@ def build_content(
             ExperienceEntry(
                 employer=_supplied_or_recorded(
                     getattr(entry, "employer_name_english", None), entry.employer_name
-                ),
+                )
+                or entry.employer_name,
                 job_title=approved.text(
                     TranslatableEntry.work_experience, entry.id, "job_title", entry.job_title
                 )
@@ -231,7 +263,8 @@ def build_content(
             EducationEntry(
                 institution=_supplied_or_recorded(
                     getattr(entry, "institution_english", None), entry.institution
-                ),
+                )
+                or entry.institution,
                 qualification=approved.text(
                     TranslatableEntry.education, entry.id, "qualification", entry.qualification
                 ),
@@ -257,12 +290,9 @@ def build_content(
         else (),
         certifications=tuple(
             CertificationEntry(
-                name=_supplied_or_recorded(getattr(entry, "name_english", None), entry.name),
-                issuer=(
-                    _supplied_or_recorded(getattr(entry, "issuer_english", None), entry.issuer)
-                    if entry.issuer
-                    else None
-                ),
+                name=_supplied_or_recorded(getattr(entry, "name_english", None), entry.name)
+                or entry.name,
+                issuer=_supplied_or_recorded(getattr(entry, "issuer_english", None), entry.issuer),
                 issued_on=entry.issued_on,
                 source_entry_id=entry.id,
             )

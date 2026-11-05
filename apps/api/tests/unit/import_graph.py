@@ -16,6 +16,12 @@ import ast
 from importlib.util import resolve_name
 from pathlib import Path
 
+#: Every throwaway module the boundary tests write starts with this. They
+#: are written into `app/` because a relative import resolves against the
+#: package a file sits in, so the prefix is how a sweep recognises them
+#: without guessing.
+FIXTURE_PREFIX = "_fixture_"
+
 
 def package_of(path: Path, *, root: Path) -> str:
     """The dotted package a file lives in, as Python would name it."""
@@ -58,6 +64,7 @@ def imported_modules(path: Path, *, root: Path) -> set[str]:
 
 
 def _resolve(node: ast.ImportFrom, path: Path, *, root: Path) -> str:
+    """One `from ... import ...`, as an absolute dotted name."""
     if not node.level:
         return node.module or ""
 
@@ -66,10 +73,58 @@ def _resolve(node: ast.ImportFrom, path: Path, *, root: Path) -> str:
     return resolve_name("." * node.level + (node.module or ""), package_of(path, root=root))
 
 
-def reaches(path: Path, prefix: str, *, root: Path) -> set[str]:
-    """The names this file imports that are, or sit under, `prefix`."""
-    return {
-        name
-        for name in imported_modules(path, root=root)
-        if name == prefix or name.startswith(f"{prefix}.")
-    }
+def reaches(path: Path, prefix: str, *, root: Path, through: str | None = None) -> set[str]:
+    """The names reachable from this file that are, or sit under, `prefix`.
+
+    Follows imports rather than reading only the first line of them. "The
+    era table is not reachable from the English formatter" is a statement
+    about reachability, and a check that stopped at direct imports would be
+    satisfied by a module that imports a sibling which imports the era
+    table — one hop, no diff anybody would question, and the guarantee
+    gone.
+
+    `through` bounds the walk to a package, so the search stays inside this
+    repository and does not try to open `datetime`. Cycles are ordinary in
+    an application's import graph; `seen` is what stops this following one
+    forever.
+    """
+    package = through or prefix.split(".")[0]
+    found: set[str] = set()
+    seen: set[Path] = set()
+    queue = [path.resolve()]
+
+    while queue:
+        current = queue.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+
+        for name in imported_modules(current, root=root):
+            if name == prefix or name.startswith(f"{prefix}."):
+                found.add(name)
+            elif name == package or name.startswith(f"{package}."):
+                nxt = _file_for(name, root=root)
+                if nxt is not None:
+                    queue.append(nxt)
+
+    return found
+
+
+def _file_for(name: str, *, root: Path) -> Path | None:
+    """The file a dotted name refers to, or None if it names no module.
+
+    `from app.ai.schemas import TranslationDraft` contributes
+    `app.ai.schemas.TranslationDraft`, which is a class. Resolving it finds
+    nothing, and finding nothing is the right answer — the module it came
+    from is in the set beside it and will be followed.
+    """
+    parts = name.split(".")[1:]
+    if not parts:
+        return None
+
+    module = root.joinpath(*parts).with_suffix(".py")
+    if module.is_file():
+        return module
+
+    package = root.joinpath(*parts, "__init__.py")
+    return package if package.is_file() else None

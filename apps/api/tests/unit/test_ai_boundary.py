@@ -106,7 +106,7 @@ def test_drafting_a_translation_also_receives_only_text():
     ],
     ids=lambda line: line,
 )
-def test_the_guard_sees_every_way_of_naming_the_boundary(tmp_path, line):
+def test_the_guard_sees_every_way_of_naming_the_boundary(line, write_module):
     """The guard below is only as good as what this helper notices.
 
     `from app import ai` is the form that slipped past the first version:
@@ -117,12 +117,7 @@ def test_the_guard_sees_every_way_of_naming_the_boundary(tmp_path, line):
     The file is written where a resume module would live, because the
     relative forms resolve against the package they sit in.
     """
-    module = APP / "resume" / "_fixture.py"
-    module.write_text(line + "\n")
-    try:
-        names = imported_modules(module, root=APP)
-    finally:
-        module.unlink()
+    names = imported_modules(write_module("resume", "probe", line), root=APP)
 
     assert any(name == "app.ai" or name.startswith("app.ai.") for name in names), names
 
