@@ -12,6 +12,8 @@ import pytest
 from app.ai import get_provider
 from app.ai.provider import AIProvider
 
+from tests.unit.import_graph import imported_modules, reaches
+
 APP = Path(__file__).resolve().parents[2] / "app"
 
 # The only module permitted to import a provider SDK.
@@ -29,50 +31,6 @@ def _imported_roots(path: Path) -> set[str]:
         elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
             roots.add(node.module.split(".")[0])
     return roots
-
-
-def _package_of(path: Path) -> str:
-    """The dotted package a file lives in, for resolving relative imports."""
-    parts = path.relative_to(APP.parent).parts
-    return ".".join(parts[:-1])
-
-
-def _imported_modules(path: Path) -> set[str]:
-    """Every dotted module name an import could be naming.
-
-    `_imported_roots` answers "does this touch `app`", which every module
-    does. Telling `app.career` from `app.ai` needs the whole name — and the
-    whole name is not always `node.module`:
-
-    - `from app import ai` has module `app` and the thing being imported in
-      the alias list, so both have to be joined. This is the form that
-      slipped past the first version of this helper, which is the kind of
-      hole a guard is supposed to not have.
-    - `from ..ai import get_provider` has no module at all until it is
-      resolved against the package the file sits in.
-
-    Over-reports rather than under-reports: `from app.ai.schemas import X`
-    contributes `app.ai.schemas.X`, which is a class and not a module. A
-    guard that answers "is anything here named app.ai" is not harmed by an
-    extra name that starts with it, and the opposite mistake is the one
-    that matters.
-    """
-    tree = ast.parse(path.read_text())
-    names: set[str] = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            names |= {alias.name for alias in node.names}
-        elif isinstance(node, ast.ImportFrom):
-            if node.level:
-                package = _package_of(path).split(".")
-                base = ".".join(package[: len(package) - node.level + 1])
-            else:
-                base = ""
-            module = ".".join(filter(None, (base, node.module)))
-            if module:
-                names.add(module)
-            names |= {".".join(filter(None, (module, alias.name))) for alias in node.names}
-    return names
 
 
 def _feature_modules() -> list[Path]:
@@ -148,7 +106,7 @@ def test_drafting_a_translation_also_receives_only_text():
     ],
     ids=lambda line: line,
 )
-def test_the_guard_sees_every_way_of_naming_the_boundary(tmp_path, line):
+def test_the_guard_sees_every_way_of_naming_the_boundary(line, write_module):
     """The guard below is only as good as what this helper notices.
 
     `from app import ai` is the form that slipped past the first version:
@@ -159,12 +117,7 @@ def test_the_guard_sees_every_way_of_naming_the_boundary(tmp_path, line):
     The file is written where a resume module would live, because the
     relative forms resolve against the package they sit in.
     """
-    module = APP / "resume" / "_fixture.py"
-    module.write_text(line + "\n")
-    try:
-        names = _imported_modules(module)
-    finally:
-        module.unlink()
+    names = imported_modules(write_module("resume", "probe", line), root=APP)
 
     assert any(name == "app.ai" or name.startswith("app.ai.") for name in names), names
 
@@ -180,12 +133,6 @@ def test_generation_cannot_reach_a_model():
     offenders = {
         str(module.relative_to(APP)): sorted(reached)
         for module in (APP / "resume").rglob("*.py")
-        if (
-            reached := {
-                name
-                for name in _imported_modules(module)
-                if name == "app.ai" or name.startswith("app.ai.")
-            }
-        )
+        if (reached := reaches(module, "app.ai", root=APP))
     }
     assert not offenders, f"these reach the model boundary from the render path: {offenders}"
