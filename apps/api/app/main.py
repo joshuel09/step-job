@@ -9,6 +9,7 @@ from app.core.errors import AppError, app_error_handler, request_validation_hand
 from app.core.logging import configure as configure_logging
 from app.core.settings import get_settings
 from app.imports.router import router as imports_router
+from app.resume.router import router as resume_router
 from app.rirekisho.router import router as rirekisho_router
 from app.shokumu.router import router as shokumu_router
 
@@ -52,3 +53,4 @@ app.include_router(career_router)
 app.include_router(imports_router)
 app.include_router(rirekisho_router)
 app.include_router(shokumu_router)
+app.include_router(resume_router)

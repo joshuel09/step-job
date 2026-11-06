@@ -14,6 +14,7 @@ import io
 import pytest
 from app.documents.typography import (
     FONT_NAME,
+    LINE_HEIGHT,
     MARGIN,
     FontUnavailable,
     Page,
@@ -63,15 +64,25 @@ class TestTheFont:
 
 
 class TestPaperSizes:
-    def test_both_conventional_sizes_are_offered(self):
+    def test_both_conventional_japanese_sizes_are_offered(self):
         a4, b5 = page_size("a4"), page_size("b5")
         assert a4[0] > b5[0] and a4[1] > b5[1]
+
+    def test_letter_is_offered_too(self):
+        """Added by feature 005. An English resume is read where Letter is
+        the paper, and it is a different shape from A4 rather than a near
+        one — wider and shorter, so the same content breaks pages
+        differently."""
+        letter, a4 = page_size("letter"), page_size("a4")
+        assert letter != a4
+        assert letter[0] > a4[0], "wider"
+        assert letter[1] < a4[1], "and shorter"
 
     @pytest.mark.parametrize("name", ["A4", "b5", "B5"])
     def test_the_name_is_read_however_it_is_cased(self, name):
         assert page_size(name) == page_size(name.lower())
 
-    @pytest.mark.parametrize("name", ["letter", "a3", "", "a4 "])
+    @pytest.mark.parametrize("name", ["a3", "legal", "", "a4 "])
     def test_an_unknown_size_is_refused_by_name(self, name):
         """Named in the message: the caller passed it and has to find it."""
         with pytest.raises(ValueError) as raised:
@@ -251,3 +262,107 @@ class TestAContinuationHasSomethingToContinue:
         page.heading("自己PR")
         page.finish()
         assert page._filled is False
+
+
+class TestALineBreakTheUserTyped:
+    """A newline in a description is a newline on the page.
+
+    `wrap` measures width and knows nothing about newlines, and
+    `drawString` draws one as nothing at all — so before this, three
+    paragraphs reached the page as one run-on sentence, with the user's own
+    formatting silently discarded in the document they send. Silently is
+    the problem: the text is all there, so nothing looks wrong unless you
+    know what they typed.
+
+    Asserted on how many times something is drawn rather than on the bytes,
+    because a PDF holding three strings and a PDF holding one concatenated
+    string are both well-formed files of about the same size.
+    """
+
+    def _drawn(self, text: str) -> list[str]:
+        page = _page()
+        drawn: list[str] = []
+        page.canvas.drawString = lambda x, y, s: drawn.append(s)  # type: ignore[method-assign]
+        page.line(text)
+        return drawn
+
+    def test_each_paragraph_is_drawn_on_its_own(self):
+        assert self._drawn("First.\nSecond.\nThird.") == ["First.", "Second.", "Third."]
+
+    def test_a_single_line_is_unaffected(self):
+        assert self._drawn("Just the one.") == ["Just the one."]
+
+    def test_a_paragraph_too_wide_for_the_page_still_wraps(self):
+        """Both rules at once: split on the break, then wrap each part."""
+        drawn = self._drawn("Short.\n" + "word " * 200)
+
+        assert drawn[0] == "Short."
+        assert len(drawn) > 2, "the long paragraph wrapped"
+
+    def test_a_trailing_newline_does_not_draw_an_empty_line(self):
+        """It would push everything after it down by a line for no reason
+        the reader can see."""
+        assert self._drawn("One.\n") == ["One."]
+
+    def test_consecutive_newlines_do_not_collapse(self):
+        """A blank line between paragraphs is a thing people type on
+        purpose, and removing it is editing their words."""
+        assert self._drawn("One.\n\nTwo.") == ["One.", "", "Two."]
+
+
+class TestAnEntryTallerThanThePage:
+    """One entry can be longer than a page, and it still all gets drawn.
+
+    `space_for` asks whether a block fits and starts a new page if it does
+    not. That is the right answer for an entry that fits *somewhere* — it
+    keeps the entry together. It is not an answer for an entry that fits
+    nowhere: the page break happens, the block still does not fit, and the
+    rest is drawn below the bottom margin, where it is in the file,
+    invisible on the page, and gone from the copy the employer reads.
+
+    The worst kind of loss, because the file is bigger for it and every
+    byte of the text is in there.
+    """
+
+    def _drawn(self, text: str) -> tuple[list[tuple[float, str]], Page]:
+        page = _page()
+        drawn: list[tuple[float, str]] = []
+        page.canvas.drawString = lambda x, y, s: drawn.append((y, s))  # type: ignore[method-assign]
+        page.canvas.showPage = lambda: None  # type: ignore[method-assign]
+        page.line(text)
+        return drawn, page
+
+    def test_a_description_of_two_hundred_paragraphs_is_all_drawn(self):
+        paragraphs = [f"Paragraph {n:03d}." for n in range(200)]
+        drawn, _ = self._drawn("\n".join(paragraphs))
+
+        assert [text for _, text in drawn] == paragraphs
+
+    def test_none_of_it_is_drawn_below_the_bottom_margin(self):
+        """The assertion that would have caught this. Every line is on a
+        page, rather than merely present in the file."""
+        drawn, _ = self._drawn("\n".join(f"Paragraph {n:03d}." for n in range(200)))
+
+        below = [(y, text) for y, text in drawn if y < MARGIN]
+        assert not below, below[:3]
+
+    def test_it_runs_onto_as_many_pages_as_it_needs(self):
+        _, page = self._drawn("\n".join(f"Paragraph {n:03d}." for n in range(200)))
+
+        assert page.pages > 1
+
+    def test_an_entry_that_fits_is_still_kept_together(self):
+        """The reason `space_for` asks for the whole block first. A
+        three-line entry near the bottom of a page moves to the next one
+        whole rather than being split across the break."""
+        page = _page()
+        drawn: list[tuple[float, str]] = []
+        page.canvas.drawString = lambda x, y, s: drawn.append((y, s))  # type: ignore[method-assign]
+        page.canvas.showPage = lambda: None  # type: ignore[method-assign]
+
+        page.y = MARGIN + LINE_HEIGHT * 2  # room for two lines, not three
+        page.line("One.\nTwo.\nThree.")
+
+        assert len({y for y, _ in drawn}) == 3
+        assert page.pages == 2, "it moved to a new page"
+        assert all(y >= MARGIN for y, _ in drawn)

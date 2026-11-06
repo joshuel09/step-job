@@ -69,8 +69,10 @@ def test_both_page_sizes_are_available():
 
 
 def test_an_unknown_paper_size_is_refused():
+    """`letter` used to be the example here. Feature 005 offers it, so this
+    asks for a size nothing offers rather than quietly testing nothing."""
     with pytest.raises(ValueError):
-        page_size("letter")
+        page_size("a3")
 
 
 def test_a_missing_font_would_be_refused_loudly(monkeypatch):

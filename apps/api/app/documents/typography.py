@@ -23,7 +23,7 @@ one.
 import logging
 from pathlib import Path
 
-from reportlab.lib.pagesizes import A4, B5
+from reportlab.lib.pagesizes import A4, B5, LETTER
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfbase.ttfonts import TTFont
@@ -34,8 +34,11 @@ logger = logging.getLogger(__name__)
 FONT_NAME = "IPAexGothic"
 FONT_PATH = Path(__file__).parent / "fonts" / "ipaexg.ttf"
 
-# Both documents are conventionally B5 or A4; the user chooses (FR-018).
-PAGE_SIZES = {"a4": A4, "b5": B5}
+# A 履歴書 and a 職務経歴書 are conventionally B5 or A4; the user chooses
+# (004 FR-018). An English resume is Letter, because it is read where Letter
+# is the paper — A4 stays on offer for someone in Japan applying to a
+# foreign-affiliated employer (005 FR-022).
+PAGE_SIZES = {"a4": A4, "b5": B5, "letter": LETTER}
 
 MARGIN = 40
 TITLE_SIZE = 18
@@ -43,7 +46,8 @@ HEADING_SIZE = 11
 BODY_SIZE = 10
 LINE_HEIGHT = 18
 
-# Marks a section that carries on from the previous page.
+# Marks a section that carries on from the previous page. The Japanese
+# documents' default; an English one passes its own to `Page`.
 CONTINUED = "（続き）"
 
 
@@ -84,7 +88,8 @@ def page_size(name: str):
     try:
         return PAGE_SIZES[name.lower()]
     except KeyError:
-        raise ValueError(f"Unknown paper size: {name!r}. Use 'a4' or 'b5'.") from None
+        known = ", ".join(sorted(PAGE_SIZES))
+        raise ValueError(f"Unknown paper size: {name!r}. Use one of {known}.") from None
 
 
 # Registered at import so a missing font stops the application rather than one
@@ -139,9 +144,16 @@ class Page:
     page two can be read on its own: an employer may well hold the pages apart.
     """
 
-    def __init__(self, canvas: Canvas, size: tuple[float, float]) -> None:
+    def __init__(
+        self, canvas: Canvas, size: tuple[float, float], *, continued: str = CONTINUED
+    ) -> None:
         self.canvas = canvas
         self.width, self.height = size
+        # What a carried-over section is marked with. Defaulted to the
+        # Japanese documents' marker so they are untouched; an English page
+        # that said 自己PR（続き） would be a 履歴書 convention appearing in a
+        # document that has none.
+        self.continued = continued
         self.y = self.height - MARGIN
         self.pages = 1
         self.section: str | None = None
@@ -186,7 +198,7 @@ class Page:
             # Whatever was in the way was on that page, not this one.
             self._reserved = None
             if self.section and self._filled and not self._pending:
-                self._draw(f"{self.section}{CONTINUED}", MARGIN, HEADING_SIZE)
+                self._draw(f"{self.section}{self.continued}", MARGIN, HEADING_SIZE)
 
         if self._pending:
             self._draw(self._pending, MARGIN, HEADING_SIZE)
@@ -213,13 +225,38 @@ class Page:
 
         Continuation lines start under the text after `hang` — the date column,
         or a label — so a wrapped name still reads as one entry.
+
+        A line break the user typed is a line break. `wrap` measures width and
+        knows nothing about newlines, and `drawString` draws them as nothing at
+        all, so a description written as three paragraphs would otherwise reach
+        the page as one run-on sentence — the user's own formatting silently
+        discarded in the document they send.
+
+        A blank line between paragraphs is kept, because people put one there
+        on purpose and removing it is editing their words. Breaks at the very
+        end are dropped: a trailing newline is someone pressing enter, and
+        drawing it pushes everything below down for no reason a reader can
+        see.
         """
         indent = stringWidth(hang, FONT_NAME, size)
         available = self._right() - x
-        lines = wrap(text, available, available - indent, size, keep=len(hang))
+        lines = [
+            part
+            for paragraph in text.rstrip("\n").split("\n")
+            for part in wrap(paragraph, available, available - indent, size, keep=len(hang))
+        ]
 
+        # Ask for the whole entry at once, so one that fits on a fresh page
+        # is kept together rather than split across a break in the middle.
         self.space_for(len(lines))
+
         for number, part in enumerate(lines):
+            # An entry longer than a whole page cannot be kept together, and
+            # the choice is between carrying it over and drawing it below the
+            # bottom margin — where it is in the file, invisible on the page,
+            # and gone from the copy the employer reads. It carries over.
+            if self.y - LINE_HEIGHT < MARGIN:
+                self.space_for(1)
             self._draw(part, x if number == 0 else x + indent, size)
         self._filled = True
 

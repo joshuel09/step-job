@@ -44,6 +44,10 @@ CAPTURABLE_BY_FIELD = (models.JapanProfile,)
 # Copied with every projection, so the entry stays traceable to its live row.
 _ALWAYS = ("id", "profile_id")
 
+#: Where `rendered` content sits in a payload otherwise keyed by entry id.
+#: Not a uuid, so it cannot collide with one.
+RENDERED = "rendered"
+
 
 def _value(value: Any) -> Any:
     if isinstance(value, uuid.UUID):
@@ -76,6 +80,7 @@ def capture(
     document_ref: str,
     entry_ids: list[uuid.UUID],
     fields: Mapping[uuid.UUID, Iterable[str]] | None = None,
+    rendered: Mapping[str, Any] | None = None,
 ) -> models.EntrySnapshot:
     """Copy the named entries as they read right now.
 
@@ -85,6 +90,18 @@ def capture(
     `fields` narrows an entry to the named fields. A Japan profile must be
     narrowed this way, by the caller that knows what the user disclosed, so
     no path through here stores a withheld field.
+
+    `rendered` is what the document actually said, stored under a reserved
+    key beside the entries. The entries alone are not always enough: where a
+    document prints an English version the user approved, the row holds the
+    Japanese, and a snapshot of entries would describe a different document
+    the moment that approval is edited (005 R-010). Callers whose document
+    prints nothing but what the rows hold pass nothing and get nothing.
+
+    The order of `entry_ids` is kept. It is the order the document drew
+    them in, which is what makes the list readable as an account of the
+    page rather than a set — and both document features state that the
+    identity leads it.
     """
     fields = fields or {}
     if not entry_ids:
@@ -113,15 +130,23 @@ def capture(
             [("entry_ids", f"can only be captured field by field: {', '.join(whole)}")]
         )
 
+    # The caller's order, not the order the models happen to be declared in.
+    ordered = list(dict.fromkeys(entry_id for entry_id in entry_ids if entry_id in found))
+
+    payload: dict[str, Any] = {
+        str(entry_id): _serialise(found[entry_id], fields.get(entry_id)) for entry_id in ordered
+    }
+    if rendered is not None:
+        # A uuid string cannot collide with this, so the two live in one
+        # column without a nested level nobody would remember to look in.
+        payload[RENDERED] = dict(rendered)
+
     snapshot = models.EntrySnapshot(
         profile_id=profile.id,
         document_ref=document_ref,
         captured_at=datetime.now(UTC),
-        captured_entry_ids=list(found),
-        payload={
-            str(entry_id): _serialise(entry, fields.get(entry_id))
-            for entry_id, entry in found.items()
-        },
+        captured_entry_ids=ordered,
+        payload=payload,
     )
     session.add(snapshot)
     session.flush()

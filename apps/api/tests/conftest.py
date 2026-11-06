@@ -267,3 +267,81 @@ def shokumu_profile(session, user_id):
     )
     session.flush()
     return profile
+
+
+@pytest.fixture
+def resume_profile(session, user_id):
+    """A profile an English resume can be made from, in invented content.
+
+    Deliberately mixed. One employer is recorded in English and one in
+    Japanese with no approved translation, because that is the ordinary
+    state of a profile partway through feature 005 — and it is the case the
+    document has to handle without refusing, without transliterating, and
+    without a page of hollow boxes.
+
+    Education and a certification so those sections have a line. **No
+    skills**, so the test that an empty section is absent has an empty
+    section to be absent.
+    """
+    from datetime import date
+
+    from app.career import models, service
+
+    profile = service.get_or_create_profile(session, user_id)
+
+    session.add(
+        models.Identity(
+            profile_id=profile.id,
+            full_name_latin="Taro Yamada",
+            full_name_japanese="山田太郎",
+            email="taro@example.com",
+            phone="090-0000-0000",
+            # Recorded, and never printed on this document. A resume carries
+            # neither (FR-009), and the projection has nowhere to put them.
+            date_of_birth=date(1990, 5, 15),
+            address="東京都千代田区1-1-1",
+        )
+    )
+
+    session.add_all(
+        [
+            models.WorkExperience(
+                profile_id=profile.id,
+                employer_name="株式会社サンプル",
+                employer_name_normalised="サンプル",
+                job_title="エンジニア",
+                started_on=date(2013, 4, 1),
+                ended_on=date(2021, 3, 31),
+                description="社内システムの開発と保守を担当。",
+                source_language=models.Locale.ja,
+            ),
+            models.WorkExperience(
+                profile_id=profile.id,
+                employer_name="Example Corp",
+                employer_name_normalised="example",
+                job_title="Software Engineer",
+                started_on=date(2021, 4, 1),
+                ended_on=None,
+                description="Platform work on the billing service.",
+                source_language=models.Locale.en,
+            ),
+            models.Education(
+                profile_id=profile.id,
+                institution="Example University",
+                qualification="BSc",
+                field_of_study="Computer Science",
+                started_on=date(2009, 4, 1),
+                ended_on=date(2013, 3, 31),
+                source_language=models.Locale.en,
+            ),
+            models.Certification(
+                profile_id=profile.id,
+                name="基本情報技術者",
+                name_english="Fundamental Information Technology Engineer",
+                issuer="情報処理推進機構",
+                issued_on=date(2019, 4, 1),
+            ),
+        ]
+    )
+    session.flush()
+    return profile
