@@ -63,15 +63,25 @@ class TestTheFont:
 
 
 class TestPaperSizes:
-    def test_both_conventional_sizes_are_offered(self):
+    def test_both_conventional_japanese_sizes_are_offered(self):
         a4, b5 = page_size("a4"), page_size("b5")
         assert a4[0] > b5[0] and a4[1] > b5[1]
+
+    def test_letter_is_offered_too(self):
+        """Added by feature 005. An English resume is read where Letter is
+        the paper, and it is a different shape from A4 rather than a near
+        one — wider and shorter, so the same content breaks pages
+        differently."""
+        letter, a4 = page_size("letter"), page_size("a4")
+        assert letter != a4
+        assert letter[0] > a4[0], "wider"
+        assert letter[1] < a4[1], "and shorter"
 
     @pytest.mark.parametrize("name", ["A4", "b5", "B5"])
     def test_the_name_is_read_however_it_is_cased(self, name):
         assert page_size(name) == page_size(name.lower())
 
-    @pytest.mark.parametrize("name", ["letter", "a3", "", "a4 "])
+    @pytest.mark.parametrize("name", ["a3", "legal", "", "a4 "])
     def test_an_unknown_size_is_refused_by_name(self, name):
         """Named in the message: the caller passed it and has to find it."""
         with pytest.raises(ValueError) as raised:

@@ -34,11 +34,10 @@ DEFERRED: dict[str, set[str]] = {
     # Every documented path in this feature is implemented. Kept as an empty
     # set so a future story defers a path deliberately rather than by omission.
     "004-shokumu-keirekisho": set(),
-    # Planned, not yet built. The generator waits on the shared typography
-    # module feature 004's Phase 2 extracts; the translation routes do not, and
-    # come off this list first.
+    # Partly built. The generator is served (Phase 4); the readiness report
+    # and the translation routes are User Story 2 and are deferred
+    # deliberately rather than by omission.
     "005-english-resume": {
-        "/profile/documents/resume",
         "/profile/documents/resume/readiness",
         "/profile/translations",
         "/profile/translations/{translation_id}",
