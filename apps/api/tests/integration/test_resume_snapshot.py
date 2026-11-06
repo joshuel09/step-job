@@ -195,7 +195,17 @@ class TestTheRecordOfWhatWasSent:
         snapshot = snapshots.read(session, resume_profile, _generate(client, auth_headers))
         captured = snapshot.payload[str(identity.id)]
 
+        # The exact set, not "these are present and those are absent".
+        # Naming the two fields to exclude passes on the day a third is
+        # added to the table, and dropping `phone` silently would pass too.
+        assert set(captured) == {
+            "__entity__",
+            "id",
+            "profile_id",
+            "full_name_latin",
+            "email",
+            "phone",
+        }
         assert captured["full_name_latin"] == "Taro Yamada"
         assert captured["email"] == "taro@example.com"
-        assert "date_of_birth" not in captured
-        assert "address" not in captured
+        assert captured["phone"] == "090-0000-0000"

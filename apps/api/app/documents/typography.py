@@ -246,8 +246,17 @@ class Page:
             for part in wrap(paragraph, available, available - indent, size, keep=len(hang))
         ]
 
+        # Ask for the whole entry at once, so one that fits on a fresh page
+        # is kept together rather than split across a break in the middle.
         self.space_for(len(lines))
+
         for number, part in enumerate(lines):
+            # An entry longer than a whole page cannot be kept together, and
+            # the choice is between carrying it over and drawing it below the
+            # bottom margin — where it is in the file, invisible on the page,
+            # and gone from the copy the employer reads. It carries over.
+            if self.y - LINE_HEIGHT < MARGIN:
+                self.space_for(1)
             self._draw(part, x if number == 0 else x + indent, size)
         self._filled = True
 

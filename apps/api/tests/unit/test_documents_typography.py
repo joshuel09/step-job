@@ -14,6 +14,7 @@ import io
 import pytest
 from app.documents.typography import (
     FONT_NAME,
+    LINE_HEIGHT,
     MARGIN,
     FontUnavailable,
     Page,
@@ -307,3 +308,61 @@ class TestALineBreakTheUserTyped:
         """A blank line between paragraphs is a thing people type on
         purpose, and removing it is editing their words."""
         assert self._drawn("One.\n\nTwo.") == ["One.", "", "Two."]
+
+
+class TestAnEntryTallerThanThePage:
+    """One entry can be longer than a page, and it still all gets drawn.
+
+    `space_for` asks whether a block fits and starts a new page if it does
+    not. That is the right answer for an entry that fits *somewhere* — it
+    keeps the entry together. It is not an answer for an entry that fits
+    nowhere: the page break happens, the block still does not fit, and the
+    rest is drawn below the bottom margin, where it is in the file,
+    invisible on the page, and gone from the copy the employer reads.
+
+    The worst kind of loss, because the file is bigger for it and every
+    byte of the text is in there.
+    """
+
+    def _drawn(self, text: str) -> tuple[list[tuple[float, str]], Page]:
+        page = _page()
+        drawn: list[tuple[float, str]] = []
+        page.canvas.drawString = lambda x, y, s: drawn.append((y, s))  # type: ignore[method-assign]
+        page.canvas.showPage = lambda: None  # type: ignore[method-assign]
+        page.line(text)
+        return drawn, page
+
+    def test_a_description_of_two_hundred_paragraphs_is_all_drawn(self):
+        paragraphs = [f"Paragraph {n:03d}." for n in range(200)]
+        drawn, _ = self._drawn("\n".join(paragraphs))
+
+        assert [text for _, text in drawn] == paragraphs
+
+    def test_none_of_it_is_drawn_below_the_bottom_margin(self):
+        """The assertion that would have caught this. Every line is on a
+        page, rather than merely present in the file."""
+        drawn, _ = self._drawn("\n".join(f"Paragraph {n:03d}." for n in range(200)))
+
+        below = [(y, text) for y, text in drawn if y < MARGIN]
+        assert not below, below[:3]
+
+    def test_it_runs_onto_as_many_pages_as_it_needs(self):
+        _, page = self._drawn("\n".join(f"Paragraph {n:03d}." for n in range(200)))
+
+        assert page.pages > 1
+
+    def test_an_entry_that_fits_is_still_kept_together(self):
+        """The reason `space_for` asks for the whole block first. A
+        three-line entry near the bottom of a page moves to the next one
+        whole rather than being split across the break."""
+        page = _page()
+        drawn: list[tuple[float, str]] = []
+        page.canvas.drawString = lambda x, y, s: drawn.append((y, s))  # type: ignore[method-assign]
+        page.canvas.showPage = lambda: None  # type: ignore[method-assign]
+
+        page.y = MARGIN + LINE_HEIGHT * 2  # room for two lines, not three
+        page.line("One.\nTwo.\nThree.")
+
+        assert len({y for y, _ in drawn}) == 3
+        assert page.pages == 2, "it moved to a new page"
+        assert all(y >= MARGIN for y, _ in drawn)
