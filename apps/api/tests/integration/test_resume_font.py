@@ -46,19 +46,24 @@ def test_the_font_is_embedded(client, auth_headers, resume_profile):
     assert b"/FontFile2" in _pdf(client, auth_headers)
 
 
-def test_all_three_documents_embed_the_same_font(client, auth_headers, resume_profile):
-    """They draw on one typographic base (#159).
+def test_the_resume_uses_the_shared_typographic_base(client, auth_headers, resume_profile):
+    """The same embedded font as the two Japanese documents (#159).
 
-    This is what would notice if the English document stopped sharing it —
-    which is exactly the change someone would make on the reasoning that an
-    English resume does not need a Japanese font.
+    Named for the resume rather than for all three. The 履歴書 and the
+    職務経歴書 need a profile this fixture does not build, and
+    `test_shokumu_font.py` already holds those two to each other — a test
+    here that iterated a one-item tuple would say "all three" and check
+    one, which is worse than checking one and saying so.
+
+    This is what would notice if the English document stopped sharing the
+    base, which is exactly the change someone would make on the reasoning
+    that an English resume does not need a Japanese font.
     """
     from app.documents.typography import FONT_NAME
 
-    for pdf in (_pdf(client, auth_headers),):
-        fonts = {
-            str(font.get("/BaseFont", ""))
-            for page in PdfReader(io.BytesIO(pdf)).pages
-            for font in (page["/Resources"]["/Font"] or {}).values()
-        }
-        assert any(FONT_NAME in name for name in fonts), fonts
+    fonts = {
+        str(font.get("/BaseFont", ""))
+        for page in PdfReader(io.BytesIO(_pdf(client, auth_headers))).pages
+        for font in (page["/Resources"]["/Font"] or {}).values()
+    }
+    assert any(FONT_NAME in name for name in fonts), fonts

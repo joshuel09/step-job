@@ -55,7 +55,9 @@ class TestWhatIsOnThePage:
 
     def test_each_role_carries_its_title_and_period(self, document):
         assert "Software Engineer" in document
-        assert "Mar 2021 – Present" in document or "Apr 2021 – Present" in document
+        # The exact string. An alternative the fixture can never produce
+        # only widens what passes — a month off by one would satisfy it.
+        assert "Apr 2021 – Present" in document
 
     def test_education_appears(self, document):
         assert "Education" in document

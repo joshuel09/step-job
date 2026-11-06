@@ -86,8 +86,14 @@ class TestNothingIsLost:
 
     def test_the_oldest_role_is_the_one_that_would_have_been_dropped(self, document):
         """Named separately because it is the one a renderer that gave up
-        would lose, and a test asserting "most of them" would pass."""
-        assert f"Employer {ROLES - 1:02d} Limited" in _text(document.content)
+        would lose, and a test asserting "most of them" would pass.
+
+        Role `n` starts in `1990 + n` and the document sorts newest first,
+        so the oldest is `Employer 00` and it is drawn last. Asserting the
+        highest number instead would check the role printed first — the one
+        no truncation could ever reach.
+        """
+        assert "Employer 00 Limited" in _text(document.content)
 
     def test_the_page_count_matches_the_file(self, document):
         """The interface tells the user their resume runs long using this

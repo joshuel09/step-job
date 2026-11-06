@@ -225,10 +225,26 @@ class Page:
 
         Continuation lines start under the text after `hang` — the date column,
         or a label — so a wrapped name still reads as one entry.
+
+        A line break the user typed is a line break. `wrap` measures width and
+        knows nothing about newlines, and `drawString` draws them as nothing at
+        all, so a description written as three paragraphs would otherwise reach
+        the page as one run-on sentence — the user's own formatting silently
+        discarded in the document they send.
+
+        A blank line between paragraphs is kept, because people put one there
+        on purpose and removing it is editing their words. Breaks at the very
+        end are dropped: a trailing newline is someone pressing enter, and
+        drawing it pushes everything below down for no reason a reader can
+        see.
         """
         indent = stringWidth(hang, FONT_NAME, size)
         available = self._right() - x
-        lines = wrap(text, available, available - indent, size, keep=len(hang))
+        lines = [
+            part
+            for paragraph in text.rstrip("\n").split("\n")
+            for part in wrap(paragraph, available, available - indent, size, keep=len(hang))
+        ]
 
         self.space_for(len(lines))
         for number, part in enumerate(lines):

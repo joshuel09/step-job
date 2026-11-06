@@ -155,6 +155,13 @@ def generate(
         profile,
         document_ref=DOCUMENT_REF,
         entry_ids=list(dict.fromkeys(used)),
+        # The identity narrowed to what this document uses. FR-009 is about
+        # the page, and a snapshot is not the page — but copying a date of
+        # birth and an address into a stored row because the resume happened
+        # to need the name beside them is a second place that data lives,
+        # outliving the user clearing it from their profile. The document
+        # prints three fields; the record of it holds three fields.
+        fields={content.contact.source_entry_id: ("full_name_latin", "email", "phone")},
         rendered=_as_payload(content),
     )
 

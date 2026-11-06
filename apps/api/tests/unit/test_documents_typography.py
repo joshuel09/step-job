@@ -261,3 +261,49 @@ class TestAContinuationHasSomethingToContinue:
         page.heading("自己PR")
         page.finish()
         assert page._filled is False
+
+
+class TestALineBreakTheUserTyped:
+    """A newline in a description is a newline on the page.
+
+    `wrap` measures width and knows nothing about newlines, and
+    `drawString` draws one as nothing at all — so before this, three
+    paragraphs reached the page as one run-on sentence, with the user's own
+    formatting silently discarded in the document they send. Silently is
+    the problem: the text is all there, so nothing looks wrong unless you
+    know what they typed.
+
+    Asserted on how many times something is drawn rather than on the bytes,
+    because a PDF holding three strings and a PDF holding one concatenated
+    string are both well-formed files of about the same size.
+    """
+
+    def _drawn(self, text: str) -> list[str]:
+        page = _page()
+        drawn: list[str] = []
+        page.canvas.drawString = lambda x, y, s: drawn.append(s)  # type: ignore[method-assign]
+        page.line(text)
+        return drawn
+
+    def test_each_paragraph_is_drawn_on_its_own(self):
+        assert self._drawn("First.\nSecond.\nThird.") == ["First.", "Second.", "Third."]
+
+    def test_a_single_line_is_unaffected(self):
+        assert self._drawn("Just the one.") == ["Just the one."]
+
+    def test_a_paragraph_too_wide_for_the_page_still_wraps(self):
+        """Both rules at once: split on the break, then wrap each part."""
+        drawn = self._drawn("Short.\n" + "word " * 200)
+
+        assert drawn[0] == "Short."
+        assert len(drawn) > 2, "the long paragraph wrapped"
+
+    def test_a_trailing_newline_does_not_draw_an_empty_line(self):
+        """It would push everything after it down by a line for no reason
+        the reader can see."""
+        assert self._drawn("One.\n") == ["One."]
+
+    def test_consecutive_newlines_do_not_collapse(self):
+        """A blank line between paragraphs is a thing people type on
+        purpose, and removing it is editing their words."""
+        assert self._drawn("One.\n\nTwo.") == ["One.", "", "Two."]

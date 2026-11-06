@@ -162,13 +162,40 @@ class TestTheRecordOfWhatWasSent:
     def test_nothing_withheld_reaches_the_payload(
         self, client, auth_headers, session, resume_profile
     ):
-        """The rendered half of the payload is the dataclasses, which carry
-        no address and no date of birth. Worth asserting here rather than
-        only on the page: a snapshot is stored, and a document is not."""
+        """The whole payload, not only the rendered half.
+
+        The rendered half is the dataclasses, which have no attribute for
+        an address or a date of birth — so checking only that half would
+        pass while the entries beside it carried both. A snapshot is
+        stored, and a document is not: FR-009 is about the page, but a date
+        of birth copied into a row because the resume needed the name
+        beside it is a second place that data lives, outliving the user
+        clearing it from their profile.
+        """
         import json
 
         snapshot = snapshots.read(session, resume_profile, _generate(client, auth_headers))
-        rendered = json.dumps(snapshot.payload["rendered"], ensure_ascii=False)
+        whole = json.dumps(snapshot.payload, ensure_ascii=False)
 
-        assert "東京都千代田区" not in rendered
-        assert "1990-05-15" not in rendered
+        assert "東京都千代田区" not in whole
+        assert "1990-05-15" not in whole
+
+    def test_the_identity_is_captured_as_the_three_fields_the_document_uses(
+        self, client, auth_headers, session, resume_profile
+    ):
+        """Narrowed deliberately rather than by what the renderer reads.
+        The positive half of the test above, so an identity captured as
+        nothing at all would not pass both."""
+        from app.career.models import Identity
+
+        identity = session.scalars(
+            select(Identity).where(Identity.profile_id == resume_profile.id)
+        ).one()
+
+        snapshot = snapshots.read(session, resume_profile, _generate(client, auth_headers))
+        captured = snapshot.payload[str(identity.id)]
+
+        assert captured["full_name_latin"] == "Taro Yamada"
+        assert captured["email"] == "taro@example.com"
+        assert "date_of_birth" not in captured
+        assert "address" not in captured
