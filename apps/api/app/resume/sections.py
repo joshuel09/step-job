@@ -34,18 +34,6 @@ from typing import Any
 from app.career.models import Locale
 from app.translations.models import EntryTranslation, TranslatableEntry
 
-#: The `field` values an approved translation is stored under. These are the
-#: column names on the entry, deliberately: a second vocabulary ("title",
-#: "body") would have to be kept in step with the first by everyone who
-#: touched either, and the approval route in User Story 2 writes the same
-#: strings this reads.
-TRANSLATABLE_FIELDS = {
-    TranslatableEntry.work_experience: ("job_title", "description"),
-    TranslatableEntry.education: ("qualification", "field_of_study"),
-    TranslatableEntry.skill: ("name",),
-    TranslatableEntry.career_story: ("title", "challenge", "action", "result"),
-}
-
 
 @dataclass(frozen=True)
 class Contact:

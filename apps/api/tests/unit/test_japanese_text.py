@@ -1,6 +1,8 @@
-"""Which scripts count as Japanese in the readiness report (#107).
+"""Which scripts count as Japanese (#107).
 
-The report decides whether an entry will read as English from the text
+Two features ask. The 履歴書's readiness report decides whether an entry
+will read as English on a Japanese page, and the translation routes decide
+whether there is anything to render into English. Both decide from the text
 itself, not from its recorded source language — that field defaults to
 English, so trusting it would tell a user their own 大学 has no Japanese
 version.
@@ -13,7 +15,7 @@ losing one of them changes nothing.
 """
 
 import pytest
-from app.rirekisho.readiness import _JAPANESE
+from app.core.text import JAPANESE, has_japanese
 
 # The first and last character of each block the pattern claims to cover.
 BLOCKS = {
@@ -27,8 +29,8 @@ BLOCKS = {
 @pytest.mark.parametrize("block", BLOCKS)
 def test_each_block_counts_at_both_ends(block):
     first, last = BLOCKS[block]
-    assert _JAPANESE.search(first), f"{block} is short at the start"
-    assert _JAPANESE.search(last), f"{block} is short at the end"
+    assert JAPANESE.search(first), f"{block} is short at the start"
+    assert JAPANESE.search(last), f"{block} is short at the end"
 
 
 @pytest.mark.parametrize(
@@ -43,7 +45,7 @@ def test_each_block_counts_at_both_ends(block):
     ],
 )
 def test_japanese_text_is_recognised(label):
-    assert _JAPANESE.search(label)
+    assert has_japanese(label)
 
 
 @pytest.mark.parametrize(
@@ -60,4 +62,4 @@ def test_japanese_text_is_recognised(label):
 def test_text_with_no_japanese_in_it_is_not(label):
     """The distinguishing half. A pattern wide enough to match anything would
     pass every test above and report nothing, ever."""
-    assert not _JAPANESE.search(label)
+    assert not has_japanese(label)

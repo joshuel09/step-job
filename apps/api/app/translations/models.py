@@ -107,3 +107,22 @@ class EntryTranslation(Entity, ProfileOwned):
     # different question, and comparing the two is the only thing that makes
     # staleness detectable (FR-023, R-009).
     source_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+#: The `field` values an approved rendering may be stored under, per entry
+#: type. These are the column names on the entry, deliberately: a second
+#: vocabulary ("title", "body") would have to be kept in step with the first
+#: by everyone who touched either.
+#:
+#: It lives here rather than beside the first reader of it. The resume's
+#: projection reads these to find an entry's approved English; the approval
+#: route validates against them, and refusing a field this does not name is
+#: what keeps `entry_translation` from accumulating rows for columns that do
+#: not exist. One list, or the two would disagree about `field_of_study` on
+#: the day someone added it to one of them.
+TRANSLATABLE_FIELDS: dict[TranslatableEntry, tuple[str, ...]] = {
+    TranslatableEntry.work_experience: ("job_title", "description"),
+    TranslatableEntry.education: ("qualification", "field_of_study"),
+    TranslatableEntry.skill: ("name",),
+    TranslatableEntry.career_story: ("title", "challenge", "action", "result"),
+}

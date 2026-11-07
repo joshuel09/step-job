@@ -16,9 +16,9 @@ Like the row projection, it knows nothing about PDFs and touches no database,
 so every case can be tested directly.
 """
 
-import re
 from typing import Any
 
+from app.core.text import has_japanese
 from app.rirekisho.schemas import EnglishEntry, ReadinessReport
 
 # Without these a document is not a 履歴書 (FR-015). Named as the refusal names
@@ -33,24 +33,6 @@ OPTIONAL_IDENTITY = ("furigana", "date_of_birth", "address", "phone", "email")
 # Profile sections the document draws on, under the names the profile itself
 # uses for them, so a client can link straight to the section to fill.
 OPTIONAL_SECTIONS = ("education", "experiences", "certifications")
-
-# Kana and kanji. An entry whose text has none will read as English on the page.
-#
-# Half-width katakana is in here because imported data is full of it: it is what
-# older Japanese systems emit, and #002 reads documents produced by exactly those
-# systems. Without it a name written only that way is reported as having no
-# Japanese version, while the same name carrying two kanji is not (#107).
-#
-# Written as escapes with the block each range covers: as literal characters the
-# pattern is a row of glyphs nobody can check against the standard.
-_JAPANESE = re.compile(
-    "["
-    "\u3040-\u30ff"  # hiragana and katakana
-    "\u3400-\u9fff"  # kanji, including extension A
-    "\uf900-\ufaff"  # compatibility ideographs
-    "\uff66-\uff9d"  # half-width katakana
-    "]"
-)
 
 
 def missing_required(identity: Any | None) -> list[str]:
@@ -109,7 +91,7 @@ def _english_entries(
     return [
         EnglishEntry(entry_id=entry_id, entry_type=entry_type, label=label)
         for entry_type, entry_id, label in shown
-        if _filled(label) and not _JAPANESE.search(label)
+        if _filled(label) and not has_japanese(label)
     ]
 
 

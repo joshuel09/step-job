@@ -12,6 +12,7 @@ from app.imports.router import router as imports_router
 from app.resume.router import router as resume_router
 from app.rirekisho.router import router as rirekisho_router
 from app.shokumu.router import router as shokumu_router
+from app.translations.router import router as translations_router
 
 configure_logging()
 settings = get_settings()
@@ -54,3 +55,4 @@ app.include_router(imports_router)
 app.include_router(rirekisho_router)
 app.include_router(shokumu_router)
 app.include_router(resume_router)
+app.include_router(translations_router)
