@@ -82,6 +82,17 @@ def draft(
     entries.require_field(request.entry_type, request.field)
     source = entries.require_translatable(entry, request.field)
 
+    # The read is finished, and `source` is a plain string. Ending the
+    # transaction here returns the pooled connection before a call that may
+    # retry its way through several seconds of someone else's outage —
+    # otherwise a handful of concurrent drafts can hold every connection in
+    # the pool and stall routes that have nothing to do with translation.
+    # Nothing is written on this path, so this commits an empty read and
+    # loses nothing — where a rollback would discard whatever the caller
+    # had pending, which is not this function's to throw away.
+
+    session.commit()
+
     suggested = _ask(provider or get_provider(), source, profile_id)
 
     logger.info(

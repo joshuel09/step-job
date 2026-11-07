@@ -300,6 +300,33 @@ class TestADraftIsOfferedAndNeverPlaced:
         )
 
         assert response.status_code == 422, response.text
+        # The reason, not just the refusal. An empty string has no Japanese
+        # in it either, so without this the "already in English" branch
+        # alone would satisfy this test and the emptiness check could go.
+        assert "nothing recorded" in response.json()["message"]
+
+    def test_the_connection_is_not_held_while_the_model_is_called(
+        self, client, auth_headers, session, japanese_role, monkeypatch
+    ):
+        """Drafting can retry its way through several seconds of someone
+        else's outage. A pooled connection held for that long is how a
+        handful of concurrent drafts stall routes that have nothing to do
+        with translation."""
+        from app.ai.fake import FakeAIProvider
+
+        seen = {}
+
+        class Watching:
+            def draft_translation(self, text, source_language, target_language):
+                seen["held"] = session.in_transaction()
+                return FakeAIProvider().draft_translation(text, source_language, target_language)
+
+        monkeypatch.setattr("app.translations.drafting.get_provider", Watching)
+
+        response = client.post(DRAFTS, headers=auth_headers, json=_subject(japanese_role))
+
+        assert response.status_code == 200, response.text
+        assert seen["held"] is False
 
     def test_another_profile_is_a_404(self, client, auth_headers, session, profile, japanese_role):
         """An entry id that is not on this profile is not found, which is

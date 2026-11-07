@@ -183,10 +183,11 @@ class TestTheTwoWaysDraftingFails:
         message the interface can show rather than a bare status."""
         failing(behaviour)
 
-        body = client.post(DRAFTS, headers=auth_headers, json=_subject(entry)).json()
+        response = client.post(DRAFTS, headers=auth_headers, json=_subject(entry))
 
+        assert response.status_code == status, response.text
         documented = contract["components"]["schemas"]["Error"]["required"]
-        assert set(documented) <= set(body), body
+        assert set(documented) <= set(response.json()), response.text
 
     def test_a_momentary_outage_is_retried_rather_than_reported(
         self, client, auth_headers, entry, monkeypatch
