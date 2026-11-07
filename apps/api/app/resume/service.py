@@ -29,7 +29,8 @@ from app.career import snapshots
 from app.career.models import Locale
 from app.core.errors import ValidationFailed
 from app.resume import readiness, render, sections
-from app.resume.schemas import PaperSize
+from app.resume.schemas import PaperSize, ResumeReadinessReport
+from app.translations import service as translations
 from app.translations.models import EntryTranslation
 
 logger = logging.getLogger(__name__)
@@ -120,6 +121,27 @@ def build(
         certifications=_section(session, profile, career_models.Certification),
         translations=_approved_english(session, profile),
         include_skills=include_skills,
+    )
+
+
+def readiness_report(
+    session: Session, profile: career_models.CareerProfile
+) -> ResumeReadinessReport:
+    """What the user should know before asking for a document (FR-020).
+
+    Read-only, and it does not raise. `build` refuses a profile with no
+    name or no roles, which is right — it is about to produce a document —
+    but a readiness report asked by a profile in exactly that state is the
+    request that most needs answering, and `can_generate` is how it
+    answers.
+    """
+    return readiness.build_report(
+        _identity(session, profile),
+        experiences=_section(session, profile, career_models.WorkExperience),
+        education=_section(session, profile, career_models.Education),
+        skills=_section(session, profile, career_models.Skill),
+        certifications=_section(session, profile, career_models.Certification),
+        stored=translations.stored_for_profile(session, profile.id),
     )
 
 

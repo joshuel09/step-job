@@ -22,6 +22,21 @@ Caller = Annotated[CallerIdentity, Depends(current_identity)]
 Db = Annotated[Session, Depends(get_session)]
 
 
+@router.get(
+    "/profile/documents/resume/readiness",
+    response_model=schemas.ResumeReadinessReport,
+)
+def resume_readiness(session: Db, caller: Caller):
+    """What a resume would lack, before one is produced rather than after.
+
+    Read-only: nothing is generated and no snapshot is captured. It
+    answers for a profile that could not produce a document at all, which
+    is the profile most in need of an answer.
+    """
+    profile = career_service.require_profile(session, caller.user_id)
+    return service.readiness_report(session, profile)
+
+
 @router.post("/profile/documents/resume")
 def generate_resume(
     session: Db,
