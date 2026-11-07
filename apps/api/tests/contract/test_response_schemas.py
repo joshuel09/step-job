@@ -393,6 +393,9 @@ class TestTranslations:
             json={
                 "employer_name": "株式会社サンプル",
                 "job_title": "課長",
+                # A second Japanese field, so approving the title still
+                # leaves `needs_english` with something in it.
+                "description": "社内システムの開発を担当。",
                 "started_on": "2019-04-01",
             },
         )
@@ -450,16 +453,33 @@ class TestTranslations:
         check(ENGLISH, TRANSLATIONS, "put", 404, response.json())
 
     def test_the_readiness_report(self, client, auth_headers, entry_id):
-        """The Japanese fixture on purpose. `needs_english` and
-        `untranslated_names` are the parts of this response with shapes of
-        their own, and an empty array validates against any item schema —
-        so a profile written in English would check them by never
-        producing one."""
+        """The Japanese fixture on purpose, with an approval made stale on
+        purpose. All three lists carry shapes of their own, and an empty
+        array validates against any item schema — so a report with any of
+        them empty would check that shape by never producing one.
+
+        The fixture carries two Japanese fields for that reason: approving
+        one and editing it leaves the other still needing English.
+        """
+        client.put(
+            TRANSLATIONS_URL,
+            headers=auth_headers,
+            json=self._subject(entry_id) | {"text": "Section Chief"},
+        )
+        edited = client.patch(
+            f"/api/v1/profile/experiences/{entry_id}",
+            headers=auth_headers,
+            json={"job_title": "部長"},
+        )
+        assert edited.status_code == 200, edited.text
+
         response = client.get("/api/v1/profile/documents/resume/readiness", headers=auth_headers)
         assert response.status_code == 200, response.text
-        assert response.json()["needs_english"], "the fixture must have one"
-        assert response.json()["untranslated_names"], "the fixture must have one"
-        check(ENGLISH, RESUME_READINESS, "get", 200, response.json())
+        body = response.json()
+        assert body["needs_english"], "the fixture must have one"
+        assert body["untranslated_names"], "the fixture must have one"
+        assert [row["source_text"] for row in body["stale_translations"]] == ["部長"]
+        check(ENGLISH, RESUME_READINESS, "get", 200, body)
 
     def test_the_readiness_report_without_a_profile(self, client, auth_headers):
         response = client.get("/api/v1/profile/documents/resume/readiness", headers=auth_headers)

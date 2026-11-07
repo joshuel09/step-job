@@ -6,8 +6,11 @@ later change could break without any existing test noticing.
 """
 
 import inspect
+import uuid
+from datetime import UTC, datetime
 
 from app.resume import readiness
+from app.resume.schemas import StoredTranslation
 from app.translations.models import TRANSLATABLE_FIELDS, TranslatableEntry
 
 
@@ -35,3 +38,50 @@ class TestWhatThisDocumentReports:
         """An entry reported without a label is a row the interface can
         only show as an id."""
         assert set(readiness.RENDERED_FIELDS) <= set(readiness.LABELS)
+
+
+class TestWhatTheReportLeavesOut:
+    """The structural guards above are read off the module's own constants,
+    so each would pass after a matching edit. These call `build_report` and
+    look at what comes back."""
+
+    def _stored(self, entry_type: TranslatableEntry, field: str) -> StoredTranslation:
+        return StoredTranslation(
+            id=uuid.uuid4(),
+            entry_type=entry_type,
+            entry_id=uuid.uuid4(),
+            field=field,
+            text="Halved the build time",
+            approved_at=datetime.now(UTC),
+            is_stale=True,
+            source_text="ビルド時間を半分にした",
+        )
+
+    def test_a_stale_story_approval_is_not_reported(self):
+        """Approvals belong to the profile, not to one document, so a story
+        reaches this report through `stored` even though no story reaches it
+        through the entries. The 職務経歴書 keeps and prints that English;
+        a resume's reader has no page to compare it against."""
+        report = readiness.build_report(
+            None, stored=[self._stored(TranslatableEntry.career_story, "title")]
+        )
+
+        assert report.stale_translations == []
+
+    def test_a_stale_approval_this_document_prints_is(self):
+        """The distinguishing half. A report that dropped every stale
+        approval would pass the test above and tell the user nothing."""
+        report = readiness.build_report(
+            None, stored=[self._stored(TranslatableEntry.work_experience, "job_title")]
+        )
+
+        assert [row.field for row in report.stale_translations] == ["job_title"]
+
+    def test_an_approval_that_still_matches_is_not_reported(self):
+        fresh = self._stored(TranslatableEntry.work_experience, "job_title")
+
+        report = readiness.build_report(
+            None, stored=[fresh.model_copy(update={"is_stale": False, "source_text": None})]
+        )
+
+        assert report.stale_translations == []

@@ -134,6 +134,75 @@ class TestWhenTheSourceChanges:
         }
 
 
+class TestAnApprovalThisDocumentDoesNotPrint:
+    def test_a_stale_story_is_not_reported_here(self, client, auth_headers, approved):
+        """A story's English is kept and the 職務経歴書 prints it. This
+        report is the resume's, and a resume has no section for a story —
+        so asking its reader to re-read an approval that appears nowhere on
+        their page is the same mistake as listing one under
+        `needs_english`."""
+        story = client.post(
+            "/api/v1/profile/stories",
+            headers=auth_headers,
+            json={
+                "title": "ビルド時間を半分にした",
+                "challenge": "ビルドが遅かった",
+                "action": "キャッシュを導入した",
+                "result": "半分になった",
+            },
+        )
+        assert story.status_code == 201, story.text
+        story_id = story.json()["id"]
+        client.put(
+            TRANSLATIONS,
+            headers=auth_headers,
+            json={
+                "entry_type": "career_story",
+                "entry_id": story_id,
+                "field": "title",
+                "text": "Halved the build time",
+            },
+        )
+        edited = client.patch(
+            f"/api/v1/profile/stories/{story_id}",
+            headers=auth_headers,
+            json={"title": "ビルド時間を三分の一にした"},
+        )
+        assert edited.status_code == 200, edited.text
+
+        report = client.get(READINESS, headers=auth_headers).json()
+
+        assert report["stale_translations"] == []
+
+    def test_but_it_is_still_stored(self, client, auth_headers, session, profile, approved):
+        """Filtered out of one document's report, not discarded. The other
+        document still prints it, and the user still approved it."""
+        story_id = client.post(
+            "/api/v1/profile/stories",
+            headers=auth_headers,
+            json={
+                "title": "ビルド時間を半分にした",
+                "challenge": "ビルドが遅かった",
+                "action": "キャッシュを導入した",
+                "result": "半分になった",
+            },
+        ).json()["id"]
+        client.put(
+            TRANSLATIONS,
+            headers=auth_headers,
+            json={
+                "entry_type": "career_story",
+                "entry_id": story_id,
+                "field": "title",
+                "text": "Halved the build time",
+            },
+        )
+
+        listed = client.get(TRANSLATIONS, headers=auth_headers).json()
+
+        assert "Halved the build time" in [row["text"] for row in listed]
+
+
 class TestWhenTheSourceDoesNotChange:
     def test_nothing_is_reported(self, client, auth_headers, approved):
         """The distinguishing half. A report that called every approval

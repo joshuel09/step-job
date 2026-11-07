@@ -15,11 +15,14 @@ need four different responses from the user:
 - **stale_translations**: approvals whose source has changed since. Kept,
   used, and reported (FR-023).
 
-**Career stories are absent, deliberately.** They are translatable and the
-職務経歴書 prints them; an English resume does not have a section for them.
-Reporting one here would tell a user that a resume lacks something it would
-not have shown either way, and the work they did in response would change
-nothing on the page.
+**Career stories are absent from all three lists, deliberately.** They are
+translatable and the 職務経歴書 prints them; an English resume does not have
+a section for them. Reporting one here would tell a user that a resume
+lacks something it would not have shown either way, and the work they did
+in response would change nothing on the page. Two of the lists are built
+from entries this report is handed, and a story is not among them; the
+third is built from stored approvals, which belong to the profile rather
+than to any one document, so it is filtered by the same table.
 
 It takes rows and returns a report. No session, no query, no PDF — so every
 case can be made by hand in a test, which is how the combinations that
@@ -118,7 +121,16 @@ def build_report(
         untranslated_names=[
             item for entry_type, entries in named.items() for item in _unnamed(entry_type, entries)
         ],
-        stale_translations=[row for row in stored if row.is_stale],
+        # Filtered by what this document prints, like the two lists above.
+        # A profile holds approvals for every document, and a story's
+        # English is kept and used by the 職務経歴書 — telling a resume's
+        # reader to re-read an approval that appears nowhere on their page
+        # is the same mistake as listing a story under `needs_english`.
+        stale_translations=[
+            row
+            for row in stored
+            if row.is_stale and row.field in RENDERED_FIELDS.get(row.entry_type, ())
+        ],
     )
 
 
