@@ -370,6 +370,93 @@ class TestShokumuKeirekisho:
         check(SHOKUMU, "/profile/documents/shokumu-keirekisho", "post", 404, response.json())
 
 
+# --- translations -------------------------------------------------------------
+
+
+TRANSLATIONS = "/profile/translations"
+DRAFTS = f"{TRANSLATIONS}/drafts"
+TRANSLATIONS_URL = f"/api/v1{TRANSLATIONS}"
+DRAFTS_URL = f"/api/v1{DRAFTS}"
+
+
+class TestTranslations:
+    @pytest.fixture
+    def entry_id(self, client, auth_headers, profile) -> str:
+        """A role recorded in Japanese, titled with a word whose English is
+        a choice. Invented content, and 課長 on purpose: `alternatives` is
+        the only part of the draft response with a shape of its own, and an
+        empty array validates against any item schema."""
+        created = client.post(
+            "/api/v1/profile/experiences",
+            headers=auth_headers,
+            json={
+                "employer_name": "株式会社サンプル",
+                "job_title": "課長",
+                "started_on": "2019-04-01",
+            },
+        )
+        assert created.status_code == 201, created.text
+        return created.json()["id"]
+
+    def _subject(self, entry_id: str) -> dict:
+        return {"entry_type": "work_experience", "entry_id": entry_id, "field": "job_title"}
+
+    def test_a_draft(self, client, auth_headers, entry_id):
+        response = client.post(DRAFTS_URL, headers=auth_headers, json=self._subject(entry_id))
+        assert response.status_code == 200, response.text
+        assert response.json()["alternatives"], "the fixture must offer a choice"
+        check(ENGLISH, DRAFTS, "post", 200, response.json())
+
+    def test_an_approval(self, client, auth_headers, entry_id):
+        response = client.put(
+            TRANSLATIONS_URL,
+            headers=auth_headers,
+            json=self._subject(entry_id) | {"text": "Manager"},
+        )
+        assert response.status_code == 200, response.text
+        check(ENGLISH, TRANSLATIONS, "put", 200, response.json())
+
+    def test_the_stored_list_with_a_stale_approval_in_it(self, client, auth_headers, entry_id):
+        """Stale on purpose. `source_text` is present only when the approval
+        no longer matches its source, so a list of fresh approvals would
+        validate that field by never producing it."""
+        client.put(
+            TRANSLATIONS_URL,
+            headers=auth_headers,
+            json=self._subject(entry_id) | {"text": "Manager"},
+        )
+        edited = client.patch(
+            f"/api/v1/profile/experiences/{entry_id}",
+            headers=auth_headers,
+            json={"job_title": "部長"},
+        )
+        assert edited.status_code == 200, edited.text
+
+        response = client.get(TRANSLATIONS_URL, headers=auth_headers)
+        assert response.status_code == 200, response.text
+        assert [row["source_text"] for row in response.json()] == ["部長"]
+        check(ENGLISH, TRANSLATIONS, "get", 200, response.json())
+
+    def test_listing_without_a_profile(self, client, auth_headers):
+        response = client.get(TRANSLATIONS_URL, headers=auth_headers)
+        assert response.status_code == 404
+        check(ENGLISH, TRANSLATIONS, "get", 404, response.json())
+
+    def test_approving_against_an_entry_that_is_not_there(self, client, auth_headers, profile):
+        body = self._subject(str(uuid.uuid4())) | {"text": "Manager"}
+        response = client.put(TRANSLATIONS_URL, headers=auth_headers, json=body)
+        assert response.status_code == 404
+        check(ENGLISH, TRANSLATIONS, "put", 404, response.json())
+
+    def test_a_blank_approval(self, client, auth_headers, entry_id):
+        """The 422 a generated client must be able to read field by field."""
+        response = client.put(
+            TRANSLATIONS_URL, headers=auth_headers, json=self._subject(entry_id) | {"text": "  "}
+        )
+        assert response.status_code == 422, response.text
+        check(ENGLISH, TRANSLATIONS, "put", 422, response.json())
+
+
 # --- the shared unauthorised shape -------------------------------------------
 
 
@@ -408,11 +495,8 @@ UNVALIDATED: set[tuple[str, str, str, str]] = {
     (IMPORTS, "/profile/imports/upload", "post", "201"),
     # Needs an import still running, which is a timing setup rather than a shape.
     (IMPORTS, "/profile/imports/{import_id}/cancel", "post", "200"),
-    # Feature 005, likewise planned and not built.
+    # Feature 005's readiness report, planned and not built.
     (ENGLISH, "/profile/documents/resume/readiness", "get", "200"),
-    (ENGLISH, "/profile/translations", "get", "200"),
-    (ENGLISH, "/profile/translations", "put", "200"),
-    (ENGLISH, "/profile/translations/drafts", "post", "200"),
 }
 
 

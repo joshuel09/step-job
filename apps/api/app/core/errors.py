@@ -31,6 +31,29 @@ class ConflictError(AppError):
     code = "conflict"
 
 
+class UpstreamUnusable(AppError):
+    """A service we depend on answered, with something unusable.
+
+    Distinct from being unable to reach it, and the distinction is the whole
+    point of having two: this one means the service is up and replying, so
+    waiting will not help. A user told to try again in a few minutes, who
+    does, and meets the same failure, has been told something untrue.
+    """
+
+    status_code = status.HTTP_502_BAD_GATEWAY
+    code = "upstream_unusable"
+
+
+class UpstreamUnavailable(AppError):
+    """A service we depend on could not be reached.
+
+    Worth retrying, and the user is told so.
+    """
+
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    code = "upstream_unavailable"
+
+
 class ValidationFailed(AppError):
     """A rejection that names the offending field and explains why.
 
