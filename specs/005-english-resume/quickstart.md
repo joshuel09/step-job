@@ -5,6 +5,13 @@
 Scenarios that prove the feature works end to end. Each names the requirement
 it holds, so a scenario that gets deleted takes a visible guarantee with it.
 
+**Each also names the tests that execute it**, with the count as it ran. A
+scenario with nothing under that line is a guarantee nobody is keeping, and
+naming the tests here rather than in a table elsewhere puts the answer where
+the person asking the question already is. The test named is the one that
+**fails** when the scenario stops holding — not every test that touches the
+same subject, which for Scenario 18 is a different set.
+
 **Every document assertion extracts text back out of the PDF.** A page of
 hollow boxes is the right size, starts with `%PDF-`, and passes any check on
 bytes. Feature 003 established this and it matters more here, not less: the one
@@ -42,6 +49,8 @@ a font (`/FontFile2`)
 
 The check a page of boxes fails. R-007 and FR-021.
 
+**Held by** `tests/integration/test_resume_font.py` — 3 tests.
+
 ## Scenario 1 — A profile becomes a resume
 
 **Given** a profile with an identity, two employers, one degree, skills and a
@@ -53,6 +62,8 @@ and `X-Snapshot-Id` is returned
 
 US1. FR-001, FR-003.
 
+**Held by** `test_resume_generate.py::TestWhatIsOnThePage` and `::TestWhatComesBackWithIt` — 9 tests.
+
 ## Scenario 2 — Newest first
 
 **Given** two employers, one 2018–2021 and one 2021–present
@@ -60,6 +71,8 @@ US1. FR-001, FR-003.
 **Then** the 2021 employer appears before the 2018 one in the extracted text
 
 US1-1. FR-002.
+
+**Held by** `test_resume_generate.py::TestWhatIsOnThePage::test_the_most_recent_role_comes_first` — 1 test.
 
 ## Scenario 3 — Western dates, no era anywhere
 
@@ -71,6 +84,8 @@ US1-1. FR-002.
 US1-4. FR-004, SC-003. Asserted as an absence across the whole text, not per
 field — an era leaking through one unconverted date is the failure.
 
+**Held by** `test_resume_generate.py::TestDates` — 3 tests.
+
 ## Scenario 4 — Nothing to say, so no document
 
 **Given** a profile with an identity and no career history at all
@@ -81,6 +96,8 @@ US1-5. FR-006. The mirror of feature 003's first-time applicant, which
 deliberately *does* produce a document: a 履歴書 with an empty table is a
 conventional document, and a resume with no experience is not.
 
+**Held by** `test_resume_generate.py::TestWhenItCannotBeProduced` — 3 tests.
+
 ## Scenario 5 — Told before, not after
 
 **Given** two entries written in Japanese with no stored English version
@@ -88,6 +105,8 @@ conventional document, and a resume with no experience is not.
 **Then** both are named in `needs_english`, each with its source text
 
 US2-1. FR-020.
+
+**Held by** `test_resume_readiness.py::TestWhatStillNeedsEnglish` and `::TestWhichOrganisationsStillNeedAName` — 11 tests.
 
 ## Scenario 6 — A draft is offered, never placed
 
@@ -99,6 +118,8 @@ stored English versions afterwards returns nothing
 US2-2. FR-018, SC-010. The second half is the assertion that matters: the
 request that produces a draft must store nothing.
 
+**Held by** `test_translation_flow.py::TestADraftIsOfferedAndNeverPlaced` — 6 tests.
+
 ## Scenario 7 — The alternatives are surfaced, not resolved
 
 **Given** a job title recorded as 課長
@@ -108,6 +129,8 @@ readings of it
 
 R-004. FR-013, SC-006. The product does not choose between "Manager" and
 "Section Chief" on the user's behalf.
+
+**Held by** `test_translation_flow.py::TestTheAlternativesAreSurfaced` — 4 tests.
 
 ## Scenario 8 — Approved once, reused thereafter
 
@@ -120,6 +143,8 @@ in `needs_english`
 US2-3, US2-4. FR-018, SC-012. Principle I: the same work is not asked for
 twice.
 
+**Held by** `test_translation_flow.py::TestApprovedOnceAndReusedThereafter` and `test_resume_readiness.py::TestWhatStillNeedsEnglish::test_approving_one_takes_it_off_the_list` — 5 tests.
+
 ## Scenario 9 — Character for character
 
 **Given** an approval whose text differs from the draft that preceded it
@@ -129,6 +154,8 @@ contain the draft's
 
 US2-6. FR-019, SC-011.
 
+**Held by** `test_translation_flow.py::TestApprovedOnceAndReusedThereafter::test_the_users_wording_reaches_the_document_and_the_drafts_does_not` and `::test_the_spacing_the_user_typed_is_kept` — 2 tests.
+
 ## Scenario 10 — An approved blank is not an English version
 
 **Given** an approval whose text is empty or whitespace
@@ -137,6 +164,8 @@ US2-6. FR-019, SC-011.
 
 FR-025. An approved blank would make an entry vanish from the document
 silently, which is worse than having no English version at all.
+
+**Held by** `test_translation_flow.py::TestAnApprovedBlankIsNotAnEnglishVersion` — 6 tests.
 
 ## Scenario 11 — Editing the source does not discard the approval
 
@@ -152,6 +181,8 @@ text, and **is still stored** — not deleted and not re-drafted
 FR-023, R-009. The user approved those words; a typo fix in the source does
 not withdraw their approval.
 
+**Held by** `tests/integration/test_translation_staleness.py` — 11 tests.
+
 ## Scenario 12 — Nothing personal
 
 **Given** a profile with a date of birth, a full address, a photograph
@@ -164,6 +195,8 @@ US3-1, US3-2, US3-3, US3-4. FR-008, FR-009, FR-010, SC-002. The disclosure
 flags are set to `true` on purpose: they are consent for a Japanese document,
 not standing permission.
 
+**Held by** `tests/integration/test_resume_excludes_personal.py` — 36 tests.
+
 ## Scenario 13 — An empty section is absent, not blank
 
 **Given** a profile with no certifications
@@ -173,6 +206,8 @@ not standing permission.
 US3, US4-4. FR-011, SC-005. The opposite of the 履歴書, which labels its empty
 sections because a Japanese employer expects to see them.
 
+**Held by** `test_resume_generate.py::TestWhatIsNotOnThePage::test_no_certifications_heading_without_certifications` — 1 test.
+
 ## Scenario 14 — Exactly as much as was recorded
 
 **Given** an employer with a title and dates and no description
@@ -181,6 +216,8 @@ sections because a Japanese employer expects to see them.
 summary, no adjective, no inferred scope
 
 US4-1. FR-012, Principle IV.
+
+**Held by** `test_resume_truthfulness.py::TestItSaysExactlyThatMuch` — 18 tests.
 
 ## Scenario 15 — The two documents agree
 
@@ -193,6 +230,8 @@ FR-016, SC-007. Compared as entries and periods, never as strings — the
 Japanese document says 課長 and the English one says what the user approved,
 and that is the product working correctly. See research.md R-008.
 
+**Held by** `test_document_agreement.py::TestTheResumeAgreesWithTheRirekisho` and `::TestWhatIsAllowedToDiffer` — 7 tests.
+
 ## Scenario 16 — What was sent stays inspectable
 
 **Given** a generated resume and its snapshot id
@@ -200,6 +239,8 @@ and that is the product working correctly. See research.md R-008.
 **Then** fetching the snapshot still shows the English the document carried
 
 FR-015, SC-008.
+
+**Held by** `test_resume_traceability.py::TestTheRecordHoldsWhatWasPrinted` and `tests/integration/test_resume_snapshot.py` — 14 tests.
 
 ## Scenario 17 — A proper noun is never guessed
 
@@ -219,6 +260,8 @@ FR-021, SC-013, R-002. An invented issuer is the FR-021 failure in its most
 checkable form: an employer verifying a certification looks the issuer up by
 name.
 
+**Held by** `tests/integration/test_resume_proper_nouns.py` — 14 tests.
+
 ## Scenario 18 — Generation calls no model
 
 **Given** a configuration whose provider raises on every call
@@ -228,6 +271,8 @@ name.
 FR-017, FR-005 of the generator's determinism. The strongest available check
 that the render path cannot reach a provider: make every provider call fail
 and watch generation succeed anyway.
+
+**Held by** `test_resume_truthfulness.py::TestNoModelCanBeReached`, `tests/unit/test_ai_boundary.py::test_generation_cannot_reach_a_model` and `::test_the_guard_sees_every_way_of_naming_the_boundary` — 13 tests. The unit guard is named explicitly because the parametrised SDK check over `resume/*.py` is *not* the one that fails: it watches for a provider SDK, and `from app.ai import get_provider` is neither.
 
 ## Scenario 19 — Deleting an entry takes its English with it
 
@@ -239,6 +284,8 @@ experience, education, career story, skill
 FR-024, data-model.md. `entry_id` cannot be a foreign key across four tables,
 so this test is the foreign key.
 
+**Held by** `test_translation_flow.py::TestTheEnglishGoesWithTheEntry` and `::TestWhatIsLeftAlone` — 7 tests.
+
 ## Scenario 20 — The document is not retained
 
 **Given** any generated resume
@@ -247,3 +294,5 @@ so this test is the foreign key.
 
 FR-005. Asserted against `Base.metadata` rather than a count of rows, as
 feature 003 established: a count shows only that today's code stores nothing.
+
+**Held by** `test_resume_traceability.py::TestTheDocumentItselfIsNotRetained` — 4 tests.

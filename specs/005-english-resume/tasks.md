@@ -216,7 +216,7 @@ else, generate, and confirm the document says exactly that much.
 ## Phase 8: Polish & cross-cutting
 
 - [x] T064 Confirm `DEFERRED` in `apps/api/tests/contract/test_contracts.py` and `UNVALIDATED` in `apps/api/tests/contract/test_response_schemas.py` hold no remaining `005-english-resume` entry, and that the coverage test passes with every documented 2xx JSON response actually validated. `DEFERRED["005-english-resume"]` is an empty set — kept rather than removed, so a later story defers a path on purpose instead of by omission — and no `ENGLISH` tuple appears in `UNVALIDATED`: every documented 2xx JSON response of this feature is schema-checked by a test that records itself as it runs. 151 contract tests pass
-- [ ] T065 [P] Run every scenario in `specs/005-english-resume/quickstart.md` end to end and record the result in the pull request
+- [x] T065 [P] Run every scenario in `specs/005-english-resume/quickstart.md` end to end and record the result in the pull request. All twenty-one pass; the per-scenario counts are in the PR and a **Held by** line under each scenario names the tests that execute it. One correction came out of it: the test that fails when Scenario 18 stops holding is `test_ai_boundary.py::test_generation_cannot_reach_a_model`, not the parametrised SDK check over `resume/*.py` — that one watches for a provider SDK, and `from app.ai import get_provider` is not one. Verified by injecting a `get_provider()` call into `render.py`
 - [ ] T066 Verify each new test under `apps/api/tests/` can fail: reintroduce the bug it guards, watch it go red, restore. A test that has never failed has not been shown to test anything
 
 ---
