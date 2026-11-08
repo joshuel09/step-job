@@ -19,6 +19,7 @@ from datetime import UTC, date, datetime
 import pytest
 from app.career import snapshots
 from app.career.models import Locale
+from app.resume.render import JOIN
 from app.translations.models import EntryTranslation, TranslatableEntry
 from sqlalchemy import select
 
@@ -27,6 +28,12 @@ PATH = "/api/v1/profile/documents/resume"
 ORIGINAL_TITLE = "システムエンジニア"
 ORIGINAL_DESCRIPTION = "社内システムの開発を担当。"
 APPROVED_TITLE = "Systems Engineer"
+
+#: The period the fixture's one role runs over, as the resume prints it.
+#: Written out rather than formatted from the dates: `format_month` is what
+#: puts this on the page, and asking it what the page should say would make
+#: the document its own oracle.
+PERIOD = "Apr 2015 – Mar 2021"
 
 #: What the user rewrites after the document has gone out.
 EDITED_TITLE = "上級システムエンジニア"
@@ -101,6 +108,12 @@ class TestTheRecordHoldsWhatWasPrinted:
         received would satisfy all four. This one holds the rendered half
         to the bytes that were streamed back.
 
+        The whole page, not each field in it. `in printed` would be
+        satisfied by a record that said `Engineer` where the document said
+        `Systems Engineer`, and by one that described three of the four
+        things on the page — so what the record holds is assembled into the
+        document it claims to describe and the two are compared entire.
+
         Whitespace is squashed on both sides. A long sentence wraps where
         the column ends, and a line break the layout chose is not a
         difference between what was recorded and what was sent.
@@ -122,13 +135,21 @@ class TestTheRecordHoldsWhatWasPrinted:
         def squashed(value: str) -> str:
             return re.sub(r"\s+", "", value)
 
-        assert squashed(rendered["contact"]["full_name"]) in printed
-        # An empty list satisfies the loop below without reading anything,
-        # and this profile has exactly one role.
+        # This profile holds exactly one role, which is what makes the page
+        # below writable in full.
         assert len(rendered["experiences"]) == 1, rendered["experiences"]
-        for item in rendered["experiences"]:
-            for field in ("employer", "job_title", "description"):
-                assert squashed(item[field]) in printed, field
+        item = rendered["experiences"][0]
+        described = "\n".join(
+            [
+                rendered["contact"]["full_name"],
+                "Experience",
+                f"{item['job_title']}{JOIN}{item['employer']}",
+                PERIOD,
+                item["description"],
+            ]
+        )
+
+        assert printed == squashed(described)
 
     def test_the_english_that_was_printed_is_still_there(self, after_the_edit):
         """What this one does *not* prove: that the record is frozen. An
