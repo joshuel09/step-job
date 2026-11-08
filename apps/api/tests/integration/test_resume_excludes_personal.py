@@ -34,6 +34,10 @@ from sqlalchemy import event
 
 PATH = "/api/v1/profile/documents/resume"
 
+#: What the `resume_profile` fixture records and this document must not print.
+BIRTH_DATE = date(1990, 5, 15)
+ADDRESS = "東京都千代田区1-1-1"
+
 #: Filled in full, and written out here rather than imported from feature
 #: 004's disclosure test: that file is about what a 履歴書 *shows*, and the
 #: day someone narrows it this guard must not narrow with it.
@@ -54,17 +58,16 @@ FLAGS = (
     "disclose_japanese_qualification",
 )
 
-#: Each value as it would be written, and each label that would introduce it.
-#: A blank labelled line is a leak too: "Nationality:" over nothing still
-#: tells a reader there is a nationality being withheld.
+#: Each value as it would be written. Derived from the fixture rather than
+#: written out beside it: two lists that must agree are two lists that will
+#: eventually not, and the one that silently stops guarding is this one.
+#: `work_authorisation` is excluded — "True" is not a string a reader would
+#: see, and the label is what gives that field away.
 FORBIDDEN_VALUES = (
-    "永住者",
-    "Philippines",
-    "技術・人文知識・国際業務",
-    "2028",
-    "JLPT N2",
-    "1990",
-    "東京都千代田区1-1-1",
+    *(str(value) for value in JAPAN.values() if not isinstance(value, bool)),
+    str(JAPAN["visa_expires_on"].year),
+    str(BIRTH_DATE.year),
+    ADDRESS,
     "千代田区",
 )
 
@@ -84,8 +87,6 @@ FORBIDDEN_LABELS = (
     "Date of Birth",
     "Photo",
 )
-
-BIRTH_DATE = date(1990, 5, 15)
 
 
 def _text(pdf: bytes) -> str:
@@ -148,7 +149,7 @@ class TestTheFixtureHoldsWhatItClaims:
             select(models.Identity).where(models.Identity.profile_id == resume_profile.id)
         ).one()
         assert identity.date_of_birth == BIRTH_DATE
-        assert identity.address == "東京都千代田区1-1-1"
+        assert identity.address == ADDRESS
 
     def test_the_document_was_produced_and_can_be_read(self, document):
         """The positive control. Every `not in` in this file depends on it."""
@@ -170,7 +171,15 @@ class TestNoneOfItIsOnThePage:
     def test_no_age_can_be_read_off_the_page(self, document):
         """FR-009 is about what an employer can infer, not only about what
         is printed. A date of birth withheld and an age stated is the same
-        disclosure made shorter."""
+        disclosure made shorter.
+
+        A bare word-boundary search, not `"age 36"` or `"36 years"`. The
+        number alone beside a name is the disclosure; a phrasing this test
+        did not predict would be the leak going unreported. It can in
+        principle collide with an unrelated number the fixture starts
+        printing — and that failure is loud, names this test, and takes a
+        minute to read, which is the trade this file is making everywhere
+        else too."""
         age = _age_on(date.today())
         assert re.search(rf"\b{age}\b", document) is None
         assert "歳" not in document
@@ -288,6 +297,30 @@ class TestTheOneTimeTheTableIsNamed:
     def test_the_japan_profile_is_not_among_the_entries_captured(self, snapshot, disclosed):
         assert disclosed.id not in snapshot.captured_entry_ids
 
+    def test_generating_names_the_table_once_and_only_to_resolve_ids(
+        self, session, resume_profile, disclosed
+    ):
+        """The whole call, snapshot capture included.
+
+        The two guards above narrow to the projection, which leaves a gap
+        the size of everything `generate` does afterwards: a fetch added
+        inside capture would load this applicant's residence status without
+        changing an id or a payload, and every other test in this file would
+        pass. So the statement is identified rather than counted away — a
+        lookup by id, which cannot be a fetch of someone's Japan profile,
+        because a fetch of someone's Japan profile does not know an id to
+        ask for.
+        """
+        from app.resume import service
+
+        statements = TestNoneOfItIsEvenFetched._statements(
+            session, lambda: service.generate(session, resume_profile)
+        )
+        touching = [sql for sql in statements if "japan_profile" in sql.lower()]
+
+        assert len(touching) == 1, touching
+        assert "japan_profile.id IN" in touching[0], touching[0]
+
     def test_the_snapshot_holds_no_japan_profile_entity(self, snapshot):
         entities = {
             value.get("__entity__")
@@ -306,5 +339,23 @@ class TestTheOneTimeTheTableIsNamed:
 
         for value in FORBIDDEN_VALUES:
             assert value not in written, value
-        assert "date_of_birth" not in written
-        assert "address" not in written
+
+    def test_the_identity_is_recorded_narrowed_to_what_was_printed(self, snapshot):
+        """By key rather than by substring. "address" appearing anywhere in a
+        serialised payload could be an employer's description; the question
+        is whether the identity row went in with a field the page never
+        showed."""
+        identity = next(
+            value
+            for value in snapshot.payload.values()
+            if isinstance(value, dict) and value.get("__entity__") == "Identity"
+        )
+
+        assert set(identity) == {
+            "__entity__",
+            "id",
+            "profile_id",
+            "full_name_latin",
+            "email",
+            "phone",
+        }
