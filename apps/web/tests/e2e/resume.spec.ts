@@ -20,12 +20,17 @@ for (const locale of ["en", "ja"] as const) {
     let attempt = 0;
     await page.route("**/api/v1/profile/documents/resume", async (route) => {
       expect(route.request().postDataJSON()).toEqual({ paper_size: "a4", include_skills: false });
-      if (attempt++ === 0) {
+      if (attempt++ < 3) {
         await route.fulfill({
           status: 422,
           contentType: "application/json",
           body: JSON.stringify({
-            failures: [{ field: "experiences", reason: "Work experience is required" }],
+            failures:
+              attempt === 1
+                ? [{ field: "experiences", reason: "Work experience is required" }]
+                : attempt === 2
+                  ? []
+                  : [{ field: "future_field", reason: "Untranslated server reason" }],
           }),
         });
       } else {
@@ -49,6 +54,13 @@ for (const locale of ["en", "ja"] as const) {
     await expect(page.getByRole("main").getByRole("alert")).toContainText(
       japanese ? "職歴を追加" : "Add work experience",
     );
+    await generate.click();
+    await expect(page.getByRole("main").getByRole("alert")).toBeVisible();
+    await generate.click();
+    await expect(page.getByRole("main").getByRole("alert")).toContainText(
+      japanese ? "未入力項目や入力内容" : "missing or invalid information",
+    );
+    await expect(page.getByRole("main")).not.toContainText("Untranslated server reason");
     await generate.click();
     await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
     await expect(page.getByRole("status")).toContainText(japanese ? "3ページ" : "3 pages");

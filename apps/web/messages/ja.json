@@ -415,7 +415,9 @@
       "currentSource": "現在の原文",
       "approvedEnglish": "承認済みの英訳",
       "ready": "レジュメを作成できます。",
-      "fixProfile": "プロフィールへ"
+      "fixProfile": "プロフィールへ",
+      "missingOther": "作成する前に、プロフィールの未入力項目や入力内容を確認してください。",
+      "invalidPaper": "米国レターまたはA4を選択してください。"
     },
     "resumeNav": "英文レジュメ"
   }

@@ -79,11 +79,13 @@ describe("resume readiness", () => {
     readiness.mockResolvedValue({
       ...emptyReport,
       can_generate: false,
-      missing_required: ["identity", "experiences"],
+      missing_required: ["identity", "experiences", "future_field"],
     });
     const html = await render();
     expect(html).toContain(en.profile.resume.nameRequired);
     expect(html).toContain(en.profile.resume.experienceRequired);
+    expect(html).toContain(en.profile.resume.missingOther);
+    expect(html).not.toContain("future_field");
     expect(html).not.toContain(en.profile.resume.ready);
   });
 

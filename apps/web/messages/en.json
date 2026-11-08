@@ -415,7 +415,9 @@
       "currentSource": "Current source",
       "approvedEnglish": "Approved English",
       "ready": "Your profile is ready to generate.",
-      "fixProfile": "Go to your profile"
+      "fixProfile": "Go to your profile",
+      "missingOther": "Check your profile for missing or invalid information before generating.",
+      "invalidPaper": "Choose US Letter or A4."
     },
     "resumeNav": "English resume"
   }

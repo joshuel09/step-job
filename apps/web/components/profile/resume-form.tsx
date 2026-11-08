@@ -14,6 +14,7 @@ import {
   type FieldErrors,
 } from "./form-primitives";
 
+/** Generate a profile-derived PDF and release its preview URL when replaced. */
 export function ResumeForm() {
   const t = useTranslations("profile.resume");
   const tc = useTranslations("common");
@@ -33,6 +34,7 @@ export function ResumeForm() {
     };
   }, [result]);
 
+  /** Preserve generation errors until the user retries. */
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
@@ -47,8 +49,11 @@ export function ResumeForm() {
     try {
       setResult(await api.generateResume(options));
     } catch (error) {
-      if (error instanceof ValidationError) setErrors(toFieldErrors(error.failures));
-      else setProblem(problemMessage(error, tc));
+      if (error instanceof ValidationError && error.failures.length > 0) {
+        const fields = toFieldErrors(error.failures);
+        if (fields.paper_size) fields.paper_size = t("invalidPaper");
+        setErrors(fields);
+      } else setProblem(problemMessage(error, tc));
     } finally {
       setPending(false);
     }
@@ -74,13 +79,13 @@ export function ResumeForm() {
         </label>
         {Object.entries(errors)
           .filter(([field]) => field !== "paper_size")
-          .map(([field, reason]) => (
+          .map(([field]) => (
             <p key={field} role="alert" className="field-error">
               {field === "identity"
                 ? t("nameRequired")
                 : field === "experiences"
                   ? t("experienceRequired")
-                  : reason}
+                  : t("missingOther")}
             </p>
           ))}
         <Problem message={problem} />

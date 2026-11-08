@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { api, type ResumeReadinessReport } from "@/lib/api";
 
+/** Show profile gaps before generation without blocking on translation warnings. */
 export async function ResumeReadiness({ locale }: { locale: string }) {
   const t = await getTranslations("profile.resume");
   let report: ResumeReadinessReport | null = null;
@@ -28,7 +29,7 @@ export async function ResumeReadiness({ locale }: { locale: string }) {
                       ? t("nameRequired")
                       : field === "experiences"
                         ? t("experienceRequired")
-                        : field}
+                        : t("missingOther")}
                   </li>
                 ))}
               </ul>

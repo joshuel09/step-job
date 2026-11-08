@@ -6,6 +6,7 @@ import { ResumeReadiness } from "@/components/profile/resume-readiness";
 
 export const dynamic = "force-dynamic";
 
+/** Render the localized English resume workflow and its current readiness. */
 export default async function ResumePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
