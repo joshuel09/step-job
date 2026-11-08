@@ -62,7 +62,7 @@ and `X-Snapshot-Id` is returned
 
 US1. FR-001, FR-003.
 
-**Held by** `test_resume_generate.py::TestWhatIsOnThePage` and `::TestWhatComesBackWithIt` — 9 tests.
+**Held by** `test_resume_generate.py::TestWhatIsOnThePage`, `::TestWhatComesBackWithIt` and `::TestWhatIsNotOnThePage::test_the_skills_section_goes_when_the_user_says_so` — 10 tests. The third is the only one that proves the skills section *appears*: `resume_profile` records no skills, on purpose, so that Scenario 13 has an empty section to find absent.
 
 ## Scenario 2 — Newest first
 
@@ -84,7 +84,7 @@ US1-1. FR-002.
 US1-4. FR-004, SC-003. Asserted as an absence across the whole text, not per
 field — an era leaking through one unconverted date is the failure.
 
-**Held by** `test_resume_generate.py::TestDates` — 3 tests.
+**Held by** `test_resume_generate.py::TestDates` — 4 tests. The fourth sets the profile's `interface_locale` to `ja`, which nothing else in the document tests does: the other three run on a profile that is already English, and all of them would pass against a renderer that read the setting and switched calendars for a Japanese user.
 
 ## Scenario 4 — Nothing to say, so no document
 
@@ -272,7 +272,7 @@ FR-017, FR-005 of the generator's determinism. The strongest available check
 that the render path cannot reach a provider: make every provider call fail
 and watch generation succeed anyway.
 
-**Held by** `test_resume_truthfulness.py::TestNoModelCanBeReached`, `tests/unit/test_ai_boundary.py::test_generation_cannot_reach_a_model` and `::test_the_guard_sees_every_way_of_naming_the_boundary` — 13 tests. The unit guard is named explicitly because the parametrised SDK check over `resume/*.py` is *not* the one that fails: it watches for a provider SDK, and `from app.ai import get_provider` is neither.
+**Held by** `test_resume_truthfulness.py::TestNoModelCanBeReached`, `tests/unit/test_ai_boundary.py::test_generation_cannot_reach_a_model` and `::test_the_guard_sees_every_way_of_naming_the_boundary` — 14 tests, one of which generates from a profile with **approved English** while every provider factory raises. That is the scenario's own Given, and the rest of the class runs on a profile with nothing approved — where there is no stored English for a render path to check or refresh. The unit guard is named explicitly because the parametrised SDK check over `resume/*.py` is *not* the one that fails: it watches for a provider SDK, and `from app.ai import get_provider` is neither.
 
 ## Scenario 19 — Deleting an entry takes its English with it
 
@@ -295,4 +295,4 @@ so this test is the foreign key.
 FR-005. Asserted against `Base.metadata` rather than a count of rows, as
 feature 003 established: a count shows only that today's code stores nothing.
 
-**Held by** `test_resume_traceability.py::TestTheDocumentItselfIsNotRetained` — 4 tests.
+**Held by** `test_resume_traceability.py::TestTheDocumentItselfIsNotRetained` — 4 tests, and what they establish is narrower than the *Then* above. No column is `LargeBinary`, no column is named as one that would hold a document, and no snapshot payload contains a PDF raw or base64-encoded. `entry_snapshot.payload` is JSONB and could hold an encoded document under some other key, so what is checked is the storage this feature has, not every storage there could be.

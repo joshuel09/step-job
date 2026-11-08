@@ -153,6 +153,30 @@ class TestDates:
         for era in ERA_NAMES:
             assert era not in document, era
 
+    def test_a_japanese_interface_locale_changes_none_of_it(
+        self, client, auth_headers, session, resume_profile
+    ):
+        """Scenario 3 says *given a profile whose interface locale is
+        Japanese*, and every other test in this class runs on the default
+        profile, whose locale is already `en`. All of them would pass
+        against a renderer that read the setting and switched calendars for
+        a Japanese user, which is the failure FR-004 is about.
+
+        The periods are asserted as exact strings. A document that dropped
+        both roles would satisfy the era check on its own.
+        """
+        from app.career.models import Locale
+
+        resume_profile.interface_locale = Locale.ja
+        session.flush()
+
+        document = _text(_response(client, auth_headers).content)
+
+        assert "Apr 2021 – Present" in document
+        assert "Apr 2013 – Mar 2021" in document
+        for era in ERA_NAMES:
+            assert era not in document, era
+
     def test_no_japanese_date_punctuation_appears_either(self, document):
         """年月日 would be a Japanese date written in Arabic numerals —
         technically era-free and still the wrong document."""

@@ -19,16 +19,21 @@ on the page.
 
 import io
 import re
-from datetime import date
+from datetime import UTC, date, datetime
 
 import pytest
 from pypdf import PdfReader
+from sqlalchemy import select
 
 PATH = "/api/v1/profile/documents/resume"
 
 #: Every module that holds a reference to `get_provider`, the canonical
 #: one included. Checked against the tree rather than trusted, because a
 #: module missing from here is a provider the test below cannot disarm.
+#: The English this profile's one role has approved, for the scenario that
+#: asks what happens when there is some.
+APPROVED_TITLE = "Systems Engineer"
+
 BINDINGS = ("app.ai", "app.translations.drafting", "app.imports.service")
 
 #: The ways a resume writes about a person rather than reporting what they
@@ -190,6 +195,50 @@ class TestNoModelCanBeReached:
         )
         session.flush()
         return profile
+
+    @pytest.fixture
+    def approved_english(self, session, japanese_only):
+        """English the user approved, which is the scenario's own Given.
+
+        The three tests below run on a profile with nothing approved,
+        where there is no stored English for a render path to check,
+        refresh or second-guess. The case the scenario names is the one
+        where there is.
+        """
+        from app.career import models
+        from app.translations.models import EntryTranslation, TranslatableEntry
+
+        entry = session.scalars(
+            select(models.WorkExperience).where(
+                models.WorkExperience.profile_id == japanese_only.id
+            )
+        ).one()
+        session.add(
+            EntryTranslation(
+                profile_id=japanese_only.id,
+                entry_type=TranslatableEntry.work_experience,
+                entry_id=entry.id,
+                field="job_title",
+                language=models.Locale.en,
+                approved_text=APPROVED_TITLE,
+                approved_at=datetime.now(UTC),
+                source_fingerprint="0" * 64,
+            )
+        )
+        session.flush()
+        return entry
+
+    def test_the_approved_english_is_printed_without_asking_for_any(
+        self, client, auth_headers, approved_english, no_provider
+    ):
+        """Scenario 18 as it is written. A document assembled from approved
+        text has no reason to reach a model, and the way to show that is to
+        generate one while every provider factory raises.
+        """
+        document = _text(_generate(client, auth_headers))
+
+        assert APPROVED_TITLE in document
+        assert "システムエンジニア" not in document
 
     def test_a_resume_still_generates(self, client, auth_headers, japanese_only, no_provider):
         document = _text(_generate(client, auth_headers))
