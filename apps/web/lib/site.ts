@@ -21,7 +21,7 @@ export const AVAILABLE = [
 export type AvailableKey = (typeof AVAILABLE)[number]["key"];
 
 /** Specified, not built. Named on the page, never linked. */
-export const PLANNED = ["shokumu", "resume"] as const;
+export const PLANNED = ["shokumu"] as const;
 
 /** The three steps the page explains, in order. */
 export const STEPS = ["capture", "import", "generate"] as const;
@@ -37,6 +37,7 @@ export const PROFILE_LINKS = [
   { href: "/import", label: "importNav" },
   { href: "/review", label: "reviewNav" },
   { href: "/documents/rirekisho", label: "rirekishoNav" },
+  { href: "/documents/resume", label: "resumeNav" },
   { href: "/settings", label: "settings.title" },
 ] as const;
 
