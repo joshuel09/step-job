@@ -38,6 +38,23 @@ def _text(pdf: bytes) -> str:
     return "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(pdf)).pages)
 
 
+def _role(document: str, employer: str) -> tuple[str, str]:
+    """The heading line for one employer, and the period written under it.
+
+    Searching the whole page for a title and a period finds them wherever
+    they are, including on each other's roles — and a resume that gave one
+    employer another's dates would be a document the applicant has to
+    answer for. The renderer writes `title – employer` and then the
+    period on the line below, so the pairing is readable.
+    """
+    lines = [line for line in (raw.strip() for raw in document.splitlines()) if line]
+    rows = [number for number, line in enumerate(lines) if employer in line]
+
+    assert rows, f"{employer} is not on the page"
+    assert rows[0] + 1 < len(lines), f"{employer} has no line under it"
+    return lines[rows[0]], lines[rows[0] + 1]
+
+
 @pytest.fixture
 def document(client, auth_headers, resume_profile):
     return _text(_response(client, auth_headers).content)
@@ -65,15 +82,17 @@ class TestWhatIsOnThePage:
         test that looked only at the top of the page — and the older role
         is the half of someone's history they can least afford to lose.
         """
-        assert "Software Engineer" in document
+        heading, period = _role(document, "Example Corp")
+        assert "Software Engineer" in heading
         # The exact string. An alternative the fixture can never produce
         # only widens what passes — a month off by one would satisfy it.
-        assert "Apr 2021 – Present" in document
+        assert period == "Apr 2021 – Present"
 
         # Recorded in Japanese with no approved English, so it appears as
         # the user wrote it (FR-021).
-        assert "エンジニア" in document
-        assert "Apr 2013 – Mar 2021" in document
+        heading, period = _role(document, "株式会社サンプル")
+        assert "エンジニア" in heading
+        assert period == "Apr 2013 – Mar 2021"
 
     def test_education_appears(self, document):
         assert "Education" in document
