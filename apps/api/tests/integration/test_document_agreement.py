@@ -1,12 +1,21 @@
-"""Quickstart Scenario 8 — the two documents agree (FR-018).
+"""Quickstart Scenario 8, and feature 005's Scenario 15 — the documents agree.
 
-The scenario unique to feature 004, and the one failure an employer would
-find first and nobody else would find at all. A 履歴書 and a 職務経歴書 are
-often sent together. If they disagree about when someone joined a company,
-the reader does not conclude that a date formatter drifted; they conclude
-that the applicant is careless with facts, or worse.
+Feature 004, FR-018: a 履歴書 and a 職務経歴書 are often sent together.
+Feature 005 adds a third reader of the same profile, and the gap it has to
+cross is wider — one document is in Japanese and dated 年月, the other is in
+English and dated Apr 2013.
 
-Nothing compares the two at generation time. They agree because both are
+This is the one failure an employer would find first and nobody else would
+find at all. If two documents from one profile disagree about when someone
+joined a company, the reader does not conclude that a date formatter
+drifted; they conclude that the applicant is careless with facts, or worse.
+
+What may differ is the wording. The Japanese documents print 主任 and the
+resume prints whatever English the user approved for it — that is the
+product working, not a disagreement (R-008), and the comparison is made
+over employers and periods for exactly that reason.
+
+Nothing compares them at generation time. They agree because both are
 assembled from the same entries by the same date and ordering code
 (research.md R-006), and that is the mechanism. This test is what would
 catch that shared code diverging — the day someone changes an era table, a
@@ -15,12 +24,13 @@ wrapping rule or a sort in one renderer and not the other.
 
 import io
 import re
-from datetime import date
+from datetime import date, datetime
 
 import pytest
 from pypdf import PdfReader
 
 RIREKISHO = "/api/v1/profile/documents/rirekisho"
+RESUME = "/api/v1/profile/documents/resume"
 SHOKUMU = "/api/v1/profile/documents/shokumu-keirekisho"
 
 EMPLOYERS = [
@@ -253,3 +263,178 @@ class TestWhatOnlyOneOfThemCarries:
         _, shokumu = _both(client, auth_headers)
         for _, title, _, _ in EMPLOYERS:
             assert re.sub(r"\s+", "", title) in shokumu
+
+
+# --- feature 005: and the English resume agrees with both -------------------
+
+
+def _resume_period(pdf: bytes, employer: str) -> str:
+    """The period under this employer's own entry.
+
+    A resume writes "Title – Employer" and the period on the line beneath,
+    so the period belonging to an employer is the one under that employer's
+    line. Read this way rather than off the document as a whole, because two
+    roles with their periods swapped carry every date somewhere.
+    """
+    lines = _lines(pdf)
+    wanted = _squash(employer)
+    for number, line in enumerate(lines):
+        if _squash(line).endswith(wanted):
+            assert number + 1 < len(lines), f"{employer} has no line under it"
+            return lines[number + 1]
+    raise AssertionError(f"{employer} is not on the resume")
+
+
+def _months(period: str) -> list[tuple[int, int] | None]:
+    """A written period as the year and month it names.
+
+    Compared as dates rather than as strings, which is the whole point of
+    this file: the two documents write the same month in different scripts,
+    and the comparison has to see past that. `None` is an ongoing role,
+    never an unknown date.
+    """
+    out: list[tuple[int, int] | None] = []
+    for part in re.split(r"[–—-]", period):
+        part = part.strip()
+        if not part:
+            continue
+        if part.lower() == "present":
+            out.append(None)
+            continue
+        when = datetime.strptime(part, "%b %Y")
+        out.append((when.year, when.month))
+    return out
+
+
+class TestTheResumeAgreesWithTheRirekisho:
+    """Quickstart Scenario 15 — the third document joins the agreement.
+
+    The same two guarantees as above, across a harder gap: one document is
+    in Japanese and dated 年月, the other is in English and dated Apr 2013.
+    What must match is who the applicant worked for and when — never the
+    wording, which is the product working rather than a disagreement
+    (research.md R-008).
+    """
+
+    def test_every_employer_is_on_both(self, client, auth_headers, shared_profile):
+        rirekisho = _squash(
+            "".join(
+                page.extract_text() or ""
+                for page in PdfReader(io.BytesIO(_pdf(client, auth_headers, RIREKISHO))).pages
+            )
+        )
+        resume = _lines(_pdf(client, auth_headers, RESUME))
+
+        for name, _, _, _ in EMPLOYERS:
+            assert _squash(name) in rirekisho, f"{name} is missing from the 履歴書"
+            assert any(_squash(name) in _squash(line) for line in resume), (
+                f"{name} is missing from the resume"
+            )
+
+    def test_each_employer_keeps_its_own_period(self, client, auth_headers, shared_profile):
+        """The sharpest of these, and the one a reader would catch first:
+        two documents from one profile that disagree about when someone
+        joined a company do not read as a formatting bug."""
+        from app.imports.dates import format_year_month
+
+        rirekisho = _pdf(client, auth_headers, RIREKISHO)
+        resume = _pdf(client, auth_headers, RESUME)
+
+        for name, _, started, ended in EMPLOYERS:
+            recorded = [
+                (started.year, started.month),
+                None if ended is None else (ended.year, ended.month),
+            ]
+            assert _months(_resume_period(resume, name)) == recorded, name
+
+            rows = _rirekisho_dates(rirekisho, name)
+            for when in (started, ended):
+                if when is not None:
+                    assert format_year_month(when, era=False) in rows, f"{name}: {when}"
+
+    def test_a_period_belonging_to_another_employer_is_not_on_this_one(
+        self, client, auth_headers, shared_profile
+    ):
+        """What the assertion above is for. Every date in this profile is on
+        the resume somewhere; only the pairing can be wrong."""
+        resume = _pdf(client, auth_headers, RESUME)
+        first, second = EMPLOYERS[0], EMPLOYERS[1]
+
+        assert (second[2].year, second[2].month) not in _months(_resume_period(resume, first[0]))
+
+    def test_an_ongoing_role_is_open_on_both(self, client, auth_headers, shared_profile):
+        """Each says it in its own convention — 現在に至る in a 履歴書's table
+        and Present at the end of a period — and neither invents an end
+        date to fill the space."""
+        rirekisho = _squash(
+            "".join(
+                page.extract_text() or ""
+                for page in PdfReader(io.BytesIO(_pdf(client, auth_headers, RIREKISHO))).pages
+            )
+        )
+        resume = _pdf(client, auth_headers, RESUME)
+
+        assert "現在に至る" in rirekisho
+        assert _months(_resume_period(resume, EMPLOYERS[2][0]))[-1] is None
+
+
+class TestWhatIsAllowedToDiffer:
+    """And the thing that must not be mistaken for a disagreement.
+
+    An approved English title is the applicant's own rendering of their
+    Japanese one. The two documents then carry different words for the same
+    role, deliberately: a 履歴書 is read in Japanese and a resume is not, and
+    making them say the same string would mean printing one of the two in
+    the wrong language (R-008).
+    """
+
+    @pytest.fixture
+    def approved(self, session, shared_profile):
+        """An English title for the ongoing 主任 role."""
+        from datetime import UTC
+        from datetime import datetime as dt
+
+        from app.career.models import Locale, WorkExperience
+        from app.translations.models import EntryTranslation, TranslatableEntry
+        from sqlalchemy import select
+
+        entry = session.scalars(
+            select(WorkExperience).where(
+                WorkExperience.profile_id == shared_profile.id,
+                WorkExperience.employer_name == "合同会社テスト",
+            )
+        ).one()
+        session.add(
+            EntryTranslation(
+                profile_id=shared_profile.id,
+                entry_type=TranslatableEntry.work_experience,
+                entry_id=entry.id,
+                field="job_title",
+                language=Locale.en,
+                approved_text="Section Chief",
+                approved_at=dt.now(UTC),
+                source_fingerprint="0" * 64,
+            )
+        )
+        session.flush()
+        return entry
+
+    def test_the_resume_carries_the_english_the_user_approved(
+        self, client, auth_headers, shared_profile, approved
+    ):
+        resume = _lines(_pdf(client, auth_headers, RESUME))
+
+        assert any("Section Chief" in line for line in resume)
+        assert not any("主任" in line for line in resume)
+
+    def test_and_the_periods_still_agree(self, client, auth_headers, shared_profile, approved):
+        """The title changed; the facts did not. This is what separates a
+        rendering from a disagreement."""
+        from app.imports.dates import format_year_month
+
+        name, _, started, _ = EMPLOYERS[2]
+        rirekisho = _pdf(client, auth_headers, RIREKISHO)
+        resume = _pdf(client, auth_headers, RESUME)
+
+        assert _months(_resume_period(resume, name))[0] == (started.year, started.month)
+        assert format_year_month(started, era=False) in _rirekisho_dates(rirekisho, name)
