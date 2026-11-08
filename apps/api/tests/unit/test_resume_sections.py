@@ -14,6 +14,7 @@ import ast
 import dataclasses
 import json
 import pathlib
+import textwrap
 import uuid
 from datetime import UTC, date, datetime
 
@@ -486,19 +487,58 @@ class TestTheTableIsNeverNamed:
     def _names(path: pathlib.Path) -> set[str]:
         """Every mention of the model or its table in one module.
 
-        Prose is not a mention: the docstrings in this package explain at
+        Four ways to name it, because the narrow reading of any one of them
+        is a way through. The model by name or by attribute; the import
+        that brings it in, which is a mention before it is ever used; and
+        the table in a string — matched anywhere in one rather than as the
+        whole of it, since `text("select ... from japan_profile ...")` is
+        the form this would actually take.
+
+        Prose is not a mention. The docstrings in this package explain at
         length why `JapanProfile` is absent, and a guard that forbade
-        saying so would be a guard against the explanation.
+        saying so would be a guard against the explanation — so the
+        docstring of a module, class or function is skipped, and
+        `test_prose_about_it_is_not_a_mention` is what keeps that from
+        becoming the hole.
         """
+        tree = ast.parse(path.read_text())
+        prose = {
+            id(node.body[0].value)
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef)
+            and node.body
+            and isinstance(node.body[0], ast.Expr)
+            and isinstance(node.body[0].value, ast.Constant)
+            and isinstance(node.body[0].value.value, str)
+        }
+
         found = set()
-        for node in ast.walk(ast.parse(path.read_text())):
+        for node in ast.walk(tree):
             if isinstance(node, ast.Name) and node.id == "JapanProfile":
                 found.add(node.id)
             elif isinstance(node, ast.Attribute) and node.attr == "JapanProfile":
                 found.add(node.attr)
-            elif isinstance(node, ast.Constant) and node.value == "japan_profile":
-                found.add(node.value)
+            elif isinstance(node, ast.alias) and node.name.split(".")[-1] == "JapanProfile":
+                found.add("JapanProfile")
+            elif (
+                isinstance(node, ast.Constant)
+                and isinstance(node.value, str)
+                and id(node) not in prose
+                and "japan_profile" in node.value.lower()
+            ):
+                found.add("japan_profile")
         return found
+
+    def _written(self, tmp_path: pathlib.Path, source: str) -> set[str]:
+        """What the walk finds in a module written here rather than on disk.
+
+        The three tests below are about the reading, not about the package,
+        and a module under `app/resume/` that existed to be caught would be
+        a module shipped to fail a test.
+        """
+        module = tmp_path / "written.py"
+        module.write_text(textwrap.dedent(source))
+        return self._names(module)
 
     def test_nothing_under_app_resume_names_it(self):
         offenders = {
@@ -520,6 +560,52 @@ class TestTheTableIsNeverNamed:
         nothing under `app/resume/` must report something here."""
         snapshots = self.RESUME.parent / "career" / "snapshots.py"
         assert self._names(snapshots) == {"JapanProfile"}
+
+    def test_an_import_is_a_mention_before_it_is_used(self, tmp_path):
+        """An import on its own, with no use of the name anywhere. It would
+        be flagged as unused today — but the day someone adds the use and
+        the walk only looks at uses, the import was never the warning."""
+        found = self._written(
+            tmp_path,
+            """
+            from app.career.models import JapanProfile
+            """,
+        )
+
+        assert found == {"JapanProfile"}
+
+    def test_the_table_named_inside_a_string_is_a_mention(self, tmp_path):
+        """The form this would really take. A model class is easy to see in
+        review; a table name inside a SQL string is the way a value gets
+        fetched without anything in the module looking like a fetch."""
+        found = self._written(
+            tmp_path,
+            """
+            from sqlalchemy import text
+
+            def leak(session):
+                return session.execute(text("SELECT nationality FROM japan_profile"))
+            """,
+        )
+
+        assert found == {"japan_profile"}
+
+    def test_prose_about_it_is_not_a_mention(self, tmp_path):
+        """And this is what the skipping is for. Every module in the
+        package explains the absence, and naming the table while doing so
+        has to stay allowed or the explanation goes out with the leak."""
+        found = self._written(
+            tmp_path,
+            """
+            \"\"\"Nothing here reads japan_profile, and that is the point.\"\"\"
+
+            def build():
+                \"\"\"Never touches japan_profile.\"\"\"
+                return None
+            """,
+        )
+
+        assert found == set()
 
 
 class TestWhatIsReadFromTheIdentity:

@@ -12,6 +12,7 @@ Japanese was edited — which makes the approval stale, keeps it in use, and
 must leave the record of what was printed exactly as it was (FR-023, R-010).
 """
 
+import re
 import uuid
 from datetime import UTC, date, datetime
 
@@ -26,6 +27,14 @@ PATH = "/api/v1/profile/documents/resume"
 ORIGINAL_TITLE = "システムエンジニア"
 ORIGINAL_DESCRIPTION = "社内システムの開発を担当。"
 APPROVED_TITLE = "Systems Engineer"
+
+#: When the fixture's one role ran, and the period the resume prints for it.
+#: The period is written out rather than formatted from the dates:
+#: `format_month` is what puts it on the page, and asking it what the page
+#: should say would make the document its own oracle.
+STARTED_ON = date(2015, 4, 1)
+ENDED_ON = date(2021, 3, 31)
+PERIOD = "Apr 2015 – Mar 2021"
 
 #: What the user rewrites after the document has gone out.
 EDITED_TITLE = "上級システムエンジニア"
@@ -44,8 +53,8 @@ def sent(session, user_id):
         employer_name="株式会社サンプル",
         employer_name_normalised="サンプル",
         job_title=ORIGINAL_TITLE,
-        started_on=date(2015, 4, 1),
-        ended_on=date(2021, 3, 31),
+        started_on=STARTED_ON,
+        ended_on=ENDED_ON,
         description=ORIGINAL_DESCRIPTION,
         source_language=models.Locale.ja,
     )
@@ -68,6 +77,12 @@ def sent(session, user_id):
     return profile, entry
 
 
+def _squash(value: str) -> str:
+    """Whitespace removed, so a line break the layout chose is not a
+    difference between what was recorded and what was sent."""
+    return re.sub(r"\s+", "", value)
+
+
 def _generate(client, auth_headers) -> uuid.UUID:
     response = client.post(PATH, headers=auth_headers, json={})
     assert response.status_code == 200, response.text
@@ -88,6 +103,78 @@ class TestTheRecordHoldsWhatWasPrinted:
         session.flush()
 
         return snapshots.read(session, profile, snapshot_id)
+
+    def test_the_record_describes_the_document_that_was_sent(
+        self, client, auth_headers, session, sent
+    ):
+        """Before anything is edited, and against the file itself.
+
+        Every other test here reads the record after the profile moved, and
+        what they show is that it did not move with it. None of them shows
+        it ever matched the page: a snapshot describing a document nobody
+        received would satisfy all four. This one holds the rendered half
+        to the bytes that were streamed back.
+
+        The whole page, not each field in it. `in printed` would be
+        satisfied by a record that said `Engineer` where the document said
+        `Systems Engineer`, and by one that described three of the four
+        things on the page — so what the record holds is assembled into the
+        document it claims to describe and the two are compared entire.
+
+        Whitespace is squashed on both sides. A long sentence wraps where
+        the column ends, and a line break the layout chose is not a
+        difference between what was recorded and what was sent.
+        """
+        import io
+
+        from pypdf import PdfReader
+
+        profile, _ = sent
+        response = client.post(PATH, headers=auth_headers, json={})
+        assert response.status_code == 200, response.text
+
+        pages = PdfReader(io.BytesIO(response.content)).pages
+        text = "\n".join(page.extract_text() or "" for page in pages)
+        rendered = snapshots.read(
+            session, profile, uuid.UUID(response.headers["X-Snapshot-Id"])
+        ).payload["rendered"]
+
+        # This profile holds exactly one role, which is what makes the page
+        # below writable in full.
+        assert len(rendered["experiences"]) == 1, rendered["experiences"]
+        item = rendered["experiences"][0]
+
+        # Every value that carries a space inside it, read with its spacing
+        # intact and before anything is squashed. "TaroYamada" and
+        # "SystemsEngineer" describe a document with different words on it,
+        # and the squashed comparison below would call them equal. Both are
+        # short and neither wraps; the description is the only text here
+        # long enough to, and it is Japanese, which has no spaces to lose.
+        for spaced in (rendered["contact"]["full_name"], item["job_title"]):
+            assert spaced in text, spaced
+
+        # The dates are in the record and not on the page in that form, so
+        # the comparison below cannot reach them: a record that misstated
+        # when someone worked somewhere would describe the right-looking
+        # document and still be wrong about their career.
+        assert item["started_on"] == STARTED_ON.isoformat()
+        assert item["ended_on"] == ENDED_ON.isoformat()
+
+        described = "\n".join(
+            [
+                rendered["contact"]["full_name"],
+                "Experience",
+                # The separator written out rather than imported from the
+                # renderer: `JOIN` compared against itself would agree on
+                # an empty string, and a resume whose heading ran the title
+                # into the employer would pass.
+                f"{item['job_title']} – {item['employer']}",
+                PERIOD,
+                item["description"],
+            ]
+        )
+
+        assert _squash(text) == _squash(described)
 
     def test_the_english_that_was_printed_is_still_there(self, after_the_edit):
         """What this one does *not* prove: that the record is frozen. An
