@@ -21,6 +21,12 @@ from pypdf import PdfReader
 PATH = "/api/v1/profile/documents/resume"
 ERA_NAMES = ("令和", "平成", "昭和", "大正", "明治")
 
+#: Scenario 3 forbids the word 年号 as well as the eras themselves. It is
+#: not an era, so it is not in the tuple above — and a document that
+#: labelled a field "年号" would carry no era name at all while being
+#: exactly the document FR-004 is about.
+NOT_IN_AN_ENGLISH_DOCUMENT = (*ERA_NAMES, "年号")
+
 
 def _response(client, auth_headers, **body):
     response = client.post(PATH, headers=auth_headers, json=body)
@@ -30,6 +36,23 @@ def _response(client, auth_headers, **body):
 
 def _text(pdf: bytes) -> str:
     return "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(pdf)).pages)
+
+
+def _role(document: str, employer: str) -> tuple[str, str]:
+    """The heading line for one employer, and the period written under it.
+
+    Searching the whole page for a title and a period finds them wherever
+    they are, including on each other's roles — and a resume that gave one
+    employer another's dates would be a document the applicant has to
+    answer for. The renderer writes `title – employer` and then the
+    period on the line below, so the pairing is readable.
+    """
+    lines = [line for line in (raw.strip() for raw in document.splitlines()) if line]
+    rows = [number for number, line in enumerate(lines) if employer in line]
+
+    assert rows, f"{employer} is not on the page"
+    assert rows[0] + 1 < len(lines), f"{employer} has no line under it"
+    return lines[rows[0]], lines[rows[0] + 1]
 
 
 @pytest.fixture
@@ -54,10 +77,22 @@ class TestWhatIsOnThePage:
         assert document.index("Example Corp") < document.index("株式会社サンプル")
 
     def test_each_role_carries_its_title_and_period(self, document):
-        assert "Software Engineer" in document
+        """Each, not the most recent. A document that kept the current role
+        whole and reduced the earlier one to a company name would satisfy a
+        test that looked only at the top of the page — and the older role
+        is the half of someone's history they can least afford to lose.
+        """
+        heading, period = _role(document, "Example Corp")
+        assert "Software Engineer" in heading
         # The exact string. An alternative the fixture can never produce
         # only widens what passes — a month off by one would satisfy it.
-        assert "Apr 2021 – Present" in document
+        assert period == "Apr 2021 – Present"
+
+        # Recorded in Japanese with no approved English, so it appears as
+        # the user wrote it (FR-021).
+        heading, period = _role(document, "株式会社サンプル")
+        assert "エンジニア" in heading
+        assert period == "Apr 2013 – Mar 2021"
 
     def test_education_appears(self, document):
         assert "Education" in document
@@ -150,8 +185,41 @@ class TestDates:
     def test_no_era_name_appears_anywhere(self, document):
         """FR-004. The profile is Japanese; the document is not, and the
         formatter it uses cannot reach the era table at all (R-006)."""
-        for era in ERA_NAMES:
-            assert era not in document, era
+        for word in NOT_IN_AN_ENGLISH_DOCUMENT:
+            assert word not in document, word
+
+    def test_a_japanese_interface_locale_changes_none_of_it(
+        self, client, auth_headers, session, resume_profile
+    ):
+        """Scenario 3 says *given a profile whose interface locale is
+        Japanese*, and every other test in this class runs on the default
+        profile, whose locale is already `en`. All of them would pass
+        against a renderer that read the setting and switched calendars for
+        a Japanese user, which is the failure FR-004 is about.
+
+        The periods are asserted as exact strings. A document that dropped
+        both roles would satisfy the era check on its own.
+        """
+        from app.career.models import Locale
+
+        resume_profile.interface_locale = Locale.ja
+        session.flush()
+
+        document = _text(_response(client, auth_headers).content)
+
+        # Every date on the page, not only the two periods. A renderer that
+        # read the locale would be unlikely to convert some sections and
+        # not others, but a test that looked at two of four would report
+        # success for the version that did.
+        assert "Apr 2021 – Present" in document
+        assert "Apr 2013 – Mar 2021" in document
+        assert "Apr 2009 – Mar 2013" in document
+        assert "Apr 2019" in document
+
+        for word in NOT_IN_AN_ENGLISH_DOCUMENT:
+            assert word not in document, word
+        assert not re.search(r"\d\s*年", document)
+        assert not re.search(r"\d\s*月", document)
 
     def test_no_japanese_date_punctuation_appears_either(self, document):
         """年月日 would be a Japanese date written in Arabic numerals —
