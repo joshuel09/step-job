@@ -380,9 +380,15 @@ class TestTheResumeAgreesWithTheRirekisho:
         ongoing, *_ = EMPLOYERS[2]
 
         lines = _lines(rirekisho)
-        last = max(number for number, line in enumerate(lines) if _squash(ongoing) in _squash(line))
+        rows = [n for n, line in enumerate(lines) if _squash(ongoing) in _squash(line)]
 
-        assert _squash(lines[last + 1]) == "現在に至る"
+        # Both of these would otherwise be a bare ValueError or IndexError
+        # out of the line below — a failure that says the test broke rather
+        # than that the employer never reached the document.
+        assert rows, f"{ongoing} is not on the 履歴書 at all"
+        assert rows[-1] + 1 < len(lines), f"{ongoing} is the last line, with no row under it"
+
+        assert _squash(lines[rows[-1] + 1]) == "現在に至る"
         assert "退社" not in _rirekisho_dates(rirekisho, ongoing)
         assert _months(_resume_period(resume, ongoing))[-1] is None
 

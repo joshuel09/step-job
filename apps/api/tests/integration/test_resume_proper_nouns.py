@@ -16,8 +16,11 @@ accept.
 
 import io
 import re
+from collections.abc import Iterable
 
 import pytest
+from app.documents.dates import MONTHS
+from app.resume.render import JOIN
 from pypdf import PdfReader
 
 RESUME = "/api/v1/profile/documents/resume"
@@ -37,6 +40,31 @@ def _text(pdf: bytes) -> str:
 
 def _lines(text: str) -> list[str]:
     return [line for line in (raw.strip() for raw in text.splitlines()) if line]
+
+
+#: A month and its year together, as `format_month` writes them, with the
+#: month names taken from the renderer rather than written out again here.
+#:
+#: Together, and never a month on its own. A bare three-letter word is as
+#: likely to be a name nobody supplied as it is to be April — `IPA` is the
+#: English name of 情報処理推進機構, the issuer this file exists to prove
+#: was never invented, and a rule that discarded any three letters followed
+#: by a space would discard the leak along with the date.
+DATE = re.compile(rf"(?:{'|'.join(MONTHS)})\s+\d{{4}}")
+
+
+def _unaccounted(line: str, names: Iterable[str]) -> str:
+    """What is left of a line once the names that belong on it are removed.
+
+    A date and the separators the renderer puts between fields are the
+    document speaking. Everything else is text nobody supplied, and on a
+    line of proper nouns that means something was invented.
+    """
+    remainder = line
+    for name in names:
+        remainder = remainder.replace(name, "")
+    remainder = DATE.sub("", remainder)
+    return re.sub(r"[–—\-,.()\s]", "", remainder)
 
 
 @pytest.fixture
@@ -136,13 +164,27 @@ class TestWhatThePageCarries:
             (ISSUER, {CERTIFICATION}),
         ):
             line = next(line for line in _lines(document) if recorded in line)
-            remainder = line.replace(recorded, "")
-            for permitted in allowed:
-                remainder = remainder.replace(permitted, "")
-            # Dates and the en dash the renderer puts between fields are
-            # the document speaking, not a name.
-            remainder = re.sub(r"[0-9]|[A-Za-z]{3}\s|[–—\-,.()\s]", "", remainder)
+            remainder = _unaccounted(line, (recorded, *allowed))
             assert remainder == "", f"{recorded} shares its line with {remainder!r}"
+
+    def test_the_oracle_reports_a_name_nobody_supplied(self):
+        """What the assertion above is worth, asked of the oracle directly.
+
+        `IPA` is the English name of 情報処理推進機構 and no one gave it to
+        us. A reading of the line that threw those three letters away as a
+        month would let exactly the invention this file is about through,
+        and would do it silently.
+        """
+        invented = f"{CERTIFICATION}{JOIN}{ISSUER} IPA{JOIN}Apr 2014"
+
+        assert _unaccounted(invented, (CERTIFICATION, ISSUER)) == "IPA"
+
+    def test_the_oracle_passes_the_line_the_renderer_writes(self):
+        """The other half: a real line has to come back empty, or the test
+        above is satisfied by an oracle that reports everything."""
+        written = f"{CERTIFICATION}{JOIN}{ISSUER}{JOIN}Apr 2014"
+
+        assert _unaccounted(written, (CERTIFICATION, ISSUER)) == ""
 
 
 class TestWhatTheReportSays:

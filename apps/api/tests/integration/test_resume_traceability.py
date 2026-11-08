@@ -12,6 +12,7 @@ Japanese was edited — which makes the approval stale, keeps it in use, and
 must leave the record of what was printed exactly as it was (FR-023, R-010).
 """
 
+import re
 import uuid
 from datetime import UTC, date, datetime
 
@@ -88,6 +89,46 @@ class TestTheRecordHoldsWhatWasPrinted:
         session.flush()
 
         return snapshots.read(session, profile, snapshot_id)
+
+    def test_the_record_describes_the_document_that_was_sent(
+        self, client, auth_headers, session, sent
+    ):
+        """Before anything is edited, and against the file itself.
+
+        Every other test here reads the record after the profile moved, and
+        what they show is that it did not move with it. None of them shows
+        it ever matched the page: a snapshot describing a document nobody
+        received would satisfy all four. This one holds the rendered half
+        to the bytes that were streamed back.
+
+        Whitespace is squashed on both sides. A long sentence wraps where
+        the column ends, and a line break the layout chose is not a
+        difference between what was recorded and what was sent.
+        """
+        import io
+
+        from pypdf import PdfReader
+
+        profile, _ = sent
+        response = client.post(PATH, headers=auth_headers, json={})
+        assert response.status_code == 200, response.text
+
+        pages = PdfReader(io.BytesIO(response.content)).pages
+        printed = re.sub(r"\s+", "", "\n".join(page.extract_text() or "" for page in pages))
+        rendered = snapshots.read(
+            session, profile, uuid.UUID(response.headers["X-Snapshot-Id"])
+        ).payload["rendered"]
+
+        def squashed(value: str) -> str:
+            return re.sub(r"\s+", "", value)
+
+        assert squashed(rendered["contact"]["full_name"]) in printed
+        # An empty list satisfies the loop below without reading anything,
+        # and this profile has exactly one role.
+        assert len(rendered["experiences"]) == 1, rendered["experiences"]
+        for item in rendered["experiences"]:
+            for field in ("employer", "job_title", "description"):
+                assert squashed(item[field]) in printed, field
 
     def test_the_english_that_was_printed_is_still_there(self, after_the_edit):
         """What this one does *not* prove: that the record is frozen. An
