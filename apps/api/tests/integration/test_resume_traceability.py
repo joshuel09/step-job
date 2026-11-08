@@ -29,10 +29,12 @@ ORIGINAL_TITLE = "システムエンジニア"
 ORIGINAL_DESCRIPTION = "社内システムの開発を担当。"
 APPROVED_TITLE = "Systems Engineer"
 
-#: The period the fixture's one role runs over, as the resume prints it.
-#: Written out rather than formatted from the dates: `format_month` is what
-#: puts this on the page, and asking it what the page should say would make
-#: the document its own oracle.
+#: When the fixture's one role ran, and the period the resume prints for it.
+#: The period is written out rather than formatted from the dates:
+#: `format_month` is what puts it on the page, and asking it what the page
+#: should say would make the document its own oracle.
+STARTED_ON = date(2015, 4, 1)
+ENDED_ON = date(2021, 3, 31)
 PERIOD = "Apr 2015 – Mar 2021"
 
 #: What the user rewrites after the document has gone out.
@@ -52,8 +54,8 @@ def sent(session, user_id):
         employer_name="株式会社サンプル",
         employer_name_normalised="サンプル",
         job_title=ORIGINAL_TITLE,
-        started_on=date(2015, 4, 1),
-        ended_on=date(2021, 3, 31),
+        started_on=STARTED_ON,
+        ended_on=ENDED_ON,
         description=ORIGINAL_DESCRIPTION,
         source_language=models.Locale.ja,
     )
@@ -139,6 +141,14 @@ class TestTheRecordHoldsWhatWasPrinted:
         # below writable in full.
         assert len(rendered["experiences"]) == 1, rendered["experiences"]
         item = rendered["experiences"][0]
+
+        # The dates are in the record and not on the page in that form, so
+        # the comparison below cannot reach them: a record that misstated
+        # when someone worked somewhere would describe the right-looking
+        # document and still be wrong about their career.
+        assert item["started_on"] == STARTED_ON.isoformat()
+        assert item["ended_on"] == ENDED_ON.isoformat()
+
         described = "\n".join(
             [
                 rendered["contact"]["full_name"],
