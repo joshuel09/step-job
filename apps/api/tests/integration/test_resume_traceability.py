@@ -139,17 +139,19 @@ class TestTheRecordHoldsWhatWasPrinted:
             session, profile, uuid.UUID(response.headers["X-Snapshot-Id"])
         ).payload["rendered"]
 
-        # Read with its spacing intact, and before anything is squashed. A
-        # record holding "TaroYamada" describes a document with a different
-        # name on it, and squashing both sides would call them equal. The
-        # name is short and sits on a line of its own, so it is the one
-        # part of the page that needs no tolerance for wrapping.
-        assert rendered["contact"]["full_name"] in text
-
         # This profile holds exactly one role, which is what makes the page
         # below writable in full.
         assert len(rendered["experiences"]) == 1, rendered["experiences"]
         item = rendered["experiences"][0]
+
+        # Every value that carries a space inside it, read with its spacing
+        # intact and before anything is squashed. "TaroYamada" and
+        # "SystemsEngineer" describe a document with different words on it,
+        # and the squashed comparison below would call them equal. Both are
+        # short and neither wraps; the description is the only text here
+        # long enough to, and it is Japanese, which has no spaces to lose.
+        for spaced in (rendered["contact"]["full_name"], item["job_title"]):
+            assert spaced in text, spaced
 
         # The dates are in the record and not on the page in that form, so
         # the comparison below cannot reach them: a record that misstated
