@@ -1,4 +1,4 @@
-import type { Components002, Components003, components } from "@step-job/api-client";
+import type { Components002, Components003, Components005, components } from "@step-job/api-client";
 
 import { authorization, currentUserId } from "./dev-session";
 
@@ -21,6 +21,8 @@ export type CareerImport = ImportSchemas["ImportDetail"];
 export type DateConvention = DocumentSchemas["DateConvention"];
 export type PaperSize = DocumentSchemas["PaperSize"];
 export type ReadinessReport = DocumentSchemas["ReadinessReport"];
+export type ResumeRequest = Components005["schemas"]["ResumeRequest"];
+export type ResumeReadinessReport = Components005["schemas"]["ResumeReadinessReport"];
 export type EnglishEntry = DocumentSchemas["EnglishEntry"];
 
 /** A generated document, with what the interface needs to say about it. */
@@ -183,33 +185,12 @@ export const api = {
   generateRirekisho: async (
     options: { date_convention?: DateConvention; paper_size?: PaperSize } = {},
   ): Promise<GeneratedDocument> => {
-    const response = await fetch(`${BASE}/profile/documents/rirekisho`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...authorization(await currentUserId()) },
-      body: JSON.stringify(options),
-      credentials: "include",
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      if (response.status === 422 && body?.failures) {
-        throw new ValidationError(body.failures, body.message);
-      }
-      throw new ApiError(
-        response.status,
-        body?.code ?? "error",
-        body?.message ?? response.statusText,
-      );
-    }
-
-    return {
-      blob: await response.blob(),
-      filename: filenameFrom(response.headers.get("Content-Disposition")),
-      pages: Number(response.headers.get("X-Document-Pages") ?? 1),
-      snapshotId: response.headers.get("X-Snapshot-Id") ?? "",
-    };
+    return generateDocument("rirekisho", options);
   },
+
+  generateResume: (options: ResumeRequest): Promise<GeneratedDocument> =>
+    generateDocument("resume", options),
+  resumeReadiness: () => request<ResumeReadinessReport>("/profile/documents/resume/readiness"),
 
   /**
    * What a 履歴書 would lack, asked before it is generated rather than after.
@@ -233,13 +214,49 @@ export const api = {
   restoreProfile: () => request<Profile>("/profile/restore", { method: "POST" }),
 };
 
+/** Binary document responses share authentication, validation and metadata. */
+async function generateDocument(
+  document: "rirekisho" | "resume",
+  options: unknown,
+): Promise<GeneratedDocument> {
+  const response = await fetch(`${BASE}/profile/documents/${document}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authorization(await currentUserId()),
+    },
+    body: JSON.stringify(options),
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    if (response.status === 422 && body?.failures) {
+      throw new ValidationError(body.failures, body.message);
+    }
+    throw new ApiError(
+      response.status,
+      body?.code ?? "error",
+      body?.message ?? response.statusText,
+    );
+  }
+
+  return {
+    blob: await response.blob(),
+    filename: filenameFrom(response.headers.get("Content-Disposition"), `${document}.pdf`),
+    pages: Number(response.headers.get("X-Document-Pages") ?? 1),
+    snapshotId: response.headers.get("X-Snapshot-Id") ?? "",
+  };
+}
+
 /**
  * The name the server gave the document, falling back to a sensible one.
  *
  * The header is only readable because the API exposes it to this origin; if
  * that ever stops being true the download still works, under the default name.
  */
-function filenameFrom(disposition: string | null): string {
+function filenameFrom(disposition: string | null, fallback: string): string {
   const match = disposition?.match(/filename="([^"]+)"/);
-  return match?.[1] ?? "rirekisho.pdf";
+  return match?.[1] ?? fallback;
 }

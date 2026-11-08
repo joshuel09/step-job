@@ -136,7 +136,7 @@ outside this feature*. T021–T025 do not.
 - [x] T035 [US1] Create `apps/api/app/resume/router.py` serving `POST /profile/documents/resume`, streaming the PDF with `Content-Disposition`, `X-Document-Pages` and `X-Snapshot-Id`, and register it in `apps/api/app/main.py`
 - [x] T036 [P] [US1] Contract tests in `apps/api/tests/contract/test_resume.py`, including that the three documented response headers reach a cross-origin caller — they are useless to a browser otherwise
 - [x] T037 [US1] Remove `/profile/documents/resume` from `DEFERRED` in `apps/api/tests/contract/test_contracts.py`
-- [ ] T038 [P] [US1] Create `apps/web/app/[locale]/profile/documents/resume/page.tsx` with generate and preview, using the generated client types
+- [x] T038 [P] [US1] Create `apps/web/app/[locale]/profile/documents/resume/page.tsx` with generate and preview, using the generated client types
 
 **Checkpoint**: a user with an English profile has a complete, sendable resume.
 

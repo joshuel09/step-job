@@ -37,7 +37,7 @@ function constant(name: string): string[] {
   const block = readiness.match(new RegExp(`^${name}\\s*=\\s*\\(([^)]*)\\)`, "m"));
   if (!block) throw new Error(`${name} is no longer a tuple literal in readiness.py`);
 
-  const values = [...block[1].matchAll(/"([^"]+)"/g)].map(([, value]) => value);
+  const values = [...block[1]!.matchAll(/"([^"]+)"/g)].map(([, value]) => value!);
   if (values.length === 0) throw new Error(`${name} parsed to nothing`);
   return values;
 }

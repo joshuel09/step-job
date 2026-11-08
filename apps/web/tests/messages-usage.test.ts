@@ -42,7 +42,7 @@ function bindings(source: string): Map<string, string> {
   const found = new Map<string, string>();
   const pattern =
     /(?:const|let)\s+(\w+)\s*=\s*(?:await\s+)?(?:useTranslations|getTranslations)\(\s*"([^"]+)"\s*\)/g;
-  for (const [, name, namespace] of source.matchAll(pattern)) found.set(name, namespace);
+  for (const [, name, namespace] of source.matchAll(pattern)) found.set(name!, namespace!);
   return found;
 }
 
@@ -73,7 +73,7 @@ describe("every translated string the code asks for", () => {
       if (translators.size === 0) return [];
 
       return [...source.matchAll(/\b(\w+)\(\s*"([^"${}]+)"\s*[,)]/g)].flatMap(([, name, key]) => {
-        const namespace = translators.get(name);
+        const namespace = translators.get(name!);
         return namespace ? [{ file, path: `${namespace}.${key}` }] : [];
       });
     })

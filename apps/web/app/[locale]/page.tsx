@@ -19,8 +19,7 @@ import { AVAILABLE, PLANNED, PROFILE_LINKS, STEPS } from "@/lib/site";
  * paper, line and one warm orange, so the page and the illustration are
  * plainly the same thing.
  *
- * It names only what the product does today. 職務経歴書 and the English
- * resume are specified and unbuilt, so they appear as work in progress
+ * It names only what the product does today. 職務経歴書 is specified and unbuilt, so it appears as work in progress
  * rather than as links — a landing page that offers a document the product
  * cannot produce is the same kind of untrue claim Principle IV forbids a
  * generated document.

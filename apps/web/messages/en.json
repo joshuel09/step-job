@@ -382,6 +382,41 @@
         }
       }
     },
-    "rirekishoNav": "履歴書"
+    "rirekishoNav": "履歴書",
+    "resume": {
+      "pageTitle": "English resume",
+      "pageSubtitle": "A US-style resume built from your career profile.",
+      "back": "Back to profile",
+      "title": "Generate your English resume",
+      "explanation": "Experience appears newest first with Western dates. Approved English is reused; other text appears as recorded. Nothing is translated during generation.",
+      "privacyNote": "Your photograph, date of birth, address and Japan-specific personal details are excluded, even if you chose to include them in Japanese documents.",
+      "paperSize": "Paper",
+      "letter": "US Letter",
+      "a4": "A4",
+      "includeSkills": "Include skills",
+      "generate": "Generate",
+      "generating": "Generating…",
+      "download": "Download PDF",
+      "preview": "Open preview in a new tab",
+      "pageCount": "{count, plural, one {# page} other {# pages}}",
+      "notStored": "The PDF is not kept. Download it now, or generate it again when needed.",
+      "snapshot": "Record of the profile used: {id}",
+      "nameRequired": "Add your name in Latin letters to your profile.",
+      "experienceRequired": "Add work experience to your profile.",
+      "readinessTitle": "Before you generate",
+      "unchecked": "We could not check your profile. You can still try generating your resume.",
+      "missingTitle": "Add these before generating",
+      "needsEnglishTitle": "These entries will appear as recorded",
+      "needsEnglishNote": "They have no approved English version. You can still generate; Japanese text stays Japanese.",
+      "namesTitle": "These names will appear in Japanese",
+      "namesNote": "Supply official English names in your profile if needed. Names are never guessed or translated automatically.",
+      "staleTitle": "Check these approved English versions",
+      "staleNote": "The source has changed since approval. Your approved words are kept and will still be used.",
+      "currentSource": "Current source",
+      "approvedEnglish": "Approved English",
+      "ready": "Your profile is ready to generate.",
+      "fixProfile": "Go to your profile"
+    },
+    "resumeNav": "English resume"
   }
 }
