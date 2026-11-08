@@ -20,7 +20,6 @@ from collections.abc import Iterable
 
 import pytest
 from app.documents.dates import MONTHS
-from app.resume.render import JOIN
 from pypdf import PdfReader
 
 RESUME = "/api/v1/profile/documents/resume"
@@ -175,14 +174,14 @@ class TestWhatThePageCarries:
         month would let exactly the invention this file is about through,
         and would do it silently.
         """
-        invented = f"{CERTIFICATION}{JOIN}{ISSUER} IPA{JOIN}Apr 2014"
+        invented = f"{CERTIFICATION} – {ISSUER} IPA – Apr 2014"
 
         assert _unaccounted(invented, (CERTIFICATION, ISSUER)) == "IPA"
 
     def test_the_oracle_passes_the_line_the_renderer_writes(self):
         """The other half: a real line has to come back empty, or the test
         above is satisfied by an oracle that reports everything."""
-        written = f"{CERTIFICATION}{JOIN}{ISSUER}{JOIN}Apr 2014"
+        written = f"{CERTIFICATION} – {ISSUER} – Apr 2014"
 
         assert _unaccounted(written, (CERTIFICATION, ISSUER)) == ""
 

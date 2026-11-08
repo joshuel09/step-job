@@ -19,7 +19,6 @@ from datetime import UTC, date, datetime
 import pytest
 from app.career import snapshots
 from app.career.models import Locale
-from app.resume.render import JOIN
 from app.translations.models import EntryTranslation, TranslatableEntry
 from sqlalchemy import select
 
@@ -78,6 +77,12 @@ def sent(session, user_id):
     return profile, entry
 
 
+def _squash(value: str) -> str:
+    """Whitespace removed, so a line break the layout chose is not a
+    difference between what was recorded and what was sent."""
+    return re.sub(r"\s+", "", value)
+
+
 def _generate(client, auth_headers) -> uuid.UUID:
     response = client.post(PATH, headers=auth_headers, json={})
     assert response.status_code == 200, response.text
@@ -129,13 +134,17 @@ class TestTheRecordHoldsWhatWasPrinted:
         assert response.status_code == 200, response.text
 
         pages = PdfReader(io.BytesIO(response.content)).pages
-        printed = re.sub(r"\s+", "", "\n".join(page.extract_text() or "" for page in pages))
+        text = "\n".join(page.extract_text() or "" for page in pages)
         rendered = snapshots.read(
             session, profile, uuid.UUID(response.headers["X-Snapshot-Id"])
         ).payload["rendered"]
 
-        def squashed(value: str) -> str:
-            return re.sub(r"\s+", "", value)
+        # Read with its spacing intact, and before anything is squashed. A
+        # record holding "TaroYamada" describes a document with a different
+        # name on it, and squashing both sides would call them equal. The
+        # name is short and sits on a line of its own, so it is the one
+        # part of the page that needs no tolerance for wrapping.
+        assert rendered["contact"]["full_name"] in text
 
         # This profile holds exactly one role, which is what makes the page
         # below writable in full.
@@ -153,13 +162,17 @@ class TestTheRecordHoldsWhatWasPrinted:
             [
                 rendered["contact"]["full_name"],
                 "Experience",
-                f"{item['job_title']}{JOIN}{item['employer']}",
+                # The separator written out rather than imported from the
+                # renderer: `JOIN` compared against itself would agree on
+                # an empty string, and a resume whose heading ran the title
+                # into the employer would pass.
+                f"{item['job_title']} – {item['employer']}",
                 PERIOD,
                 item["description"],
             ]
         )
 
-        assert printed == squashed(described)
+        assert _squash(text) == _squash(described)
 
     def test_the_english_that_was_printed_is_still_there(self, after_the_edit):
         """What this one does *not* prove: that the record is frozen. An
