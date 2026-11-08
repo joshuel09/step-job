@@ -221,6 +221,12 @@ def build_content(
     approved = Approved(translations, language=language)
 
     return ResumeContent(
+        # Three fields, and FR-009 is why there are three. `Identity` also
+        # holds a date of birth, an address, a Japanese name and a furigana
+        # reading, all of which a 履歴書 prints and none of which belongs on
+        # a US resume. Adding a fourth line here is the whole of how that
+        # could change, which is the point of reading them one by one rather
+        # than handing the row over.
         contact=Contact(
             full_name=identity.full_name_latin,
             email=identity.email,

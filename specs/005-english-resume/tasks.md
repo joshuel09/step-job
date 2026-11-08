@@ -191,9 +191,9 @@ generate, and confirm none appears.
 Most of this story is already structural after T027 — the dataclasses have
 nowhere to put these fields. These tasks prove it and keep it true.
 
-- [ ] T055 [P] [US3] Integration test for quickstart Scenario 12 in `apps/api/tests/integration/test_resume_excludes_personal.py` — populate the date of birth, the full address and **every `JapanProfile` field with every disclosure flag set to `true`**, generate, and assert from extracted text that none of them, no age derived from the date of birth, and no 写真貼付欄 appears
-- [ ] T056 [P] [US3] Add a test to `apps/api/tests/unit/test_resume_sections.py` asserting the projection issues no query against `japan_profile`, so the exclusion is by never fetching rather than by filtering after
-- [ ] T057 [US3] Confirm `apps/api/app/resume/sections.py` reads only `full_name_latin`, `email` and `phone` from `Identity`, and add a comment naming FR-009 beside the field list so a later addition is a visible diff
+- [x] T055 [P] [US3] Integration test for quickstart Scenario 12 in `apps/api/tests/integration/test_resume_excludes_personal.py` — populate the date of birth, the full address and **every `JapanProfile` field with every disclosure flag set to `true`**, generate, and assert from extracted text that none of them, no age derived from the date of birth, and no 写真貼付欄 appears
+- [x] T056 [P] [US3] Assert the exclusion is by never fetching rather than by filtering after, in two halves: a static guard in `apps/api/tests/unit/test_resume_sections.py` that nothing under `app/resume/` names `JapanProfile` or `japan_profile`, and a capture of the SQL a real generation issues in `apps/api/tests/integration/test_resume_excludes_personal.py`. **Generating does name the table once**, in snapshot capture's by-id lookup over every capturable model — a probe this document's entry ids cannot match, asserted as such rather than excused in a comment
+- [x] T057 [US3] Confirm `apps/api/app/resume/sections.py` reads only `full_name_latin`, `email` and `phone` from `Identity`, and add a comment naming FR-009 beside the field list so a later addition is a visible diff
 
 ---
 

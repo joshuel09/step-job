@@ -10,7 +10,10 @@ list of three would keep passing on the day someone adds a fourth column to
 that table, which is the day it would need to fail.
 """
 
+import ast
 import dataclasses
+import json
+import pathlib
 import uuid
 from datetime import UTC, date, datetime
 
@@ -460,3 +463,109 @@ class TestWhatTheRendererCannotBeGiven:
 
         parameters = set(inspect.signature(build_content).parameters)
         assert "japan" not in parameters and "japan_profile" not in parameters
+
+
+class TestTheTableIsNeverNamed:
+    """The exclusion is by never fetching, not by filtering after (FR-010).
+
+    `TestWhatTheRendererCannotBeGiven` covers the shape the renderer is
+    handed. This covers everything upstream of it: a `select(JapanProfile)`
+    in `service.py` would leave the row loaded in the session, where the
+    next log line, debug repr or convenience helper can reach it — and the
+    dataclass guard would still pass, because the leak would never have to
+    go through the dataclasses at all.
+
+    Static, deliberately. The integration suite captures the SQL a real
+    generation issues, which is the stronger check and the slower one; this
+    one is what fails in the editor, naming the file.
+    """
+
+    RESUME = pathlib.Path(__file__).resolve().parents[2] / "app" / "resume"
+
+    @staticmethod
+    def _names(path: pathlib.Path) -> set[str]:
+        """Every mention of the model or its table in one module.
+
+        Prose is not a mention: the docstrings in this package explain at
+        length why `JapanProfile` is absent, and a guard that forbade
+        saying so would be a guard against the explanation.
+        """
+        found = set()
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Name) and node.id == "JapanProfile":
+                found.add(node.id)
+            elif isinstance(node, ast.Attribute) and node.attr == "JapanProfile":
+                found.add(node.attr)
+            elif isinstance(node, ast.Constant) and node.value == "japan_profile":
+                found.add(node.value)
+        return found
+
+    def test_nothing_under_app_resume_names_it(self):
+        offenders = {
+            path.relative_to(self.RESUME.parent).as_posix(): sorted(named)
+            for path in sorted(self.RESUME.rglob("*.py"))
+            if (named := self._names(path))
+        }
+        assert not offenders, offenders
+
+    def test_there_were_modules_to_read(self):
+        """An empty directory, a renamed package or a changed layout would
+        satisfy the test above without reading a line."""
+        modules = {path.name for path in self.RESUME.rglob("*.py")}
+        assert {"sections.py", "service.py", "render.py", "readiness.py"} <= modules
+
+    def test_the_walk_finds_the_name_where_it_belongs(self):
+        """The positive control. `snapshots.py` names the model on purpose —
+        a 履歴書 captures disclosed fields from it — so the walk that reports
+        nothing under `app/resume/` must report something here."""
+        snapshots = self.RESUME.parent / "career" / "snapshots.py"
+        assert self._names(snapshots) == {"JapanProfile"}
+
+
+class TestWhatIsReadFromTheIdentity:
+    """Three fields out of a row that holds seven (FR-009).
+
+    The row is handed to the projection whole — there is no narrowed query
+    upstream — so what is read from it is decided here, and that is the
+    thing worth a test. Asserted against the projection serialised, not
+    against the dataclass fields: a value smuggled into a name or a phone
+    number would pass a check on field names.
+    """
+
+    IDENTITY = {
+        "full_name_latin": "Taro Yamada",
+        "email": "taro@example.com",
+        "phone": "090-0000-0000",
+        "full_name_japanese": "山田太郎",
+        "furigana": "ヤマダタロウ",
+        "date_of_birth": date(1990, 5, 15),
+        "address": "東京都千代田区1-1-1",
+    }
+
+    @pytest.fixture
+    def written(self):
+        content = build_content(
+            _identity(**self.IDENTITY),
+            experiences=[_experience()],
+        )
+        return json.dumps(dataclasses.asdict(content), ensure_ascii=False, default=str)
+
+    def test_the_three_it_reads_are_there(self, written):
+        """The positive control: a projection that dropped the contact
+        details entirely would satisfy every absence below."""
+        for value in ("Taro Yamada", "taro@example.com", "090-0000-0000"):
+            assert value in written
+
+    @pytest.mark.parametrize(
+        "field", ["full_name_japanese", "furigana", "date_of_birth", "address"]
+    )
+    def test_the_four_it_does_not_read_are_not(self, written, field):
+        assert str(self.IDENTITY[field]) not in written
+
+    def test_the_identity_row_offered_more_than_was_taken(self):
+        """If `Identity` ever stopped carrying these, the test above would
+        go on passing while guarding nothing."""
+        from app.career.models import Identity
+
+        columns = {column.name for column in Identity.__table__.columns}
+        assert {"date_of_birth", "address", "full_name_japanese", "furigana"} <= columns
