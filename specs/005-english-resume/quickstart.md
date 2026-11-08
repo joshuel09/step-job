@@ -62,7 +62,7 @@ and `X-Snapshot-Id` is returned
 
 US1. FR-001, FR-003.
 
-**Held by** `test_resume_generate.py::TestWhatIsOnThePage`, `::TestWhatComesBackWithIt` and `::TestWhatIsNotOnThePage::test_the_skills_section_goes_when_the_user_says_so` — 10 tests. The third is the only one that proves the skills section *appears*: `resume_profile` records no skills, on purpose, so that Scenario 13 has an empty section to find absent.
+**Held by** `test_resume_generate.py::TestWhatIsOnThePage`, `::TestWhatComesBackWithIt` and `::TestWhatIsNotOnThePage::test_the_skills_section_goes_when_the_user_says_so` — 10 tests. The third is the only one that proves the skills section *appears*: `resume_profile` deliberately records no skills, so that Scenario 13 has an empty section to find absent. Both roles are checked for their own title and period — a document that kept the current role whole and reduced the earlier one to a company name would otherwise pass.
 
 ## Scenario 2 — Newest first
 
@@ -84,7 +84,7 @@ US1-1. FR-002.
 US1-4. FR-004, SC-003. Asserted as an absence across the whole text, not per
 field — an era leaking through one unconverted date is the failure.
 
-**Held by** `test_resume_generate.py::TestDates` — 4 tests. The fourth sets the profile's `interface_locale` to `ja`, which nothing else in the document tests does: the other three run on a profile that is already English, and all of them would pass against a renderer that read the setting and switched calendars for a Japanese user.
+**Held by** `test_resume_generate.py::TestDates` — 4 tests. The fourth sets the profile's `interface_locale` to `ja`, which nothing else in the document tests does: the other three run on a profile that is already English, and all of them would pass against a renderer that read the setting and switched calendars for a Japanese user. It asserts every date on the page — both periods, the degree and the certification — and rejects 年 and 月 beside a number as well as the word 年号, which the scenario forbids and which is not an era name.
 
 ## Scenario 4 — Nothing to say, so no document
 
