@@ -26,6 +26,11 @@ from pypdf import PdfReader
 
 PATH = "/api/v1/profile/documents/resume"
 
+#: Every module that holds a reference to `get_provider`, the canonical
+#: one included. Checked against the tree rather than trusted, because a
+#: module missing from here is a provider the test below cannot disarm.
+BINDINGS = ("app.ai", "app.translations.drafting", "app.imports.service")
+
 #: The ways a resume writes about a person rather than reporting what they
 #: did. None of these is a word the profile below contains, so any of them
 #: appearing was put there by something other than the user.
@@ -156,12 +161,8 @@ class TestNoModelCanBeReached:
         def raise_instead():
             raise TestNoModelCanBeReached.Asked("the render path asked for a provider")
 
-        for target in (
-            "app.ai.get_provider",
-            "app.translations.drafting.get_provider",
-            "app.imports.service.get_provider",
-        ):
-            monkeypatch.setattr(target, raise_instead)
+        for module in BINDINGS:
+            monkeypatch.setattr(f"{module}.get_provider", raise_instead)
 
     @pytest.fixture
     def japanese_only(self, session, user_id):
@@ -215,11 +216,39 @@ class TestNoModelCanBeReached:
         assert response.json()["can_generate"] is True
         assert response.json()["needs_english"]
 
-    def test_the_trap_is_armed(self, client, auth_headers, japanese_only, no_provider):
+    def test_the_trap_is_armed(self, no_provider):
         """The three tests above assert that nothing raised, which is what
         a monkeypatch that silently failed to apply would also produce.
-        This asks for a provider the way the drafting path does."""
-        from app.ai import get_provider
 
-        with pytest.raises(TestNoModelCanBeReached.Asked):
-            get_provider()
+        Every binding, not only the canonical one. A fixture that patched
+        `app.ai` alone would satisfy a check that asked `app.ai` — and the
+        path this scenario is about is a renderer reaching one of the
+        other two.
+        """
+        import importlib
+
+        for module in BINDINGS:
+            with pytest.raises(TestNoModelCanBeReached.Asked):
+                importlib.import_module(module).get_provider()
+
+    def test_the_list_of_bindings_is_the_whole_list(self):
+        """And the list is not maintained by hand.
+
+        A module added tomorrow with `from app.ai import get_provider`
+        binds the function into its own namespace, where the fixture above
+        would not reach it — and nothing would fail, which is the way a
+        guard stops guarding without anyone noticing.
+        """
+        import ast
+        import pathlib
+
+        app = pathlib.Path(__file__).resolve().parents[2] / "app"
+        binding = set()
+        for path in app.rglob("*.py"):
+            for node in ast.walk(ast.parse(path.read_text())):
+                if isinstance(node, ast.ImportFrom) and any(
+                    alias.name == "get_provider" for alias in node.names
+                ):
+                    binding.add(".".join(path.relative_to(app.parent).with_suffix("").parts))
+
+        assert binding <= set(BINDINGS), sorted(binding - set(BINDINGS))

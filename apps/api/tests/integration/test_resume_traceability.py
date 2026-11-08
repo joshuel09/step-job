@@ -27,6 +27,10 @@ ORIGINAL_TITLE = "システムエンジニア"
 ORIGINAL_DESCRIPTION = "社内システムの開発を担当。"
 APPROVED_TITLE = "Systems Engineer"
 
+#: What the user rewrites after the document has gone out.
+EDITED_TITLE = "上級システムエンジニア"
+EDITED_DESCRIPTION = "部門全体の基盤を設計。"
+
 
 @pytest.fixture
 def sent(session, user_id):
@@ -79,13 +83,18 @@ class TestTheRecordHoldsWhatWasPrinted:
         profile, entry = sent
         snapshot_id = _generate(client, auth_headers)
 
-        entry.job_title = "上級システムエンジニア"
-        entry.description = "部門全体の基盤を設計。"
+        entry.job_title = EDITED_TITLE
+        entry.description = EDITED_DESCRIPTION
         session.flush()
 
         return snapshots.read(session, profile, snapshot_id)
 
     def test_the_english_that_was_printed_is_still_there(self, after_the_edit):
+        """What this one does *not* prove: that the record is frozen. An
+        approval survives the Japanese being edited, so a snapshot that
+        re-rendered from live rows would answer the same way. The test
+        below is where the freezing is checked.
+        """
         titles = {item["job_title"] for item in after_the_edit.payload["rendered"]["experiences"]}
         assert titles == {APPROVED_TITLE}
 
@@ -96,14 +105,19 @@ class TestTheRecordHoldsWhatWasPrinted:
         written = str(after_the_edit.payload)
 
         assert ORIGINAL_DESCRIPTION in written
-        assert "部門全体の基盤を設計。" not in written
+        assert EDITED_DESCRIPTION not in written
+        # The title too. The approval masks it in the rendered half, so the
+        # entry copy is the only place a record that moved with the row
+        # would show.
+        assert ORIGINAL_TITLE in written
+        assert EDITED_TITLE not in written
 
     def test_the_edit_did_happen(self, session, sent, after_the_edit):
         """The two assertions above are satisfied by an edit that never
         took, which is the one way they could both pass for no reason."""
         _, entry = sent
         session.refresh(entry)
-        assert entry.job_title == "上級システムエンジニア"
+        assert entry.job_title == EDITED_TITLE
 
     def test_a_later_document_reflects_the_edit(self, client, auth_headers, after_the_edit):
         """The snapshot is frozen; the profile is not. A product where the
@@ -122,7 +136,7 @@ class TestTheRecordHoldsWhatWasPrinted:
         # used (FR-023) — but the description had no approval, so the new
         # Japanese is what appears.
         assert APPROVED_TITLE in text
-        assert "部門全体の基盤を設計。" in text
+        assert EDITED_DESCRIPTION in text
 
 
 class TestTheDocumentItselfIsNotRetained:
@@ -139,11 +153,9 @@ class TestTheDocumentItselfIsNotRetained:
     be deliberate rather than inherited.
     """
 
-    def test_no_column_in_the_schema_could_hold_a_file(self, client, auth_headers, sent):
+    def test_no_column_in_the_schema_could_hold_a_file(self):
         from app.db.base import Base
         from sqlalchemy import LargeBinary
-
-        _generate(client, auth_headers)
 
         binary = [
             f"{table.name}.{column.name}"
@@ -156,24 +168,38 @@ class TestTheDocumentItselfIsNotRetained:
     def test_the_walk_covers_this_feature_s_tables(self):
         """The assertion above is over whatever `Base.metadata` happens to
         hold. If feature 005's tables were not registered, it would pass
-        while guarding nothing of this feature's."""
+        while guarding nothing of this feature's.
+
+        Registration is a side effect of importing the modules that define
+        the models, so this imports the application rather than relying on
+        what this file happens to have imported at the top. The question is
+        whether the running application registers them, not whether a test
+        can make it look as though it does.
+        """
+        import app.main  # noqa: F401
         from app.db.base import Base
 
         assert "entry_translation" in Base.metadata.tables
         assert "entry_snapshot" in Base.metadata.tables
 
-    def test_no_column_is_named_for_a_document(self, client, auth_headers, sent):
+    def test_no_column_is_named_for_a_document(self):
         """A PDF fits in a text column too. This is the weaker, broader
-        half: nothing in the schema is even called the thing."""
-        from app.db.base import Base
+        half: nothing in the schema is even called the thing.
 
-        _generate(client, auth_headers)
+        `document` is not among the forbidden parts — `entry_snapshot`
+        has a `document_ref`, which names which document a record is of
+        and holds no document. Forbidding the word would mean forbidding
+        the thing this feature correctly does.
+        """
+        from app.db.base import Base
 
         named = [
             f"{table.name}.{column.name}"
             for table in Base.metadata.tables.values()
             for column in table.columns
-            if column.name in {"pdf", "document", "file", "content", "rendered_document"}
+            if column.name in {"document", "file", "content", "rendered_document"}
+            or "pdf" in column.name
+            or "blob" in column.name
         ]
         assert named == []
 
@@ -189,5 +215,12 @@ class TestTheDocumentItselfIsNotRetained:
         assert first != second
 
         rows = session.scalars(select(EntrySnapshot)).all()
+        # Counted, because an empty list satisfies the loop below and would
+        # mean the session could not see what the route wrote.
+        assert len(rows) == 2
         for row in rows:
-            assert "%PDF" not in str(row.payload)
+            written = str(row.payload)
+            assert "%PDF" not in written
+            # A file put into a JSON column would arrive base64-encoded,
+            # where the header this checks for does not appear at all.
+            assert "JVBERi" not in written
