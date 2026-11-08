@@ -272,7 +272,9 @@ FR-017, FR-005 of the generator's determinism. The strongest available check
 that the render path cannot reach a provider: make every provider call fail
 and watch generation succeed anyway.
 
-**Held by** `test_resume_truthfulness.py::TestNoModelCanBeReached`, `tests/unit/test_ai_boundary.py::test_generation_cannot_reach_a_model` and `::test_the_guard_sees_every_way_of_naming_the_boundary` — 14 tests, one of which generates from a profile with **approved English** while every provider factory raises. That is the scenario's own Given, and the rest of the class runs on a profile with nothing approved — where there is no stored English for a render path to check or refresh. The unit guard is named explicitly because the parametrised SDK check over `resume/*.py` is *not* the one that fails: it watches for a provider SDK, and `from app.ai import get_provider` is neither.
+**Held by** `test_resume_truthfulness.py::TestNoModelCanBeReached` and `tests/unit/test_ai_boundary.py::test_generation_cannot_reach_a_model` — 7 tests, one of which generates from a profile with **approved English** while every provider factory raises. That is the scenario's own Given, and the rest of the class runs on a profile with nothing approved — where there is no stored English for a render path to check or refresh.
+
+`::test_the_guard_sees_every_way_of_naming_the_boundary` (7 cases) is counted apart from those. It checks that the import helper notices each way of naming `app.ai`, and it passes whether or not generation reaches a provider — so it is what makes the guard above worth believing, not evidence for the scenario. The unit guard is named explicitly because the parametrised SDK check over `resume/*.py` is *not* the one that fails: it watches for a provider SDK, and `from app.ai import get_provider` is neither.
 
 ## Scenario 19 — Deleting an entry takes its English with it
 
