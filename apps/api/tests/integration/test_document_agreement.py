@@ -334,9 +334,13 @@ class TestTheResumeAgreesWithTheRirekisho:
     def test_each_employer_keeps_its_own_period(self, client, auth_headers, shared_profile):
         """The sharpest of these, and the one a reader would catch first:
         two documents from one profile that disagree about when someone
-        joined a company do not read as a formatting bug."""
-        from app.imports.dates import format_year_month
+        joined a company do not read as a formatting bug.
 
+        Both sides are compared against the dates in `EMPLOYERS`, written
+        out here rather than through `format_year_month`. That function is
+        what puts the date on the 履歴書; asking it what the date should be
+        would make a change to it agree with itself.
+        """
         rirekisho = _pdf(client, auth_headers, RIREKISHO)
         resume = _pdf(client, auth_headers, RESUME)
 
@@ -350,7 +354,7 @@ class TestTheResumeAgreesWithTheRirekisho:
             rows = _rirekisho_dates(rirekisho, name)
             for when in (started, ended):
                 if when is not None:
-                    assert format_year_month(when, era=False) in rows, f"{name}: {when}"
+                    assert f"{when.year}年{when.month}月" in rows, f"{name}: {when}"
 
     def test_a_period_belonging_to_another_employer_is_not_on_this_one(
         self, client, auth_headers, shared_profile
@@ -363,19 +367,34 @@ class TestTheResumeAgreesWithTheRirekisho:
         assert (second[2].year, second[2].month) not in _months(_resume_period(resume, first[0]))
 
     def test_an_ongoing_role_is_open_on_both(self, client, auth_headers, shared_profile):
-        """Each says it in its own convention — 現在に至る in a 履歴書's table
-        and Present at the end of a period — and neither invents an end
-        date to fill the space."""
-        rirekisho = _squash(
-            "".join(
-                page.extract_text() or ""
-                for page in PdfReader(io.BytesIO(_pdf(client, auth_headers, RIREKISHO))).pages
-            )
-        )
+        """Each says it in its own convention — 現在に至る on a row of its own
+        in a 履歴書's table and Present at the end of a period on a resume —
+        and neither invents an end date to fill the space.
+
+        Tied to the employer on both sides. 現在に至る found anywhere in the
+        document would be satisfied by a 履歴書 that marked the wrong role
+        as continuing, which is a worse error than not marking one at all.
+        """
+        rirekisho = _pdf(client, auth_headers, RIREKISHO)
+        resume = _pdf(client, auth_headers, RESUME)
+        ongoing, *_ = EMPLOYERS[2]
+
+        lines = _lines(rirekisho)
+        last = max(number for number, line in enumerate(lines) if _squash(ongoing) in _squash(line))
+
+        assert _squash(lines[last + 1]) == "現在に至る"
+        assert "退社" not in _rirekisho_dates(rirekisho, ongoing)
+        assert _months(_resume_period(resume, ongoing))[-1] is None
+
+    def test_a_finished_role_is_closed_on_both(self, client, auth_headers, shared_profile):
+        """The other half of the same statement, and what makes the one
+        above mean something: the roles that ended say so."""
+        rirekisho = _pdf(client, auth_headers, RIREKISHO)
         resume = _pdf(client, auth_headers, RESUME)
 
-        assert "現在に至る" in rirekisho
-        assert _months(_resume_period(resume, EMPLOYERS[2][0]))[-1] is None
+        for name, _, _, ended in EMPLOYERS[:2]:
+            assert "退社" in _rirekisho_dates(rirekisho, name), name
+            assert _months(_resume_period(resume, name))[-1] == (ended.year, ended.month), name
 
 
 class TestWhatIsAllowedToDiffer:
@@ -430,11 +449,9 @@ class TestWhatIsAllowedToDiffer:
     def test_and_the_periods_still_agree(self, client, auth_headers, shared_profile, approved):
         """The title changed; the facts did not. This is what separates a
         rendering from a disagreement."""
-        from app.imports.dates import format_year_month
-
         name, _, started, _ = EMPLOYERS[2]
         rirekisho = _pdf(client, auth_headers, RIREKISHO)
         resume = _pdf(client, auth_headers, RESUME)
 
         assert _months(_resume_period(resume, name))[0] == (started.year, started.month)
-        assert format_year_month(started, era=False) in _rirekisho_dates(rirekisho, name)
+        assert f"{started.year}年{started.month}月" in _rirekisho_dates(rirekisho, name)

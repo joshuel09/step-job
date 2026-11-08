@@ -15,6 +15,7 @@ accept.
 """
 
 import io
+import re
 
 import pytest
 from pypdf import PdfReader
@@ -32,6 +33,10 @@ ISSUER = "情報処理推進機構"
 
 def _text(pdf: bytes) -> str:
     return "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(pdf)).pages)
+
+
+def _lines(text: str) -> list[str]:
+    return [line for line in (raw.strip() for raw in text.splitlines()) if line]
 
 
 @pytest.fixture
@@ -108,18 +113,40 @@ class TestWhatThePageCarries:
         assert SUPPLIED_EMPLOYER not in document
 
     def test_a_certification_and_its_issuer_appear_as_recorded(self, document):
+        """The issuer especially. It is the proper noun an applicant would
+        have to answer for — who says you hold this — and an invented
+        English form of it is a claim about a body that never made one."""
         assert CERTIFICATION in document
+        assert ISSUER in document
 
-    def test_nothing_was_transliterated(self, document):
-        """The failure this guards against is a plausible-looking English
-        name nobody supplied — "Sample Corporation" reads like a fact and
-        is not one."""
-        for invented in ("Sample", "Information-technology Promotion", "IPA"):
-            assert invented not in document
+    def test_the_unsupplied_names_stand_alone_on_their_lines(self, document):
+        """The oracle for "nothing was transliterated", and it does not
+        depend on guessing what a transliteration would have looked like.
+
+        Each of these names is recorded in Japanese with no English form
+        supplied, so the only text that may accompany it on the page is the
+        document's own — a job title, a date, a separator. Anything else in
+        Latin letters beside it is a name nobody gave us.
+        """
+        for recorded, allowed in (
+            (RECORDED_EMPLOYER, {"Software Engineer"}),
+            # The two share a line: a certification prints as its name,
+            # its issuer and the date it was awarded.
+            (CERTIFICATION, {ISSUER}),
+            (ISSUER, {CERTIFICATION}),
+        ):
+            line = next(line for line in _lines(document) if recorded in line)
+            remainder = line.replace(recorded, "")
+            for permitted in allowed:
+                remainder = remainder.replace(permitted, "")
+            # Dates and the en dash the renderer puts between fields are
+            # the document speaking, not a name.
+            remainder = re.sub(r"[0-9]|[A-Za-z]{3}\s|[–—\-,.()\s]", "", remainder)
+            assert remainder == "", f"{recorded} shares its line with {remainder!r}"
 
 
 class TestWhatTheReportSays:
-    def test_the_unnamed_employer_is_listed(self, report, proper_nouns):
+    def test_the_unnamed_employer_is_listed(self, report):
         names = {
             (item["entry_type"], item["recorded_name"]) for item in report["untranslated_names"]
         }
@@ -204,9 +231,10 @@ class TestACertificationCannotBeDrafted:
             json={"entry_type": "work_experience", "entry_id": str(entry.id), "field": "job_title"},
         )
 
-        assert "entry_type" not in [
-            item["field"] for item in response.json().get("failures", [])
-        ], response.text
+        assert response.status_code == 422, response.text
+        failures = response.json()["failures"]
+        assert [item["field"] for item in failures] == ["field"]
+        assert "already in English" in failures[0]["reason"]
 
     def test_an_employer_name_is_not_a_field_that_can_be_drafted(
         self, client, auth_headers, session, proper_nouns
@@ -234,3 +262,11 @@ class TestACertificationCannotBeDrafted:
         )
 
         assert response.status_code == 422, response.text
+        failures = response.json()["failures"]
+        assert [item["field"] for item in failures] == ["field"]
+        # Named rather than matched loosely: "refused" is also what a
+        # broken route looks like, and the three refusals in this class
+        # have to be told apart.
+        assert failures[0]["reason"] == (
+            "work_experience has no translatable field 'employer_name'"
+        )
