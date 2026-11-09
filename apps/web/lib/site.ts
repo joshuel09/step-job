@@ -14,6 +14,7 @@ export const AVAILABLE = [
   { key: "profile", href: "profile" },
   { key: "import", href: "profile/import" },
   { key: "rirekisho", href: "profile/documents/rirekisho" },
+  { key: "shokumu", href: "profile/documents/shokumu-keirekisho" },
   { key: "stories", href: "profile/stories" },
 ] as const;
 
@@ -21,7 +22,7 @@ export const AVAILABLE = [
 export type AvailableKey = (typeof AVAILABLE)[number]["key"];
 
 /** Specified, not built. Named on the page, never linked. */
-export const PLANNED = ["shokumu"] as const;
+export const PLANNED = [] as const;
 
 /** The three steps the page explains, in order. */
 export const STEPS = ["capture", "import", "generate"] as const;
@@ -37,6 +38,7 @@ export const PROFILE_LINKS = [
   { href: "/import", label: "importNav" },
   { href: "/review", label: "reviewNav" },
   { href: "/documents/rirekisho", label: "rirekishoNav" },
+  { href: "/documents/shokumu-keirekisho", label: "shokumuNav" },
   { href: "/documents/resume", label: "resumeNav" },
   { href: "/translations", label: "translationsNav" },
   { href: "/settings", label: "settings.title" },

@@ -154,6 +154,7 @@ __pycache__/
 dist/
 build/
 .next/
+.next-profile-tests/
 *.egg-info/
 .DS_Store
 .ruff_cache/

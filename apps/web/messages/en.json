@@ -79,6 +79,10 @@
       "stories": {
         "title": "Career stories",
         "body": "The longer accounts of your work that a resume has no room for."
+      },
+      "shokumu": {
+        "title": "Japanese career history (職務経歴書)",
+        "body": "Your work and achievements, drawn from the same career profile."
       }
     },
     "plannedTitle": "Being built",
@@ -485,6 +489,36 @@
       "discardSuggestion": "Discard suggestion and use my wording",
       "nameUnsupported": "This name cannot be edited here yet. It will remain as recorded; no change was saved."
     },
-    "translationsNav": "Review English"
+    "translationsNav": "Review English",
+    "shokumu": {
+      "pageTitle": "Japanese career history (職務経歴書)",
+      "pageSubtitle": "Your work and achievements, drawn from the same career profile.",
+      "back": "Back to profile",
+      "title": "Generate your 職務経歴書",
+      "explanation": "Choose the order, dates and paper. These choices change presentation only; every recorded entry stays in the document.",
+      "contentNote": "No model writes this document. English entries stay in English. 自己PR is labelled and left blank for you. Japan-specific personal details are excluded.",
+      "arrangement": "Work history order",
+      "newestFirst": "Newest first",
+      "oldestFirst": "Oldest first",
+      "dateConvention": "Dates",
+      "westernDates": "Western years (2024)",
+      "eraDates": "Japanese eras (令和6年)",
+      "paperSize": "Paper",
+      "a4": "A4",
+      "b5": "B5",
+      "generate": "Generate",
+      "generating": "Generating…",
+      "download": "Download PDF",
+      "preview": "Open preview in a new tab",
+      "pageCount": "{count, plural, one {# page} other {# pages}}",
+      "notStored": "The PDF is not kept. Download it now, or generate it again when needed.",
+      "snapshot": "Record of the profile used: {id}",
+      "nameRequired": "Add your name in Latin letters to your profile. No document was generated.",
+      "experienceRequired": "Add work experience to your profile. No document was generated.",
+      "missingOther": "Check your profile for missing or invalid information. Nothing was generated.",
+      "invalidChoice": "Choose one of the listed options. No document was generated.",
+      "noProfile": "No profile is available. Record your career first; no document was generated."
+    },
+    "shokumuNav": "職務経歴書"
   }
 }

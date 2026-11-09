@@ -1,4 +1,4 @@
-/** Isolated HTTP fixture for server-rendered and browser translation flow tests. */
+/** Isolated HTTP fixture for server-rendered and browser profile flow tests. */
 import { createServer } from "node:http";
 
 const profiles = new Map();
@@ -70,6 +70,17 @@ const server = createServer(async (req, res) => {
   for await (const chunk of req) body += chunk;
   const data = body ? JSON.parse(body) : {};
   const report = state(owner);
+  if (req.method === "POST" && req.url === "/api/v1/profile/documents/shokumu-keirekisho") {
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": 'attachment; filename="shokumu-keirekisho.pdf"',
+      "X-Document-Pages": "4",
+      "X-Snapshot-Id": "snapshot-004-full-reference",
+      "Access-Control-Expose-Headers": "Content-Disposition, X-Document-Pages, X-Snapshot-Id",
+    });
+    return res.end("%PDF-fixture");
+  }
+
   if (req.method === "GET" && req.url === "/api/v1/profile/documents/resume/readiness") {
     if (failRefresh.has(owner)) return respond(503, { code: "unavailable" });
     if (owner.endsWith("000499"))

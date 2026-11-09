@@ -141,7 +141,7 @@ generate, and confirm the document says exactly that much about it.
 - [X] T037 [US3] Produce empty sections empty in `apps/api/app/shokumu/render.py` — no placeholder, no sample, no inferred content (FR-013)
 - [X] T038 [US3] Render 自己PR as a labelled, empty section in `apps/api/app/shokumu/render.py`, per research.md R-007
 - [X] T039 [US3] Render the closing achievements section for stories attached to no employer in `apps/api/app/shokumu/render.py`, per research.md R-005
-- [ ] T040 [P] [US3] Add the English and Japanese strings for this feature to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
+- [X] T040 [P] [US3] Add the English and Japanese strings for this feature to `apps/web/messages/en.json` and `apps/web/messages/ja.json`
 - [X] T054 [P] [US3] Integration test for quickstart Scenario 11 in `apps/api/tests/integration/test_shokumu_english.py`, asserting entries recorded in English appear in English exactly as written and that nothing in the document is Japanese the user did not write (FR-015). Subtract the user's own values, the document's fixed vocabulary and the dates, then assert no Japanese remains — a blocklist of known translations only catches the ones someone thought of. Include a guard case confirming the subtraction does see a planted translation
 
 **Checkpoint**: the document says what the profile says, and no more.
@@ -158,9 +158,9 @@ generate, and confirm the document says exactly that much about it.
 - [X] T046 [P] Integration test for quickstart Scenario 9 in `apps/api/tests/integration/test_shokumu_long_history.py`, counting entries in and out so none is dropped or truncated
 - [X] T047 Integration test for quickstart Scenario 8 in `apps/api/tests/integration/test_document_agreement.py`, asserting a 履歴書 and a 職務経歴書 from the same profile agree on every employer, period and title that both carry (FR-018)
 - [X] T048 Regenerate the typed clients into `packages/api-client/src/`
-- [ ] T049 [P] Build the document page in `apps/web/app/[locale]/profile/documents/shokumu-keirekisho/page.tsx`
-- [ ] T050 [P] Build the generate control in `apps/web/components/profile/shokumu-form.tsx`, with the arrangement, convention and paper choices and a preview
-- [ ] T051 [P] Add a link to the new page from `apps/web/app/[locale]/profile/page.tsx` with strings in both languages — a page nobody can reach is not shipped
+- [X] T049 [P] Build the document page in `apps/web/app/[locale]/profile/documents/shokumu-keirekisho/page.tsx`
+- [X] T050 [P] Build the generate control in `apps/web/components/profile/shokumu-form.tsx`, with the arrangement, convention and paper choices and a preview
+- [X] T051 [P] Add a link to the new page from `apps/web/app/[locale]/profile/page.tsx` with strings in both languages — a page nobody can reach is not shipped
 - [X] T052 [P] Add structured logging across `apps/api/app/shokumu/`, recording outcomes and never document content, following the existing allow-list formatter
 - [X] T053 Run the full walkthrough in `specs/004-shokumu-keirekisho/quickstart.md` against a fresh environment and record the result
 
