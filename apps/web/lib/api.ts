@@ -1,4 +1,10 @@
-import type { Components002, Components003, Components005, components } from "@step-job/api-client";
+import type {
+  Components002,
+  Components003,
+  Components004,
+  Components005,
+  components,
+} from "@step-job/api-client";
 
 import { authorization, currentUserId } from "./dev-session";
 
@@ -21,6 +27,8 @@ export type CareerImport = ImportSchemas["ImportDetail"];
 export type DateConvention = DocumentSchemas["DateConvention"];
 export type PaperSize = DocumentSchemas["PaperSize"];
 export type ReadinessReport = DocumentSchemas["ReadinessReport"];
+export type ShokumuRequest = Components004["schemas"]["ShokumuKeirekishoRequest"];
+export type ShokumuReadinessReport = Components004["schemas"]["ReadinessReport"];
 export type ResumeRequest = Components005["schemas"]["ResumeRequest"];
 export type ResumeReadinessReport = Components005["schemas"]["ResumeReadinessReport"];
 export type TranslationDraftRequest = Components005["schemas"]["TranslationDraftRequest"];
@@ -194,17 +202,24 @@ export const api = {
     return generateDocument("rirekisho", options);
   },
 
+  generateShokumuKeirekisho: (options: ShokumuRequest): Promise<GeneratedDocument> =>
+    generateDocument("shokumu-keirekisho", options),
+  shokumuReadiness: () =>
+    request<ShokumuReadinessReport>("/profile/documents/shokumu-keirekisho/readiness"),
+
   generateResume: (options: ResumeRequest): Promise<GeneratedDocument> =>
     generateDocument("resume", options),
   resumeReadiness: () => request<ResumeReadinessReport>("/profile/documents/resume/readiness"),
 
   draftTranslation: (body: TranslationDraftRequest) =>
     request<TranslationDraft>("/profile/translations/drafts", {
-      method: "POST", body: JSON.stringify(body),
+      method: "POST",
+      body: JSON.stringify(body),
     }),
   approveTranslation: (body: TranslationApproval) =>
     request<StoredTranslation>("/profile/translations", {
-      method: "PUT", body: JSON.stringify(body),
+      method: "PUT",
+      body: JSON.stringify(body),
     }),
   deleteTranslation: (id: string) =>
     request<void>(`/profile/translations/${encodeURIComponent(id)}`, { method: "DELETE" }),
@@ -233,7 +248,7 @@ export const api = {
 
 /** Binary document responses share authentication, validation and metadata. */
 async function generateDocument(
-  document: "rirekisho" | "resume",
+  document: "rirekisho" | "resume" | "shokumu-keirekisho",
   options: unknown,
 ): Promise<GeneratedDocument> {
   const response = await fetch(`${BASE}/profile/documents/${document}`, {

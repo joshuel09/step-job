@@ -79,5 +79,6 @@ export const GLYPHS: Record<AvailableKey, ComponentType<GlyphProps>> = {
   profile: ProfileGlyph,
   import: ImportGlyph,
   rirekisho: RirekishoGlyph,
+  shokumu: RirekishoGlyph,
   stories: StoriesGlyph,
 };

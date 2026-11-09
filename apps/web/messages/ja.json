@@ -79,6 +79,10 @@
       "stories": {
         "title": "実績ストーリー",
         "body": "履歴書には書ききれない、仕事の詳しい経緯。"
+      },
+      "shokumu": {
+        "title": "職務経歴書",
+        "body": "同じ職務プロフィールから、業務内容と実績をまとめます。"
       }
     },
     "plannedTitle": "開発中",
@@ -485,6 +489,54 @@
       "discardSuggestion": "翻訳案を破棄して自分の文章を使用",
       "nameUnsupported": "この名称はここではまだ編集できません。記録された名称が引き続き使用されます。変更は保存されていません。"
     },
-    "translationsNav": "英訳を確認"
+    "translationsNav": "英訳を確認",
+    "shokumu": {
+      "pageTitle": "職務経歴書",
+      "pageSubtitle": "同じ職務プロフィールから、業務内容と実績をまとめます。",
+      "back": "プロフィールに戻る",
+      "title": "職務経歴書を作成",
+      "explanation": "職歴の順序、日付の表記、用紙を選んでください。変わるのは見せ方だけです。記録した項目が省略されることはありません。",
+      "contentNote": "AIによる文章の生成は行いません。英語の項目は英語のまま表示します。自己PR欄は見出しだけを設け、ご自身で記入できるよう空欄にします。在留資格など日本固有の個人情報は含みません。",
+      "arrangement": "職歴の順序",
+      "newestFirst": "新しい順",
+      "oldestFirst": "古い順",
+      "dateConvention": "日付の表記",
+      "westernDates": "西暦（2024年）",
+      "eraDates": "和暦（令和6年）",
+      "paperSize": "用紙サイズ",
+      "a4": "A4",
+      "b5": "B5",
+      "generate": "作成する",
+      "generating": "作成中…",
+      "download": "PDFをダウンロード",
+      "preview": "新しいタブでプレビュー",
+      "pageCount": "{count}ページ",
+      "notStored": "PDFは保存されません。今すぐダウンロードするか、必要なときに再作成してください。",
+      "snapshot": "使用したプロフィールの記録：{id}",
+      "nameRequired": "プロフィールに氏名（ローマ字）を追加してください。",
+      "experienceRequired": "プロフィールに職歴を追加してください。",
+      "missingOther": "プロフィールの未入力項目や入力内容を確認してください。書類は作成されていません。",
+      "invalidChoice": "表示されている選択肢から選んでください。",
+      "noProfile": "利用できるプロフィールがありません。先に職務経歴を記録してください。書類は作成されていません。",
+      "readinessTitle": "作成する前に",
+      "unchecked": "現在のプロフィールを確認できませんでした。書類の作成を試すことはできます。",
+      "requiredTitle": "作成前に追加してください",
+      "optionalTitle": "以下の欄は空欄になります",
+      "optionalNote": "そのまま作成できます。空欄を埋めるために内容を推測することはありません。",
+      "unattachedTitle": "勤務先に紐づいていない実績",
+      "unattachedNote": "これらのエピソードは末尾の実績欄に表示されます。省略されることはありません。",
+      "reviewStories": "実績エピソードを確認",
+      "ready": "書類を作成できます。",
+      "fields": {
+        "identity": "氏名",
+        "experiences": "職歴",
+        "skills": "スキル",
+        "languages": "語学",
+        "certifications": "資格",
+        "stories": "実績エピソード",
+        "other": "その他のプロフィール情報"
+      }
+    },
+    "shokumuNav": "職務経歴書"
   }
 }

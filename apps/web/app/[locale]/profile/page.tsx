@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { ExperienceForm } from "@/components/profile/experience-form";
@@ -41,6 +42,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
   return (
     <main className="page">
       <PageHeading title={t("title")} subtitle={t("subtitle")} />
+
+      <Link href={`/${locale}/profile/documents/shokumu-keirekisho`} className="link self-start">
+        {t("shokumuNav")}
+      </Link>
 
       <IdentityForm initial={profile?.identity} />
       <ExperienceForm existing={profile?.experiences ?? []} stories={stories} />

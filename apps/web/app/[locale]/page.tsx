@@ -19,8 +19,7 @@ import { AVAILABLE, PLANNED, PROFILE_LINKS, STEPS } from "@/lib/site";
  * paper, line and one warm orange, so the page and the illustration are
  * plainly the same thing.
  *
- * It names only what the product does today. 職務経歴書 is specified and unbuilt, so it appears as work in progress
- * rather than as links — a landing page that offers a document the product
+ * It names only what the product does today — a landing page that offers a document the product
  * cannot produce is the same kind of untrue claim Principle IV forbids a
  * generated document.
  */
@@ -188,22 +187,24 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           </section>
 
           {/* --- what is still being built ---------------------------------- */}
-          <section className="flex flex-col gap-4">
-            <SectionTitle>{t("plannedTitle")}</SectionTitle>
-            <div className="rounded-card border-2 border-dashed border-cream-300 bg-cream-50/60 p-6 dark:border-white/10 dark:bg-white/5">
-              <p className="text-sm text-ink-soft dark:text-brand-100/75">{t("plannedBody")}</p>
-              <ul className="mt-4 flex flex-wrap gap-2">
-                {PLANNED.map((item) => (
-                  <li
-                    key={item}
-                    className="rounded-full border border-cream-300 bg-cream-100 px-3 py-1 text-sm text-ink-soft dark:border-white/10 dark:bg-white/5 dark:text-brand-100/75"
-                  >
-                    {t(`planned.${item}`)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
+          {PLANNED.length > 0 && (
+            <section className="flex flex-col gap-4">
+              <SectionTitle>{t("plannedTitle")}</SectionTitle>
+              <div className="rounded-card border-2 border-dashed border-cream-300 bg-cream-50/60 p-6 dark:border-white/10 dark:bg-white/5">
+                <p className="text-sm text-ink-soft dark:text-brand-100/75">{t("plannedBody")}</p>
+                <ul className="mt-4 flex flex-wrap gap-2">
+                  {PLANNED.map((item) => (
+                    <li
+                      key={item}
+                      className="rounded-full border border-cream-300 bg-cream-100 px-3 py-1 text-sm text-ink-soft dark:border-white/10 dark:bg-white/5 dark:text-brand-100/75"
+                    >
+                      {t(`planned.${item}`)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
 
           {/* --- the promise, on a note -------------------------------------- */}
           <section className="glass flex flex-col gap-3 rounded-card p-7">
