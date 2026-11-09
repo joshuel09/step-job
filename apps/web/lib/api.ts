@@ -28,7 +28,6 @@ export type DateConvention = DocumentSchemas["DateConvention"];
 export type PaperSize = DocumentSchemas["PaperSize"];
 export type ReadinessReport = DocumentSchemas["ReadinessReport"];
 export type ShokumuRequest = Components004["schemas"]["ShokumuKeirekishoRequest"];
-export type ShokumuReadinessReport = Components004["schemas"]["ReadinessReport"];
 export type ResumeRequest = Components005["schemas"]["ResumeRequest"];
 export type ResumeReadinessReport = Components005["schemas"]["ResumeReadinessReport"];
 export type TranslationDraftRequest = Components005["schemas"]["TranslationDraftRequest"];
@@ -204,8 +203,6 @@ export const api = {
 
   generateShokumuKeirekisho: (options: ShokumuRequest): Promise<GeneratedDocument> =>
     generateDocument("shokumu-keirekisho", options),
-  shokumuReadiness: () =>
-    request<ShokumuReadinessReport>("/profile/documents/shokumu-keirekisho/readiness"),
 
   generateResume: (options: ResumeRequest): Promise<GeneratedDocument> =>
     generateDocument("resume", options),

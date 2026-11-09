@@ -14,8 +14,6 @@ for (const locale of ["en", "ja"] as const) {
     await page.getByRole("link", { name: "職務経歴書", exact: true }).first().click();
     await expect(page).toHaveURL(/documents\/shokumu-keirekisho$/);
     const main = page.getByRole("main");
-    await expect(main.getByText("My recorded achievement", { exact: true })).toBeVisible();
-    await expect(main.getByText(ja ? "スキル" : "Skills", { exact: true })).toBeVisible();
     const order = page.getByLabel(ja ? "職歴の順序" : "Work history order");
     const dates = page.getByLabel(ja ? "日付の表記" : "Dates", { exact: true });
     const paper = page.getByLabel(ja ? "用紙サイズ" : "Paper", { exact: true });
@@ -86,6 +84,9 @@ for (const locale of ["en", "ja"] as const) {
     await expect(alerts).toHaveCount(2);
     await expect(alerts.first()).toContainText(ja ? "氏名" : "name");
     await expect(alerts.last()).toContainText(ja ? "職歴" : "work experience");
+    await expect(alerts.first()).toContainText(
+      ja ? "書類は作成されていません" : "No document was generated",
+    );
     await generate.click();
     await expect(alerts).toContainText(ja ? "選択肢" : "listed options");
     await generate.click();
@@ -96,17 +97,6 @@ for (const locale of ["en", "ja"] as const) {
     await expect(page.getByRole("status")).toHaveCount(0);
   });
 }
-
-test("failed readiness check remains explicit", async ({ page }) => {
-  await signIn(page, "00000000-0000-4000-8000-000000000503");
-  await page.goto("/en/profile/documents/shokumu-keirekisho");
-  await expect(
-    page.getByText(
-      "We could not check the current profile. You can still try generating the document.",
-    ),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Generate", exact: true })).toBeEnabled();
-});
 
 test("Japanese career history page fits mobile", async ({ page }, testInfo) => {
   await signIn(page);

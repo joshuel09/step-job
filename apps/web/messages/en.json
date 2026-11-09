@@ -513,29 +513,11 @@
       "pageCount": "{count, plural, one {# page} other {# pages}}",
       "notStored": "The PDF is not kept. Download it now, or generate it again when needed.",
       "snapshot": "Record of the profile used: {id}",
-      "nameRequired": "Add your name in Latin letters to your profile.",
-      "experienceRequired": "Add work experience to your profile.",
+      "nameRequired": "Add your name in Latin letters to your profile. No document was generated.",
+      "experienceRequired": "Add work experience to your profile. No document was generated.",
       "missingOther": "Check your profile for missing or invalid information. Nothing was generated.",
-      "invalidChoice": "Choose one of the listed options.",
-      "noProfile": "No profile is available. Record your career first; no document was generated.",
-      "readinessTitle": "Before you generate",
-      "unchecked": "We could not check the current profile. You can still try generating the document.",
-      "requiredTitle": "Add these before generating",
-      "optionalTitle": "These sections will be blank",
-      "optionalNote": "You can still generate. Nothing is invented to fill these sections.",
-      "unattachedTitle": "Achievements without an employer",
-      "unattachedNote": "These stories appear in the closing achievements section. They are not left out.",
-      "reviewStories": "Review career stories",
-      "ready": "Your profile is ready to generate.",
-      "fields": {
-        "identity": "Your name",
-        "experiences": "Work history",
-        "skills": "Skills",
-        "languages": "Languages",
-        "certifications": "Certifications",
-        "stories": "Career stories",
-        "other": "Other profile information"
-      }
+      "invalidChoice": "Choose one of the listed options. No document was generated.",
+      "noProfile": "No profile is available. Record your career first; no document was generated."
     },
     "shokumuNav": "職務経歴書"
   }

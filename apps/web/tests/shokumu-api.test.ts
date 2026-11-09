@@ -58,16 +58,4 @@ describe("career history document client", () => {
     fetchMock.mockResolvedValue(Response.json({ code: "not_found" }, { status: 404 }));
     await expect(api.generateShokumuKeirekisho({})).rejects.toBeInstanceOf(ApiError);
   });
-  it("checks readiness without generating a document", async () => {
-    const report = {
-      can_generate: true,
-      missing_required: [],
-      missing_optional: ["skills"],
-      unattached_achievements: [],
-    };
-    fetchMock.mockResolvedValue(Response.json(report));
-    expect(await api.shokumuReadiness()).toEqual(report);
-    expect(fetchMock.mock.calls[0]![0]).toMatch(/shokumu-keirekisho\/readiness$/);
-    expect(fetchMock.mock.calls[0]![1].method).toBeUndefined();
-  });
 });

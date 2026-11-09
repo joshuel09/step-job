@@ -70,13 +70,6 @@ const server = createServer(async (req, res) => {
   for await (const chunk of req) body += chunk;
   const data = body ? JSON.parse(body) : {};
   const report = state(owner);
-  if (req.method === "GET" && req.url === "/api/v1/profile/documents/shokumu-keirekisho/readiness")
-    return respond(200, {
-      can_generate: true,
-      missing_required: [],
-      missing_optional: ["skills"],
-      unattached_achievements: [{ entry_id: "story-1", title: "My recorded achievement" }],
-    });
   if (req.method === "POST" && req.url === "/api/v1/profile/documents/shokumu-keirekisho") {
     res.writeHead(200, {
       "Content-Type": "application/pdf",

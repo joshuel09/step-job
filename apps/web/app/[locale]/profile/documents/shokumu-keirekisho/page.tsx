@@ -1,7 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { PageHeading } from "@/components/profile/page-heading";
 import { ShokumuForm } from "@/components/profile/shokumu-form";
-import { ShokumuReadiness } from "@/components/profile/shokumu-readiness";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +16,6 @@ export default async function ShokumuPage({ params }: { params: Promise<{ locale
         subtitle={t("pageSubtitle")}
         back={{ href: `/${locale}/profile`, label: t("back") }}
       />
-      <ShokumuReadiness locale={locale} />
       <ShokumuForm />
     </main>
   );

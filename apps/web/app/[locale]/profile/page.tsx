@@ -16,6 +16,7 @@ import { api, type CareerStory, type Profile } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
+/** Load the profile when present; a missing profile is an expected first-use state. */
 async function loadProfile(): Promise<Profile | null> {
   try {
     return await api.getProfile();
@@ -25,6 +26,7 @@ async function loadProfile(): Promise<Profile | null> {
   }
 }
 
+/** Load recorded achievement stories; the page remains usable if that list is unavailable. */
 async function loadStories(): Promise<CareerStory[]> {
   try {
     return await api.listStories();
@@ -33,6 +35,7 @@ async function loadStories(): Promise<CareerStory[]> {
   }
 }
 
+/** Render the user's recorded career profile and its editing sections. */
 export default async function ProfilePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
