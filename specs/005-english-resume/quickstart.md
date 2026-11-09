@@ -39,6 +39,21 @@ uv run --project apps/api pytest tests/integration/test_resume_generate.py -q
 
 ---
 
+## Translation review browser checks
+
+```bash
+# Isolated Next.js + HTTP fixture; no database or model provider is used.
+pnpm --filter web exec playwright install chromium
+pnpm --filter web test:e2e:translations
+# Or use an installed Chrome: PLAYWRIGHT_CHANNEL=chrome pnpm --filter web test:e2e:translations
+```
+
+The browser suite starts its own web app (3189) and fixture API (8199). It covers
+English/Japanese comparison, explicit exact-text approval, unselected ambiguity
+choices, official-name updates, stale approvals, removal, and failure handling.
+It proves UI interactions against controlled responses; the API/PDF integration
+tests named below establish stored wording and document output.
+
 ## Scenario 0 — The Japanese that has to render
 
 **Given** an employer recorded only as 株式会社サンプル, with no English name

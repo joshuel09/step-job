@@ -23,6 +23,12 @@ export type PaperSize = DocumentSchemas["PaperSize"];
 export type ReadinessReport = DocumentSchemas["ReadinessReport"];
 export type ResumeRequest = Components005["schemas"]["ResumeRequest"];
 export type ResumeReadinessReport = Components005["schemas"]["ResumeReadinessReport"];
+export type TranslationDraftRequest = Components005["schemas"]["TranslationDraftRequest"];
+export type TranslationDraft = Components005["schemas"]["TranslationDraft"];
+export type TranslationApproval = Components005["schemas"]["TranslationApproval"];
+export type StoredTranslation = Components005["schemas"]["StoredTranslation"];
+export type UntranslatedField = Components005["schemas"]["UntranslatedField"];
+export type UntranslatedName = Components005["schemas"]["UntranslatedName"];
 export type EnglishEntry = DocumentSchemas["EnglishEntry"];
 
 /** A generated document, with what the interface needs to say about it. */
@@ -191,6 +197,17 @@ export const api = {
   generateResume: (options: ResumeRequest): Promise<GeneratedDocument> =>
     generateDocument("resume", options),
   resumeReadiness: () => request<ResumeReadinessReport>("/profile/documents/resume/readiness"),
+
+  draftTranslation: (body: TranslationDraftRequest) =>
+    request<TranslationDraft>("/profile/translations/drafts", {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  approveTranslation: (body: TranslationApproval) =>
+    request<StoredTranslation>("/profile/translations", {
+      method: "PUT", body: JSON.stringify(body),
+    }),
+  deleteTranslation: (id: string) =>
+    request<void>(`/profile/translations/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
   /**
    * What a 履歴書 would lack, asked before it is generated rather than after.

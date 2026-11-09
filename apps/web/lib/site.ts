@@ -38,6 +38,7 @@ export const PROFILE_LINKS = [
   { href: "/review", label: "reviewNav" },
   { href: "/documents/rirekisho", label: "rirekishoNav" },
   { href: "/documents/resume", label: "resumeNav" },
+  { href: "/translations", label: "translationsNav" },
   { href: "/settings", label: "settings.title" },
 ] as const;
 
