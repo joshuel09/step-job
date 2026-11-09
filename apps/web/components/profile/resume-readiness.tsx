@@ -91,6 +91,14 @@ export async function ResumeReadiness({ locale }: { locale: string }) {
             report.stale_translations.length === 0 && <p className="explain">{t("ready")}</p>}
         </>
       )}
+      {report &&
+        (report.needs_english.length > 0 ||
+          report.stale_translations.length > 0 ||
+          report.untranslated_names.length > 0) && (
+          <Link href={`/${locale}/profile/translations`} className="link self-start text-sm">
+            {t("reviewEnglish")}
+          </Link>
+        )}
       <Link href={`/${locale}/profile`} className="link self-start text-sm">
         {t("fixProfile")}
       </Link>

@@ -172,8 +172,8 @@ next document without being translated again.
 - [x] T050 [US2] Create `apps/api/app/resume/readiness.py` reporting `needs_english`, `untranslated_names` and `stale_translations` (FR-020, FR-023), reusing the shape #65 establishes for the 履歴書 rather than writing a third one
 - [x] T051 [US2] Serve `GET /profile/documents/resume/readiness` from `apps/api/app/resume/router.py` (FR-020 — before a document is produced, not after)
 - [x] T052 [US2] Remove the four translation and readiness paths from `DEFERRED` in `apps/api/tests/contract/test_contracts.py` and their four entries from `UNVALIDATED` in `apps/api/tests/contract/test_response_schemas.py`
-- [ ] T053 [P] [US2] Create `apps/web/app/[locale]/profile/translations/page.tsx` and `apps/web/components/profile/translation-review.tsx` showing the source beside the draft, the alternatives as choices, and an editable field — the user must be able to compare, not just accept
-- [ ] T054 [P] [US2] Add the English and Japanese interface strings for the translation review to `apps/web/messages/`; `pnpm --filter web check:messages` fails on a gap
+- [x] T053 [P] [US2] Create `apps/web/app/[locale]/profile/translations/page.tsx` and `apps/web/components/profile/translation-review.tsx` showing the source beside the draft, the alternatives as choices, and an editable field — the user must be able to compare, not just accept
+- [x] T054 [P] [US2] Add the English and Japanese interface strings for the translation review to `apps/web/messages/`; `pnpm --filter web check:messages` fails on a gap
 
 **Checkpoint**: a user whose profile is Japanese can produce a readable resume,
 and never translates the same entry twice.
