@@ -15,7 +15,7 @@ import {
   type TranslationDraftRequest,
   type UntranslatedName,
 } from "@/lib/api";
-import { applyTranslationOption } from "@/lib/translation-options";
+import { applyTranslationOption, containsTranslationOption } from "@/lib/translation-options";
 
 import { Problem, problemMessage } from "./form-primitives";
 
@@ -61,7 +61,7 @@ function TranslationRow({
       choice === "own" ||
       (choice !== undefined &&
         choice !== "" &&
-        text.includes(alternative.options[Number(choice)] ?? "\u0000"))
+        containsTranslationOption(text, alternative.options[Number(choice)] ?? ""))
     );
   });
 

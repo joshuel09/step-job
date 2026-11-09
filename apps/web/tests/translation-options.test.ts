@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyTranslationOption } from "../lib/translation-options";
+import { applyTranslationOption, containsTranslationOption } from "../lib/translation-options";
 
 describe("choosing an English reading", () => {
   it("replaces the one identifiable reading without changing other words", () => {
@@ -31,4 +31,10 @@ describe("choosing an English reading", () => {
       "Manager",
     );
   });
+});
+
+it("does not count a word fragment as the user's selected wording", () => {
+  expect(containsTranslationOption("Managerial work", "Manager")).toBe(false);
+  expect(containsTranslationOption("Manager in Tokyo", "Manager")).toBe(true);
+  expect(containsTranslationOption("Text", "")).toBe(false);
 });
