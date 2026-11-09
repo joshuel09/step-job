@@ -32,6 +32,11 @@ for (const locale of ["en", "ja"] as const) {
     await english.fill("  \n ");
     await expect(approve).toBeDisabled();
     await card.getByRole("button", { name: ja ? "英訳案を作成" : "Suggest English" }).click();
+    await expect(english).toHaveValue("  \n ");
+    await expect(approve).toBeDisabled();
+    await card
+      .getByRole("button", { name: ja ? "この翻訳案を使用" : "Use this suggestion", exact: true })
+      .click();
     await expect(english).toHaveValue("Manager");
     await expect(card.getByText("課長", { exact: true }).first()).toBeVisible();
     expect(approvals).toEqual([]);
@@ -145,6 +150,9 @@ test("an unambiguous draft can be approved and failed approval preserves edits",
   await page.goto("/en/profile/translations");
   const stale = page.getByRole("region", { name: "Approved English to check" });
   await stale.getByRole("button", { name: "Suggest English" }).click();
+  await expect(stale.getByLabel("English to approve")).toHaveValue("Old skill");
+  await expect(stale.getByRole("button", { name: "Approve and save English" })).toBeDisabled();
+  await stale.getByRole("button", { name: "Use this suggestion", exact: true }).click();
   await expect(stale.getByLabel("English to approve")).toHaveValue("New skill");
   await expect(stale.getByLabel("Choose a meaning")).toHaveCount(0);
   await stale.getByLabel("English to approve").fill("Corrected skill");
@@ -177,4 +185,37 @@ test("Japanese comparison fits a mobile viewport", async ({ page }, testInfo) =>
     path: testInfo.outputPath("translation-review-mobile.png"),
     fullPage: true,
   });
+});
+
+test("unknown name fields explain why they cannot be edited", async ({ page }) => {
+  await signIn(page, "00000000-0000-4000-8000-000000000499");
+  await page.goto("/en/profile/translations");
+  const names = page.getByRole("region", { name: "Supply official English names" });
+  await expect(names).toContainText("cannot be edited here yet");
+  await expect(names.getByRole("textbox")).toHaveCount(0);
+});
+
+test("a failed post-save refresh does not contradict the confirmed save", async ({ page }) => {
+  await signIn(page, "00000000-0000-4000-8000-000000000504");
+  await page.goto("/en/profile/translations");
+  const card = page.getByRole("article", { name: "株式会社サンプル" });
+  await card.getByLabel("English to approve").fill("My approved English");
+  await card.getByRole("button", { name: "Approve and save English" }).click();
+  await expect(page.getByRole("status")).toContainText("was saved");
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+    "confirmed saves or removals are already stored",
+  );
+});
+
+test("discarding a suggestion keeps the user's existing English", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/en/profile/translations");
+  const card = page.getByRole("article", { name: "株式会社サンプル" });
+  await card.getByLabel("English to approve").fill("My own English");
+  await card.getByRole("button", { name: "Suggest English", exact: true }).click();
+  await expect(card.getByLabel("English to approve")).toHaveValue("My own English");
+  await expect(card.getByRole("button", { name: "Approve and save English" })).toBeDisabled();
+  await card.getByRole("button", { name: "Discard suggestion and use my wording" }).click();
+  await expect(card.getByLabel("English to approve")).toHaveValue("My own English");
+  await expect(card.getByRole("button", { name: "Approve and save English" })).toBeEnabled();
 });

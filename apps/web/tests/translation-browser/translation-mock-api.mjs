@@ -2,6 +2,7 @@
 import { createServer } from "node:http";
 
 const profiles = new Map();
+const failRefresh = new Set();
 const role = "11111111-1111-4111-8111-111111111111";
 const skill = "22222222-2222-4222-8222-222222222222";
 const sourceRole = {
@@ -69,8 +70,18 @@ const server = createServer(async (req, res) => {
   for await (const chunk of req) body += chunk;
   const data = body ? JSON.parse(body) : {};
   const report = state(owner);
-  if (req.method === "GET" && req.url === "/api/v1/profile/documents/resume/readiness")
+  if (req.method === "GET" && req.url === "/api/v1/profile/documents/resume/readiness") {
+    if (failRefresh.has(owner)) return respond(503, { code: "unavailable" });
+    if (owner.endsWith("000499"))
+      return respond(200, {
+        ...report,
+        untranslated_names: report.untranslated_names.map((entry) => ({
+          ...entry,
+          field: "future_name",
+        })),
+      });
     return respond(200, report);
+  }
   if (req.method === "POST" && req.url === "/api/v1/profile/translations/drafts")
     return respond(200, {
       ...data,
@@ -89,6 +100,7 @@ const server = createServer(async (req, res) => {
     });
   if (req.method === "PUT" && req.url === "/api/v1/profile/translations") {
     if (!data.text?.trim()) return respond(422, { failures: [{ field: "text", reason: "blank" }] });
+    if (owner.endsWith("000504")) failRefresh.add(owner);
     report.needs_english = report.needs_english.filter(
       (item) => !(item.entry_id === data.entry_id && item.field === data.field),
     );

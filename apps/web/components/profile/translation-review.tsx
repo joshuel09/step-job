@@ -17,19 +17,9 @@ import {
 } from "@/lib/api";
 import { applyTranslationOption, containsTranslationOption } from "@/lib/translation-options";
 
-import { Problem, problemMessage } from "./form-primitives";
+import { TRANSLATION_FIELDS, type TranslationNotice } from "@/lib/translation-labels";
 
-const FIELDS: Record<string, string> = {
-  job_title: "jobTitle",
-  description: "description",
-  qualification: "qualification",
-  field_of_study: "fieldOfStudy",
-  name: "name",
-  title: "title",
-  challenge: "challenge",
-  action: "action",
-  result: "result",
-};
+import { Problem, problemMessage } from "./form-primitives";
 
 /** Compare one source with editable English; only an explicit approval writes. */
 function TranslationRow({
@@ -43,7 +33,7 @@ function TranslationRow({
   source: string | null;
   label: string;
   stored?: StoredTranslation;
-  onChange: (message: "saved" | "removed") => void;
+  onChange: (message: Exclude<TranslationNotice, "nameSaved">) => void;
 }) {
   const t = useTranslations("profile.translations");
   const tc = useTranslations("common");
@@ -51,6 +41,7 @@ function TranslationRow({
   const [text, setText] = useState(stored?.text ?? "");
   const [currentSource, setCurrentSource] = useState(source);
   const [draft, setDraft] = useState<TranslationDraft | null>(null);
+  const [draftUsed, setDraftUsed] = useState(false);
   const [choices, setChoices] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState(false);
   const [settled, setSettled] = useState(false);
@@ -73,7 +64,7 @@ function TranslationRow({
       const next = await api.draftTranslation(subject);
       setCurrentSource(next.source_text);
       setDraft(next);
-      setText(next.text);
+      setDraftUsed(false);
       setChoices({});
     } catch (error) {
       if (error instanceof ApiError && error.status === 503) setProblem(t("unavailable"));
@@ -110,7 +101,7 @@ function TranslationRow({
         <h3 id={`${id}-title`} className="font-semibold">
           {label}
         </h3>
-        <p className="hint">{t(`fields.${FIELDS[subject.field] ?? "other"}`)}</p>
+        <p className="hint">{t(`fields.${TRANSLATION_FIELDS[subject.field] ?? "other"}`)}</p>
         {stored && <p className="notice mt-2">{t("staleNote")}</p>}
       </div>
       <div className="grid min-w-0 gap-4 md:grid-cols-2">
@@ -121,6 +112,40 @@ function TranslationRow({
           </p>
         </div>
         <div className="min-w-0">
+          {draft && (
+            <div className="entry mb-4 flex flex-col gap-2">
+              <h4 className="field-label">{t("suggestion")}</h4>
+              <p className="whitespace-pre-wrap break-words" lang="en">
+                {draft.text}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="btn-form"
+                  disabled={busy || settled || draftUsed}
+                  onClick={() => {
+                    setText(draft.text);
+                    setChoices({});
+                    setDraftUsed(true);
+                  }}
+                >
+                  {t("useSuggestion")}
+                </button>
+                <button
+                  type="button"
+                  className="btn-quiet"
+                  disabled={busy || settled}
+                  onClick={() => {
+                    setDraft(null);
+                    setChoices({});
+                    setDraftUsed(false);
+                  }}
+                >
+                  {t("discardSuggestion")}
+                </button>
+              </div>
+            </div>
+          )}
           <label htmlFor={`${id}-english`} className="field-label">
             {t("english")}
           </label>
@@ -141,7 +166,11 @@ function TranslationRow({
         <div className="flex flex-col gap-3">
           <p className="explain">{t("alternativesHint")}</p>
           {draft.alternatives.map((alternative, index) => (
-            <fieldset key={index} className="entry flex flex-col gap-2" disabled={busy || settled}>
+            <fieldset
+              key={index}
+              className="entry flex flex-col gap-2"
+              disabled={busy || settled || !draftUsed}
+            >
               <legend className="px-1 font-medium" lang="ja">
                 {alternative.phrase}
               </legend>
@@ -191,7 +220,12 @@ function TranslationRow({
           type="button"
           className="btn-form"
           disabled={
-            busy || settled || currentSource === null || !text.trim() || !alternativesResolved
+            busy ||
+            settled ||
+            currentSource === null ||
+            !text.trim() ||
+            !alternativesResolved ||
+            (draft !== null && !draftUsed)
           }
           onClick={() => saveOrRemove()}
         >
@@ -234,7 +268,10 @@ function EnglishNameRow({ entry, onSaved }: { entry: UntranslatedName; onSaved: 
   /** Patch the existing entry route so the profile stays the single source. */
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    if (!target) return;
+    if (!target) {
+      setProblem(t("nameUnsupported"));
+      return;
+    }
     setBusy(true);
     setProblem(null);
     try {
@@ -253,7 +290,7 @@ function EnglishNameRow({ entry, onSaved }: { entry: UntranslatedName; onSaved: 
       <p className="font-medium" lang="ja">
         {entry.recorded_name}
       </p>
-      {target && (
+      {target ? (
         <>
           <label htmlFor={`${id}-name`} className="field-label">
             {t("officialName")}
@@ -274,6 +311,8 @@ function EnglishNameRow({ entry, onSaved }: { entry: UntranslatedName; onSaved: 
             {t("saveName")}
           </button>
         </>
+      ) : (
+        <p className="hint">{t("nameUnsupported")}</p>
       )}
       <Problem message={problem} />
     </form>
@@ -295,7 +334,7 @@ export function TranslationReview({
   const [notice, setNotice] = useState<string | null>(null);
   const [refreshing, startRefresh] = useTransition();
   const refresh = () => startRefresh(() => router.refresh());
-  const changed = (message: "saved" | "removed" | "nameSaved") => {
+  const changed = (message: TranslationNotice) => {
     setNotice(t(message));
     refresh();
   };
