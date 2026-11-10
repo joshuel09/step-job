@@ -129,10 +129,11 @@
       "deletedExplanation": "It is no longer visible anywhere in Step Job.",
       "checkingRecovery": "Checking this browser for a restore option…",
       "recoveryDeviceLimit": "For privacy, this reminder stays in this browser and account. Use both before the date below.",
-      "recoveryStorageUnavailable": "Browser storage is unavailable. If you deleted your profile, this reminder may not survive a reload.",
-      "recoveryStorageSave": "This browser could not save the restore reminder. Restore now before leaving this page.",
+      "recoveryStorageUnavailable": "We couldn't read a restore reminder for this account. If you deleted your profile, use the same browser and account and check that browser storage is available.",
+      "recoveryStorageSave": "Your profile was deleted, but this browser could not save the restore reminder. Restore now before leaving this page.",
       "recoveryStorageClear": "Your profile was restored, but this browser could not clear the old reminder. A stale restore option may appear after reload.",
       "restoreFailed": "We could not restore your profile. Your reminder is still here; try again.",
+      "deleteFailed": "We could not confirm profile deletion, and no restore reminder was saved. Check whether the profile is still active before trying again.",
       "recoverableUntil": "You can restore it until {date}.",
       "erasedNow": "Erased immediately and unrecoverable: {fields}",
       "restore": "Restore my profile"

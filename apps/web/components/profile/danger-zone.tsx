@@ -27,12 +27,19 @@ async function receiptKey(): Promise<string | null> {
 /** Reject damaged or expired reminders before showing a restore action. */
 function parseReceipt(value: string): DeletionReceipt | null {
   try {
-    const receipt = JSON.parse(value) as DeletionReceipt;
-    return Array.isArray(receipt.erased_immediately) &&
-      typeof receipt.recoverable_until === "string" &&
-      Date.parse(receipt.recoverable_until) > Date.now()
-      ? receipt
-      : null;
+    const candidate: unknown = JSON.parse(value);
+    if (!candidate || typeof candidate !== "object") return null;
+    const receipt = candidate as Record<string, unknown>;
+    if (
+      !Array.isArray(receipt.erased_immediately) ||
+      !receipt.erased_immediately.every((field) => typeof field === "string") ||
+      typeof receipt.recoverable_until !== "string" ||
+      Date.parse(receipt.recoverable_until) <= Date.now()
+    ) return null;
+    return {
+      erased_immediately: receipt.erased_immediately,
+      recoverable_until: receipt.recoverable_until,
+    } as DeletionReceipt;
   } catch {
     return null;
   }
@@ -54,13 +61,17 @@ export function DangerZone() {
   const [loaded, setLoaded] = useState(false);
   const [storageProblem, setStorageProblem] = useState<StorageProblem | null>(null);
   const [restoreError, setRestoreError] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
 
   useEffect(() => {
     let active = true;
     void (async () => {
       try {
         const key = await receiptKey();
-        if (!key) return;
+        if (!key) {
+          if (active) setStorageProblem("unavailable");
+          return;
+        }
         const saved = localStorage.getItem(key);
         if (!saved) return;
         const recovered = parseReceipt(saved);
@@ -100,6 +111,7 @@ export function DangerZone() {
   /** Keep the API receipt in browser storage so reload does not hide Restore. */
   async function onDelete() {
     setPending(true);
+    setDeleteError(false);
     try {
       const deleted = await api.deleteProfile();
       setReceipt(deleted);
@@ -112,6 +124,8 @@ export function DangerZone() {
       } catch {
         setStorageProblem("save");
       }
+    } catch {
+      setDeleteError(true);
     } finally {
       setPending(false);
     }
@@ -126,7 +140,8 @@ export function DangerZone() {
       setReceipt(null);
       try {
         const key = await receiptKey();
-        if (key) localStorage.removeItem(key);
+        if (!key) throw new Error("No browser session");
+        localStorage.removeItem(key);
         setStorageProblem(null);
       } catch {
         setStorageProblem("clear");
@@ -216,6 +231,7 @@ export function DangerZone() {
             {/* Stated before the call, not after: the user decides against the
                 actual consequences. */}
             <p className="text-sm font-medium">{t("confirmHeading")}</p>
+            {deleteError && <p className="field-error">{t("deleteFailed")}</p>}
             <ul className="list-disc pl-5 text-sm">
               <li>{t("confirmImmediate")}</li>
               <li>{t("confirmRecoverable")}</li>
